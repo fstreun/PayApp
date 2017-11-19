@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -11,22 +10,25 @@ import java.util.UUID;
 
 /**
  * Created by fabio on 11/12/17.
- *
+ * simple implementation of a Session with
+ * ChainImpl and BlockImpl
  */
 
-public class SessionImpl extends Session<ChainImpl> implements SessionClient {
+public class SessionImpl extends Session<ChainImpl, BlockImpl> implements SessionClient {
+
+    static final BlockFactory<BlockImpl> blockFactory = new BlockImpl("");
 
     public SessionImpl(UUID sessionID, UUID userID) {
-        super(sessionID, userID, new ChainImpl());
+        super(sessionID, userID, new ChainImpl(blockFactory));
     }
 
     public SessionImpl(JSONObject object) throws JSONException {
-        super(object, new ChainImpl());
+        super(object, new ChainImpl(blockFactory));
     }
 
     @Override
     public boolean add(String content) {
-        Block block = Block.createWithContent(content);
+        BlockImpl block = new BlockImpl(content);
         return add(block);
     }
 
@@ -43,8 +45,8 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
     private List<String> chainsToList(Map<UUID, ChainImpl> chains){
         List<String> res = new ArrayList<>();
         for (ChainImpl c : chains.values()){
-            List<Block> blocks = c.getBlocks();
-            for (Block b : blocks){
+            List<BlockImpl> blocks = c.getBlocks();
+            for (BlockImpl b : blocks){
                 res.add(b.getContent());
             }
         }

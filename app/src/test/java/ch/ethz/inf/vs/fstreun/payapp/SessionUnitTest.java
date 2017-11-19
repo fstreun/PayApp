@@ -3,11 +3,8 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import org.json.JSONObject;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.UUID;
 
-import ch.ethz.inf.vs.fstreun.datasharing.Block;
-import ch.ethz.inf.vs.fstreun.datasharing.ChainImpl;
 import ch.ethz.inf.vs.fstreun.datasharing.Session;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
@@ -36,10 +33,10 @@ public class SessionUnitTest {
     public void session_json() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        Session<ChainImpl> s = new SessionImpl(sessionID, userID);
+        SessionImpl s = new SessionImpl(sessionID, userID);
 
         String content = "this is content";
-        s.add(Block.createWithContent(content));
+        s.add(content);
 
         JSONObject j = s.toJSON();
 

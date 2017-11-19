@@ -1,30 +1,27 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.List;
 
 /**
  * Created by fabio on 11/12/17.
- * Basic interface of a chain.
+ * Basic interface of a chain with Blocks of type B
  */
 
-public interface Chain extends Iterable<Block>{
+public interface Chain<B extends Block> extends Iterable<B>{
 
     /**
      * Appends block to the end of the chain.
      * @param block to be appended
      * @return success
      */
-    public boolean append(Block block);
+    public boolean append(B block);
 
     /**
      * To access a block in the chain
      * @param position of the block in the chain
      * @return a read only block
      */
-    public Block get(int position);
+    public B get(int position);
 
     /**
      * To access a contiguous list of blocks.
@@ -40,7 +37,7 @@ public interface Chain extends Iterable<Block>{
      * NOT THE ACTUAL DATA REPRESENTATION OF THE CHAIN!
      * @return
      */
-    public List<Block> getBlocks();
+    public List<B> getBlocks();
 
 
 

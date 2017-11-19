@@ -12,10 +12,10 @@ import java.util.UUID;
 /**
  * Created by fabio on 11/12/17.
  * Basic class for a session (not recommended for clients)
- * using Chains of type C
+ * using Chains of type C with Blocks of type B
  */
 
-public abstract class Session <C extends Chain>{
+public abstract class Session <C extends Chain<B>, B extends Block>{
 
     // identifier of the session
     private final UUID sessionID;
@@ -30,6 +30,7 @@ public abstract class Session <C extends Chain>{
     // fast access to the users chain (is also in the data)
     private final C own;
     public final ChainFactory<C> chainFactory;
+
 
 
     /**
@@ -135,7 +136,7 @@ public abstract class Session <C extends Chain>{
      * @param block to be added
      * @return true if success, else false
      */
-    public final boolean add (Block block){
+    public final boolean add (B block){
         return own.append(block);
     }
 
