@@ -6,10 +6,10 @@ import java.util.UUID;
 
 /**
  * Created by fabio on 11/12/17.
- * Minimal interface of a basic block.
+ * Immutable block
  */
 
-public abstract class Block {
+public final class Block {
 
     private final JSONObject content;
 
@@ -22,7 +22,7 @@ public abstract class Block {
      * TODO: only return copy of object
      * @return
      */
-    public final JSONObject getContent() {
+    public JSONObject getContent() {
         return content;
     }
 

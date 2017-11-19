@@ -8,6 +8,7 @@ import java.util.UUID;
 
 /**
  * Created by fabio on 11/12/17.
+ * optimal interface for a client using a session
  */
 
 public interface SessionClient {

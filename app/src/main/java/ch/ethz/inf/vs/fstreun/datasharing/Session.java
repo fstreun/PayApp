@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Created by fabio on 11/12/17.
- * Basic class for a session (not recommended for users)
+ * Basic class for a session (not recommended for clients)
  * using Chains of type C
  */
 
@@ -29,8 +29,15 @@ public abstract class Session <C extends Chain>{
     private static final String JSON_KEY_DATA = "data";
     // fast access to the users chain (is also in the data)
     private final C own;
-    private final ChainFactory<C> chainFactory;
+    public final ChainFactory<C> chainFactory;
 
+
+    /**
+     * Create new basic Session
+     * @param sessionID used by the session
+     * @param userID of the user by this session object
+     * @param chainFactory which defines the chain structure
+     */
     public Session(UUID sessionID, UUID userID, ChainFactory<C> chainFactory) {
         this.sessionID = sessionID;
         this.userID = userID;
@@ -44,10 +51,16 @@ public abstract class Session <C extends Chain>{
     }
 
 
+    /**
+     * Create Session of an JSON Object
+     * @param object representing the Session Object
+     * @param chainFactory which defines the chain structure
+     * @throws JSONException if fails
+     */
     public Session(JSONObject object, ChainFactory<C> chainFactory) throws JSONException {
         this.chainFactory = chainFactory;
 
-        String errors = "Session creation with JSONObject failed due to:\n";
+        String errors = ""; // string of all errors occurred
         boolean error = false;
 
         UUID sID = null;
@@ -77,14 +90,14 @@ public abstract class Session <C extends Chain>{
 
 
         if (error){
-            throw new JSONException(errors);
+            throw new JSONException("Session creation with JSONObject failed due to:\n" + errors);
         }
 
         if (map != null){
             Iterator<String> iterator = map.keys();
             while (iterator.hasNext()){
                 String key = iterator.next();
-                data.put(UUID.fromString(key), chainFactory.createFromJSON(map.getJSONObject(key)));
+                data.put(UUID.fromString(key), chainFactory.createFromJSON(map.getJSONArray(key)));
             }
         }
 
@@ -100,6 +113,10 @@ public abstract class Session <C extends Chain>{
     }
 
 
+    /**
+     * @return the JSON object representing this Session object
+     * @throws JSONException if fails
+     */
     public JSONObject toJSON() throws JSONException {
         JSONObject object = new JSONObject();
         object.put(JSON_KEY_SESSION_ID, sessionID.toString());
@@ -108,7 +125,7 @@ public abstract class Session <C extends Chain>{
         for (Map.Entry<UUID, C> entry : data.entrySet()){
             map.put(entry.getKey().toString(), chainFactory.createJSON(entry.getValue()));
         }
-        object.put(JSON_KEY_DATA, new JSONObject(data));
+        object.put(JSON_KEY_DATA, map);
         return object;
     }
 
@@ -136,9 +153,25 @@ public abstract class Session <C extends Chain>{
      * @param start of the beginning of the chain (included)
      * @return a map of sub chains
      */
-    public final Map<UUID, Chain> getDataAfter(Map<UUID, Integer> start){
-
+    public final Map<UUID, C> getDataAfter(Map<UUID, Integer> start){
+        Map<UUID, C> res = new HashMap<>();
+        for (Map.Entry<UUID, C> entry : data.entrySet()){
+            UUID key = entry.getKey();
+            Integer s = start.get(key);
+            if (s == null){
+                s = 0;
+            }
+            res.put(key, (C) entry.getValue().getSubChain(s));
+        }
         return null;
+    }
+
+    public final Map<UUID, Integer> getLength(){
+        Map<UUID, Integer> res = new HashMap<>();
+        for (Map.Entry<UUID, C> entry : data.entrySet()){
+            res.put(entry.getKey(), entry.getValue().length());
+        }
+        return res;
     }
 
     /**
@@ -164,4 +197,5 @@ public abstract class Session <C extends Chain>{
     public final UUID getUserID(){
         return userID;
     }
+
 }

@@ -1,7 +1,7 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
+import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,65 +9,76 @@ import java.util.List;
 
 /**
  * Created by fabio on 11/12/17.
- * possibly chain implementation
+ * possibly data implementation
  */
 
 public class ChainImpl implements ChainFactory<ChainImpl>, Chain {
 
-    List<Block> chain = new ArrayList<>();
+    private List<Block> data = new ArrayList<>();
+
+    public ChainImpl(){}
+    private ChainImpl(List<Block> blocks){
+        data.addAll(blocks);
+    }
 
 
     @Override
     public boolean append(Block block) {
-        chain.add(block);
+        data.add(block);
         return true;
     }
 
     @Override
     public Block get(int position) {
-        return chain.get(position);
+        return data.get(position);
     }
 
     @Override
-    public List<Block> getBlocks(int start) {
-        return new ArrayList<>(chain.subList(start, chain.size()));
-    }
-
-    @Override
-    public List<Block> getBlocks(int start, int end) {
-        return new ArrayList<>(chain.subList(start, end));
+    public Chain getSubChain(int start) {
+        return new ChainImpl (data.subList(start, data.size()));
     }
 
     @Override
     public List<Block> getBlocks() {
-        return new ArrayList<>(chain);
+        return new ArrayList<>(data);
     }
 
     @Override
-    public int size() {
-        return chain.size();
+    public int length() {
+        return data.size();
     }
 
 
     @Override
     public Iterator<Block> iterator() {
-        return chain.iterator();
+        return data.iterator();
     }
+
 
 
     @Override
     public ChainImpl createEmpty() {
+        return new ChainImpl();
+    }
+
+    @Override
+    public ChainImpl createFromJSON(JSONArray object) throws JSONException {
+        ChainImpl chain = new ChainImpl();
+        int length = object.length();
+        for (int i = 0; i < length; i++){
+            chain.append(new Block(object.getJSONObject(i)));
+        }
         return null;
     }
 
     @Override
-    public ChainImpl createFromJSON(JSONObject object) {
-        return null;
+    public ChainImpl createFromBlocks(List<Block> blocks) {
+        return new ChainImpl(blocks);
     }
 
     @Override
-    public JSONObject createJSON(ChainImpl chain) {
-        return null;
+    public JSONArray createJSON(ChainImpl chain) {
+        return new JSONArray(chain.data);
     }
 
 }
