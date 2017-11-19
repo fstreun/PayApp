@@ -66,9 +66,9 @@ public class ChainImpl implements ChainFactory<ChainImpl>, Chain {
         ChainImpl chain = new ChainImpl();
         int length = object.length();
         for (int i = 0; i < length; i++){
-            chain.append(new Block(object.getJSONObject(i)));
+            chain.append(Block.createFromJSON(object.getJSONObject(i)));
         }
-        return null;
+        return chain;
     }
 
     @Override
@@ -77,8 +77,14 @@ public class ChainImpl implements ChainFactory<ChainImpl>, Chain {
     }
 
     @Override
-    public JSONArray createJSON(ChainImpl chain) {
-        return new JSONArray(chain.data);
+    public JSONArray createJSON(ChainImpl chain) throws JSONException {
+        JSONArray array = new JSONArray();
+        if (chain != null){
+            for (Block b : chain.data){
+                array.put(b.getJSONObject());
+            }
+        }
+        return array;
     }
 
 }

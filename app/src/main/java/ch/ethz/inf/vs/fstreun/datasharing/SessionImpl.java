@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -19,26 +20,28 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
         super(sessionID, userID, new ChainImpl());
     }
 
+    public SessionImpl(JSONObject object) throws JSONException {
+        super(object, new ChainImpl());
+    }
 
     @Override
-    public boolean add(JSONObject content) {
-        Block block = new Block(content);
+    public boolean add(String content) {
+        Block block = Block.createWithContent(content);
         return add(block);
     }
 
-
     @Override
-    public List<JSONObject> getContent() {
+    public List<String> getContent() {
         return chainsToList(getData());
     }
 
     @Override
-    public List<JSONObject> getContentAfter(Map<UUID, Integer> start) {
+    public List<String> getContentAfter(Map<UUID, Integer> start) {
         return chainsToList(getDataAfter(start));
     }
 
-    private List<JSONObject> chainsToList(Map<UUID, ChainImpl> chains){
-        List<JSONObject> res = new ArrayList<>();
+    private List<String> chainsToList(Map<UUID, ChainImpl> chains){
+        List<String> res = new ArrayList<>();
         for (ChainImpl c : chains.values()){
             List<Block> blocks = c.getBlocks();
             for (Block b : blocks){

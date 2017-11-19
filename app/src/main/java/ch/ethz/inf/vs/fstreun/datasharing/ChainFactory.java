@@ -18,5 +18,5 @@ public interface ChainFactory<C extends Chain> {
 
     public C createFromBlocks (List<Block> blocks);
 
-    public JSONArray createJSON(C chain);
+    public JSONArray createJSON(C chain) throws JSONException;
 }

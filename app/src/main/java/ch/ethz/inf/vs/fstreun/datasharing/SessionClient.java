@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public interface SessionClient {
 
-    public boolean add (JSONObject content);
-    public List<JSONObject> getContent ();
-    public List<JSONObject> getContentAfter (Map<UUID, Integer> start);
+    public boolean add (String content);
+    public List<String> getContent ();
+    public List<String> getContentAfter (Map<UUID, Integer> start);
 }
