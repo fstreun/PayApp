@@ -1,5 +1,7 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
+import android.support.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,43 +14,30 @@ import java.util.UUID;
 /**
  * Created by fabio on 11/12/17.
  * Basic class for a session (not recommended for clients)
- * using Chains of type C with Blocks of type B
+ * using Chains of type C
  */
 
-public abstract class Session <C extends Chain<B>, B extends Block>{
+public abstract class Session <C extends Chain>{
 
     // identifier of the session
     private final UUID sessionID;
     private static final String JSON_KEY_SESSION_ID = "session_id";
-    // identifier of the user which uses this object
-    private final UUID userID;
-    private static final String JSON_KEY_USER_ID = "user_id";
 
     // data in the session
     private final Map<UUID, C> data = new HashMap<>();
     private static final String JSON_KEY_DATA = "data";
-    // fast access to the users chain (is also in the data)
-    private final C own;
-    public final ChainFactory<C> chainFactory;
 
+    public final ChainFactory<C> chainFactory;
 
 
     /**
      * Create new basic Session
      * @param sessionID used by the session
-     * @param userID of the user by this session object
      * @param chainFactory which defines the chain structure
      */
-    public Session(UUID sessionID, UUID userID, ChainFactory<C> chainFactory) {
+    public Session(UUID sessionID, ChainFactory<C> chainFactory) {
         this.sessionID = sessionID;
-        this.userID = userID;
         this.chainFactory = chainFactory;
-
-        // TODO: not sure if that works!
-        if (!data.containsKey(userID)) {
-            data.put(userID, this.chainFactory.createEmpty());
-        }
-        own = data.get(userID);
     }
 
 
@@ -70,15 +59,6 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
         } catch (JSONException e) {
             error = true;
             errors += "key " + JSON_KEY_SESSION_ID + " missing\n";
-        }
-
-
-        UUID uID = null;
-        try {
-            uID = UUID.fromString(object.getString(JSON_KEY_USER_ID));
-        } catch (JSONException e) {
-            error = true;
-            errors += "key " + JSON_KEY_USER_ID + " missing\n";
         }
 
         JSONObject map = null;
@@ -103,14 +83,6 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
         }
 
         sessionID = sID;
-
-        userID = uID;
-
-        // TODO: not sure if that works...
-        if (!data.containsKey(userID)) {
-            data.put(userID, this.chainFactory.createEmpty());
-        }
-        own = data.get(userID);
     }
 
 
@@ -121,7 +93,6 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
     public JSONObject toJSON() throws JSONException {
         JSONObject object = new JSONObject();
         object.put(JSON_KEY_SESSION_ID, sessionID.toString());
-        object.put(JSON_KEY_USER_ID, userID.toString());
         JSONObject map = new JSONObject();
         for (Map.Entry<UUID, C> entry : data.entrySet()){
             map.put(entry.getKey().toString(), chainFactory.createJSON(entry.getValue()));
@@ -132,20 +103,15 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
 
 
     /**
-     * adds block to the own chain
-     * @param block to be added
-     * @return true if success, else false
-     */
-    public final boolean add (B block){
-        return own.append(block);
-    }
-
-    /**
      * accesses all the chains in the session
      * @return a copy of the map with the chains
      */
     public final Map<UUID, C> getData(){
-        return new HashMap<>(data);
+        Map<UUID, C> res = new HashMap<>();
+        for (Map.Entry<UUID, C> entry : data.entrySet()){
+            res.put(entry.getKey(), chainFactory.copy(entry.getValue()));
+        }
+        return res;
     }
 
 
@@ -164,9 +130,60 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
             }
             res.put(key, (C) entry.getValue().getSubChain(s));
         }
-        return null;
+        return res;
     }
 
+    /**
+     * appends chains if possible (holes in the chain are not allowed)
+     * @param chainMap chains to be appended
+     * @param expected length of each chain (position of first block to be appended)
+     * @return actual length of the chain before appending
+     */
+    public final Map<UUID, Integer> put (Map<UUID, Chain> chainMap, Map<UUID, Integer> expected){
+        Map<UUID, Integer> res = new HashMap<>();
+        for (Map.Entry<UUID, Chain> entry : chainMap.entrySet()){
+            UUID key = entry.getKey();
+            if (!data.containsKey(key)){
+                data.put(entry.getKey(), chainFactory.createEmpty());
+            }
+            Integer actual = data.get(key).append(entry.getValue(), expected.get(key));
+            res.put(key, actual);
+        }
+        return res;
+    }
+
+    /**
+     * appends chain if possible (hole in the chain is not allowed)
+     * @param userID of the chain
+     * @param chain to be appended
+     * @param expected length of the current chain (position of first block to be appended)
+     * @return actual length of the current chain before appending
+     */
+    public final int put(UUID userID, Chain chain, int expected){
+        if (!data.containsKey(userID)){
+            data.put(userID, chainFactory.createEmpty());
+        }
+        return data.get(userID).append(chain, expected);
+    }
+
+    /**
+     * appends block if possible (hole in the chain is not allowed
+     * @param userID of the chain
+     * @param block to be appended
+     * @param expected length of the current chain (position of the block to be appended)
+     * @return
+     */
+    public final int put(UUID userID, Block block, int expected){
+        if (!data.containsKey(userID)){
+            data.put(userID, chainFactory.createEmpty());
+        }
+        return data.get(userID).append(block, expected);
+    }
+
+
+    /**
+     * @return length of current chains
+     */
     public final Map<UUID, Integer> getLength(){
         Map<UUID, Integer> res = new HashMap<>();
         for (Map.Entry<UUID, C> entry : data.entrySet()){
@@ -175,28 +192,21 @@ public abstract class Session <C extends Chain<B>, B extends Block>{
         return res;
     }
 
+
     /**
-     *
      * @return all user UUID the session has a chain of
      */
+    @NonNull
     public final Set<UUID> getAllUserID(){
         return data.keySet();
     }
 
     /**
-     *
      * @return the UUID of the Session
      */
     public final UUID getSessionID(){
         return sessionID;
     }
 
-    /**
-     *
-     * @return the user UUID of the owner of this session
-     */
-    public final UUID getUserID(){
-        return userID;
-    }
 
 }

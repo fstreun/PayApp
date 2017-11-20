@@ -1,44 +1,56 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Created by fabio on 11/12/17.
- * Basic interface of a chain with Blocks of type B
+ * Basic interface of a chain.
  */
 
-public interface Chain<B extends Block> extends Iterable<B>{
+public interface Chain extends Iterable<Block>{
+
 
     /**
-     * Appends block to the end of the chain.
-     * @param block to be appended
-     * @return success
+     * Appends block to the end of the chain if length == elength
+     * @param ablock to be appended
+     * @param elength expected length of the chain (elength >= 0)
+     * @return actual length before appending
      */
-    public boolean append(B block);
+    public int append(Block ablock, int elength);
+
+    /**
+     * Appends chain to the end of the chain if elength <= length
+     * @param achain chain to be appended
+     * @param elength expected length of chain (elength >= 0)
+     * @return actuall length before appending
+     */
+    public int append(Chain achain, int elength);
 
     /**
      * To access a block in the chain
      * @param position of the block in the chain
      * @return a read only block
      */
-    public B get(int position);
+    public Block get(int position);
 
     /**
      * To access a contiguous list of blocks.
      * NOT THE ACTUAL DATA REPRESENTATION OF THE CHAIN!
      * @param start position of the first block to be in the list
-     * @return
+     * @return a copy of the sub chain
      */
     public Chain getSubChain(int start);
-
 
     /**
      * To access a contiguous list of all blocks of the chain
      * NOT THE ACTUAL DATA REPRESENTATION OF THE CHAIN!
-     * @return
+     * @return a copy of the data
      */
-    public List<B> getBlocks();
-
+    public List<Block> getBlocks();
 
 
     /**

@@ -12,40 +12,55 @@ import java.util.List;
  * possibly data implementation
  */
 
-public class ChainImpl implements ChainFactory<ChainImpl>, Chain<BlockImpl> {
+public class ChainImpl implements ChainFactory<ChainImpl>, Chain {
 
-    private List<BlockImpl> data = new ArrayList<>();
+    private List<Block> data = new ArrayList<>();
 
-    public final BlockFactory<BlockImpl> blockFactory;
+    public ChainImpl(){}
 
-    public ChainImpl(BlockFactory<BlockImpl> blockFactory){
-        this.blockFactory = blockFactory;
-    }
-
-    private ChainImpl(List<BlockImpl> blocks, BlockFactory<BlockImpl> blockFactory){
-        this.blockFactory = blockFactory;
+    private ChainImpl(List<Block> blocks){
         data.addAll(blocks);
     }
 
+    @Override
+    public int append(Block block, int elength) {
+        int length = data.size();
+        if (length == elength){
+            data.add(block);
+        }
+        return length;
+    }
+
 
     @Override
-    public boolean append(BlockImpl block) {
-        data.add(block);
-        return true;
+    public int append(Chain chain, int elength) {
+        int length = data.size();
+        if (elength <= length){
+            List<Block> sub = chain.getBlocks();
+            for ( int i = length - elength; i < chain.length(); i++){
+                data.add(chain.get(i));
+            }
+        }
+        return length;
     }
 
     @Override
-    public BlockImpl get(int position) {
+    public Block get(int position) {
         return data.get(position);
     }
 
     @Override
     public Chain getSubChain(int start) {
-        return new ChainImpl (data.subList(start, data.size()), blockFactory);
+        if (start < data.size()) {
+            return new ChainImpl(data.subList(start, data.size()));
+        }else {
+            return new ChainImpl();
+        }
     }
 
+
     @Override
-    public List<BlockImpl> getBlocks() {
+    public List<Block> getBlocks() {
         return new ArrayList<>(data);
     }
 
@@ -56,7 +71,7 @@ public class ChainImpl implements ChainFactory<ChainImpl>, Chain<BlockImpl> {
 
 
     @Override
-    public Iterator<BlockImpl> iterator() {
+    public Iterator<Block> iterator() {
         return data.iterator();
     }
 
@@ -64,15 +79,15 @@ public class ChainImpl implements ChainFactory<ChainImpl>, Chain<BlockImpl> {
 
     @Override
     public ChainImpl createEmpty() {
-        return new ChainImpl(blockFactory);
+        return new ChainImpl();
     }
 
     @Override
     public ChainImpl createFromJSON(JSONArray object) throws JSONException {
-        ChainImpl chain = new ChainImpl(blockFactory);
+        ChainImpl chain = new ChainImpl();
         int length = object.length();
         for (int i = 0; i < length; i++){
-            chain.append(blockFactory.createFromJSON(object.getJSONObject(i)));
+            chain.data.add((Block.createFromJSON(object.getJSONObject(i))));
         }
         return chain;
     }
@@ -81,11 +96,16 @@ public class ChainImpl implements ChainFactory<ChainImpl>, Chain<BlockImpl> {
     public JSONArray createJSON(ChainImpl chain) throws JSONException {
         JSONArray array = new JSONArray();
         if (chain != null){
-            for (BlockImpl b : chain.data){
-                array.put(blockFactory.getJSONObject(b));
+            for (Block b : chain.data){
+                array.put(b.getJSONObject());
             }
         }
         return array;
+    }
+
+    @Override
+    public ChainImpl copy(Chain chain) {
+        return new ChainImpl(chain.getBlocks());
     }
 
 }

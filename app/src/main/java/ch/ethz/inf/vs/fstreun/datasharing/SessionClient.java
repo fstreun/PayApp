@@ -13,7 +13,9 @@ import java.util.UUID;
 
 public interface SessionClient {
 
-    public boolean add (String content);
+    public void add (String content);
     public List<String> getContent ();
     public List<String> getContentAfter (Map<UUID, Integer> start);
+    public Map<UUID, ? extends Chain> getContentMap();
+    public Map<UUID, ? extends Chain> getContentMapAfter(Map<UUID, Integer> start);
 }

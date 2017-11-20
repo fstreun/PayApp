@@ -24,7 +24,7 @@ public class SessionUnitTest {
     public void session_creation() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        Session s = new SessionImpl(sessionID, userID);
+        SessionImpl s = new SessionImpl(sessionID, userID);
         assertEquals("session ID expected", sessionID, s.getSessionID());
         assertEquals("user ID expected", userID, s.getUserID());
     }
@@ -62,6 +62,7 @@ public class SessionUnitTest {
         client.add(content);
 
         JSONObject jSession = session.toJSON();
+
         session = new SessionImpl(jSession);
         client = session;
 

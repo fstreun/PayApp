@@ -2,10 +2,12 @@ package ch.ethz.inf.vs.fstreun.datasharing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * Created by fabio on 11/18/17.
- * Factory of Chains of type C
  */
 
 public interface ChainFactory<C extends Chain> {
@@ -16,4 +18,5 @@ public interface ChainFactory<C extends Chain> {
 
     public JSONArray createJSON(C chain) throws JSONException;
 
+    public C copy(Chain chain);
 }
