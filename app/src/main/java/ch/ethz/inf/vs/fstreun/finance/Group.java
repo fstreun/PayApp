@@ -6,20 +6,59 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by anton on 22.11.17.
  */
 
 public class Group {
-    private List<String> participants;
+
+    // all participants that are involved in or have paid a transaction
+    private List<String> participants = new ArrayList<>();
+
+    // list of all transactions in this group
     private List<Transaction> transactions;
+
+    // ID of the corresponding session of this group
+    private final UUID sessionID;
 
     public final String PARTICIPANTS_KEY = "participants_key";
     public final String TRANSACTIONS_KEY = "transactions_key";
+    public final String SESSION_ID_KEY = "session_id_key";
 
     private static final String TAG = "GroupTAG";
+
+    /**
+     * creates a group
+     * @param o is a JSONObject containing:
+     *          JSONArray of Strings: participants as names
+     *          JSONArray of JSONObjects: transaction
+     *          String: containing the UUID
+     * @throws JSONException
+     */
+    public Group (JSONObject o) throws JSONException {
+        //participants
+        JSONArray parJson = o.getJSONArray(PARTICIPANTS_KEY);
+        int numPart = parJson.length();
+        for (int i=0; i<numPart; i++) {
+            participants.add(parJson.getString(i));
+        }
+
+        //transactions
+        JSONArray transJson = o.getJSONArray(TRANSACTIONS_KEY);
+        int numTrans = transJson.length();
+        for (int i=0; i<numTrans; i++){
+            JSONObject tempJson = transJson.getJSONObject(i);
+            transactions.add(new Transaction(tempJson));
+        }
+
+        // sessionID
+        sessionID = UUID.fromString(o.getString(SESSION_ID_KEY));
+
+    }
 
     /**
      * adds the transaction t
