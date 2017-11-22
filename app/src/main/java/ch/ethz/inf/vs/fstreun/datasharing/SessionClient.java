@@ -18,4 +18,6 @@ public interface SessionClient {
     public List<String> getContentAfter (Map<UUID, Integer> start);
     public Map<UUID, ? extends Chain> getContentMap();
     public Map<UUID, ? extends Chain> getContentMapAfter(Map<UUID, Integer> start);
+    public UUID getUserID();
+    public UUID getSessionID();
 }

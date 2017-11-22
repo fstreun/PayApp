@@ -17,7 +17,7 @@ import java.util.UUID;
  * using Chains of type C
  */
 
-public abstract class Session <C extends Chain>{
+public class Session <C extends Chain>{
 
     // identifier of the session
     private final UUID sessionID;
@@ -118,7 +118,7 @@ public abstract class Session <C extends Chain>{
     /**
      * accesses all the sub chains in the session
      * @param start of the beginning of the chain (included)
-     * @return a map of sub chains
+     * @return a copy map of sub chains
      */
     public final Map<UUID, C> getDataAfter(Map<UUID, Integer> start){
         Map<UUID, C> res = new HashMap<>();

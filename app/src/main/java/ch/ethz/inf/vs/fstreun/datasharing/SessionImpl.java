@@ -82,6 +82,11 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
         return getDataAfter(start);
     }
 
+    @Override
+    public UUID getUserID() {
+        return userID;
+    }
+
 
     private List<String> chainsToList(Map<UUID, ChainImpl> chains){
         List<String> res = new ArrayList<>();
@@ -94,7 +99,4 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
         return res;
     }
 
-    public UUID getUserID(){
-        return userID;
-    }
 }
