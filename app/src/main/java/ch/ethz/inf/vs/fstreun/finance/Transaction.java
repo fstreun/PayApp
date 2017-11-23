@@ -77,4 +77,17 @@ public class Transaction {
         o.put(COMMENT_KEY, comment);
         return o;
     }
+
+    /**
+     * @return the output from toJson() as a string
+     */
+    @Override
+    public String toString() {
+        try {
+            return toJson().toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
 }

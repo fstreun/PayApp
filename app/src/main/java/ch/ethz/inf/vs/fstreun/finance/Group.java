@@ -97,6 +97,7 @@ public class Group {
      * ability to return the whole object as a string
      * @return JSON as string
      */
+    @Override
     public String toString(){
         try {
             return toJson().toString();
