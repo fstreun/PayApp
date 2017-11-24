@@ -41,20 +41,21 @@ public class Group {
      */
     public Group (JSONObject o) throws JSONException {
         //participants
+        // this part is actually redundant because the participants are added automatically
         JSONArray parJson = o.getJSONArray(PARTICIPANTS_KEY);
         int numPart = parJson.length();
         for (int i=0; i<numPart; i++) {
-            participants.add(parJson.getString(i));
+            addParticipant(parJson.getString(i));
         }
 
         //transactions
-        JSONArray transJson = o.getJSONArray(TRANSACTIONS_KEY);
-        int numTrans = transJson.length();
+        JSONArray transArray = o.getJSONArray(TRANSACTIONS_KEY);
+        int numTrans = transArray.length();
         for (int i=0; i<numTrans; i++){
             System.out.println(i + "th iteration through transaction JSONArray");
-            JSONObject tempJson = transJson.getJSONObject(i);
+            JSONObject tempJson = transArray.getJSONObject(i);
             Transaction tempTrans = new Transaction(tempJson);
-            transactions.add(tempTrans);
+            addTransaction(tempTrans);
         }
 
         // sessionID
@@ -67,6 +68,22 @@ public class Group {
             }
             if(!participants.contains(t.payer)) this.addParticipant(t.payer);
         }
+    }
+
+    /**
+     * getter function for participants
+     * @return participants as List<String>
+     */
+    public List<String> getParticipants() {
+        return participants;
+    }
+
+    /**
+     * getter function for transactions
+     * @return transactions as List<Transaction>
+     */
+    public List<Transaction> getTransactions() {
+        return transactions;
     }
 
     /**
@@ -91,6 +108,8 @@ public class Group {
     }
 
     /**
+     * this function is actually unnecessary because when a transaction is added, all involved
+     * participants are added automatically
      * @param p will be added to the list of participants
      */
     public void addParticipant(String p){
@@ -143,10 +162,10 @@ public class Group {
     public double toPay(String p){
         double result = 0;
         if (participants.contains(p)){
-            for (Transaction transaction : transactions){
-                if (transaction.involved.contains(p)) result += transaction.amount /
-                        transaction.getNumInvolved();
-                if (transaction.payer.equals(p)) result -= transaction.amount;
+            for (Transaction t : transactions){
+                if (t.involved.contains(p)) result += t.amount /
+                        t.getNumInvolved();
+                if (t.payer.equals(p)) result -= t.amount;
             }
         } //else (i.e. if p is not a participant of this group) returns 0
         return result;

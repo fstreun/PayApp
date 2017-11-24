@@ -35,7 +35,7 @@ public class Transaction {
      * @param creator UUID of the user who created the transaction
      * @param payer name (String) of the user who payed the amount
      * @param involved list of all users (their names) involved in the transaction
-     * @param amount the amount that the payer paid in cents as int
+     * @param amount the amount that the payer paid as a double
      * @param comment a comment of what has been purchased
      */
     public Transaction(UUID creator, String payer, List<String> involved, double amount,
@@ -75,6 +75,14 @@ public class Transaction {
         amount = (double) o.get(AMOUNT_KEY);
         comment = o.getString(COMMENT_KEY);
 
+    }
+
+    /**
+     * getter function for amount
+     * @return
+     */
+    public double getAmount() {
+        return amount;
     }
 
     /**

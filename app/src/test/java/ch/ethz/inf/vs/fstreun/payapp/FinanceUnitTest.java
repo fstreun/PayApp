@@ -70,15 +70,53 @@ public class FinanceUnitTest {
         involved.put("michi").put("knöppel").put("häuplting weisse blume");
         transJson1.put(Transaction.AMOUNT_KEY, 1.50);
         transJson1.put(Transaction.COMMENT_KEY, "einkauf im coop vom 32.11.17");
-        transJson1.put(Transaction.CREATOR_KEY, creator);
+        transJson1.put(Transaction.CREATOR_KEY, creator.toString());
         transJson1.put(Transaction.INVOLVED_KEY, involved);
         transJson1.put(Transaction.PAYER_KEY, "gönner");
 
-        //todo create 2nd transaction json
+        //getting amount value:
+
+        //create 2nd transaction json
+        JSONObject transJson2 = new JSONObject();
+        creator = UUID.randomUUID();
+        involved = new JSONArray();
+        involved.put("richi").put("knöppel");
+        transJson2.put(Transaction.AMOUNT_KEY, 68.168);
+        transJson2.put(Transaction.COMMENT_KEY, "stromrechnung");
+        transJson2.put(Transaction.CREATOR_KEY, creator.toString());
+        transJson2.put(Transaction.INVOLVED_KEY, involved);
+        transJson2.put(Transaction.PAYER_KEY, "richi");
 
         //creating group json
         JSONObject groupJson = new JSONObject();
         UUID sessionID = UUID.randomUUID();
-        JSONArray transarray = new JSONArray();
+        JSONArray transArray = new JSONArray();
+        transArray.put(transJson1).put(transJson2);
+        JSONArray partiArray = new JSONArray();
+        groupJson.put(Group.TRANSACTIONS_KEY, transArray);
+        groupJson.put(Group.SESSION_ID_KEY, sessionID.toString());
+        groupJson.put(Group.PARTICIPANTS_KEY, partiArray);
+
+        //creating group
+        Group awesomeWG = new Group(groupJson);
+
+        /* works :)
+        //output the amount of the transactions
+        System.out.println("the amount of the transactions of the group" +
+                awesomeWG.getTransactions().get(0).getAmount() +
+                " and " + awesomeWG.getTransactions().get(1).getAmount());
+        */
+
+        // iterating over participants and printing emerson's toPay value to console
+        List<Double> members = new ArrayList<Double>();
+        int i = 0;
+        for(String p : awesomeWG.getParticipants()){
+            members.add(i, awesomeWG.toPay(p));
+            System.out.println(p + " has to pay " + members.get(i));
+            i++;
+        }
     }
+
+
+    //todo: write test, that converts a transaction to a JSONObject (or even String) and back
 }
