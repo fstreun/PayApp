@@ -11,16 +11,17 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-public class SessionPublishService extends Service implements NsdManager.RegistrationListener {
+public class SessionPublishService extends Service {
 
     String TAG = "SessionPublishService";
-    String SERVICE_TYPE = "payapp._tcp";
+    String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "PayAppPublisher";
     private NsdManager mNsdManager;
     private NsdServiceInfo mServiceInfo;
     private String mServiceName;
     private ServerSocket mServerSocket;
     private int mLocalPort;
+    private NsdManager.RegistrationListener mRegistrationListener;
 
     public SessionPublishService() {
     }
@@ -34,6 +35,7 @@ public class SessionPublishService extends Service implements NsdManager.Registr
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         initializeServerSocket();
+        initializeRegistrationListener();
         registerService(mLocalPort);
         return super.onStartCommand(intent, flags, startId);
     }
@@ -50,7 +52,7 @@ public class SessionPublishService extends Service implements NsdManager.Registr
 
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
 
-        mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, this);
+        mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
 
     public void initializeServerSocket() {
@@ -66,23 +68,31 @@ public class SessionPublishService extends Service implements NsdManager.Registr
         mLocalPort =  mServerSocket.getLocalPort();
     }
 
-    @Override
-    public void onRegistrationFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
-        Log.d(TAG, "Registration Failed: " + errorCode);
+    public void initializeRegistrationListener() {
+        mRegistrationListener = new NsdManager.RegistrationListener() {
+
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
+                Log.d(TAG, "Registration Failed: " + errorCode);
+            }
+
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
+                Log.d(TAG, "Unregistration Failed: " + errorCode);
+            }
+
+            @Override
+            public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
+                mServiceName = mServiceInfo.getServiceName();
+                Log.d(TAG, "onServiceRegistered: " + mServiceName);
+            }
+
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
+                mNsdManager.unregisterService(mRegistrationListener);
+            }
+        };
     }
 
-    @Override
-    public void onUnregistrationFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
-        Log.d(TAG, "Unregistration Failed: " + errorCode);
-    }
 
-    @Override
-    public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
-        mServiceName = mServiceInfo.getServiceName();
-    }
-
-    @Override
-    public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
-        mNsdManager.unregisterService(this);
-    }
 }

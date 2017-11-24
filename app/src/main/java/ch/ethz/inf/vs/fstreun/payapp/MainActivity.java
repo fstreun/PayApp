@@ -1,7 +1,9 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -9,6 +11,9 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
+import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,30 +34,19 @@ public class MainActivity extends AppCompatActivity {
 
         ListView listViewGroup = findViewById(R.id.listView_groups);
         listViewGroup.setAdapter(adapter);
-
-        final Button buttonCreate = findViewById(R.id.button_create);
-        buttonCreate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buttonCreateClicked();
-            }
-        });
-
-        final Button buttonJoin = findViewById(R.id.button_join);
-        buttonJoin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buttonJoinClicked();
-            }
-        });
-
     }
 
-    private void buttonCreateClicked(){
+    public void buttonCreateClicked(View view){
         //TODO: create finance group and open GroupActivity
+        Log.d("MainActivity", "buttonCreateClicked()");
+        Intent intent = new Intent(this, SessionPublishService.class);
+        startService(intent);
     }
 
-    private void buttonJoinClicked(){
+    public void buttonJoinClicked(View view){
         //TODO: open JoinGroupActivity
+        Log.d("MainActivity", "buttonJoinClicked()");
+        Intent intent = new Intent(this, SessionSubscribeService.class);
+        startService(intent);
     }
 }
