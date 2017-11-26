@@ -54,12 +54,12 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
     }
 
     @Override
-    public void add(String content) {
+    public boolean add(String content) {
         Integer length = getLength().get(userID);
         if (length == null){
             length = 0;
         }
-        put(userID, Block.createWithContent(content), length);
+        return length == put(userID, Block.createWithContent(content), length);
     }
 
     @Override
