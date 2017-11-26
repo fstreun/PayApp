@@ -127,9 +127,11 @@ public class SessionPublishService extends Service {
                     }
 
                     BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+
                     PrintWriter wtr = new PrintWriter(output);
-                    wtr.print(get_message);
+                    wtr.print(generateResponse("Success"));
                     wtr.flush();
+                    wtr.close();
 
                 } catch (SocketException e) {
                     e.printStackTrace();
@@ -144,7 +146,7 @@ public class SessionPublishService extends Service {
                                 "Content-Length: " + body.length() + "\r\n" +
                                 "Content-Type: text/plain\r\n" +
                                 "Connection: Closed\r\n" + body;
-            return respose;
+            return response;
         }
     }
 
