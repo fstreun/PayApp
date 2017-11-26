@@ -12,10 +12,16 @@
         android:layout_height="wrap_content"
         android:text="Group ID:"/>
 
-    <TextView
+    <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="8855"/>
+
+    <Button
+
+        />
+
+    <Button />
 
 
 
