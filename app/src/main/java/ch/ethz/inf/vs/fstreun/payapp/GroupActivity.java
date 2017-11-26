@@ -56,7 +56,9 @@ public class GroupActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_publishGroup:
-                //TODO: open PublishGroupActivity with this group
+                //TODO: add information (SessionID's to be shared) to the intent
+                Intent intent = new Intent(this, PublishGroupActivity.class);
+                startActivity(intent);
                 return true;
 
             default:
