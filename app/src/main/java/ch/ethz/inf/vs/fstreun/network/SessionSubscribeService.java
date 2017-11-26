@@ -167,8 +167,8 @@ public class SessionSubscribeService extends Service {
         }
 
         public String generateRequest(String host, int port, String path) {
-            String accept = "text/html";
-            String connect = "close";
+            String accept = "text/plain";
+            String connect = "Closed";
 
 
             String request = "GET " + path + " HTTP/1.1\r\n"
