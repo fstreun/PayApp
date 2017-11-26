@@ -13,6 +13,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -121,17 +122,29 @@ public class SessionPublishService extends Service {
                             Log.i(TAG, result);
                             break;
                         }else {
-                           result = result + line;
+                           result = result + line + "\r\n";
                         }
                     }
 
                     BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+                    PrintWriter wtr = new PrintWriter(output);
+                    wtr.print(get_message);
+                    wtr.flush();
+
                 } catch (SocketException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        public String generateResponse(String body) {
+            String response =    "HTTP/1.1 200 OK\r\n" +
+                                "Content-Length: " + body.length() + "\r\n" +
+                                "Content-Type: text/plain\r\n" +
+                                "Connection: Closed\r\n" + body;
+            return respose;
         }
     }
 
