@@ -20,6 +20,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".PublishGroupActivity" />
+        <activity android:name=".JoinGroupActivity" />
+        <activity
+            android:name=".GroupActivity"
+            android:label="@string/title_activity_group"
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublishService"
