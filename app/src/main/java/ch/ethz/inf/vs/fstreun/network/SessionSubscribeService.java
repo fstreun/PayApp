@@ -128,6 +128,8 @@ public class SessionSubscribeService extends Service {
                 mService = serviceInfo;
                 mPort = mService.getPort();
                 mHost = mService.getHost();
+
+                new Thread(new ClientThread()).start();
             }
         };
     }
