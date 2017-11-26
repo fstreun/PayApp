@@ -151,13 +151,26 @@ public class SessionSubscribeService extends Service {
                 //mOutputStream.write(get_message.getBytes());
                 wtr.flush();
 
-                InputStream mInputStream = mSocket.getInputStream();
+                BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                // parse all header fields
+                String result = "";
+                String line;
+                while ((line = input.readLine()) != null){
+                    if (line.isEmpty()){
+                        Log.i(TAG, result);
+                        break;
+                    }else {
+                        result = result + line + "\r\n";
+                    }
+                }
+                /*InputStream mInputStream = mSocket.getInputStream();
 
                 String result = "";
                 int c;
                 while ((c = mInputStream.read()) != -1) {
                     result = result + (char) c;
                 }
+                */
                 Log.i(TAG, "Result: " + result);
                 mSocket.close();
                 return;
