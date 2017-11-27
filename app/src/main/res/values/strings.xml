@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Pay App!</string>
     <string name="title_activity_group">GroupActivity</string>
+    <string name="join_group">Join Group</string>
+    <string name="create_group">Create Group</string>
+    <string name="group_secret">Group Secret</string>
+    <string name="join">Join</string>
+    <string name="change_secret">Change Secret</string>
 </resources>

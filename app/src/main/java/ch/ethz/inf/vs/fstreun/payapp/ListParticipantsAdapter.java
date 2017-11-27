@@ -45,4 +45,6 @@ public class ListParticipantsAdapter extends ArrayAdapter<ListParticipantsAdapte
         // Return the completed view to render on screen
         return convertView;
     }
+
+
 }

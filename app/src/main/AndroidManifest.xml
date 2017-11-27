@@ -23,10 +23,13 @@
         <activity android:name=".JoinGroupActivity" />
         <activity
             android:name=".GroupActivity"
-            android:label="@string/title_activity_group"
             android:exported="true"
-            android:theme="@style/AppTheme.NoActionBar" />
-
+            android:label="@string/title_activity_group"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".TransactionCreationActivity"
+            android:parentActivityName=".GroupActivity" />
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublishService"
             android:enabled="true"
@@ -34,7 +37,8 @@
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionSubscribeService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
     </application>
 
 </manifest>

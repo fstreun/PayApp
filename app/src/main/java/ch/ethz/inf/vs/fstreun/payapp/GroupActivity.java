@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -27,7 +29,7 @@ public class GroupActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fabButtonClicked();
+                createTransaction();
             }
         });
 
@@ -54,7 +56,9 @@ public class GroupActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_publishGroup:
-                //TODO: open PublishGroupActivity with this group
+                //TODO: add information (SessionID's to be shared) to the intent
+                Intent intent = new Intent(this, PublishGroupActivity.class);
+                startActivity(intent);
                 return true;
 
             default:
@@ -65,8 +69,26 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private void fabButtonClicked(){
-        // TODO: add transaction
+    public final static int CREATE_TRANSACTION_REQUEST = 666;
+    private void createTransaction(){
+        Intent intent = new Intent(this, TransactionCreationActivity.class);
+        startActivityForResult(intent, CREATE_TRANSACTION_REQUEST);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == CREATE_TRANSACTION_REQUEST){
+            if (resultCode == RESULT_OK){
+                // Transaction was finished with save
+                double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
+                String desciption = data.getStringExtra(TransactionCreationActivity.KEY_DESCRIPTION);
+                String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
+                String[] involved = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+                //TODO: Create transaction from the intent data.
+                Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 }

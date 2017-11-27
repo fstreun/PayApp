@@ -19,16 +19,18 @@
         android:orientation="horizontal">
 
         <Button
+            style="@style/Base.Widget.AppCompat.Button"
             android:id="@+id/button_join"
-            android:text="Join Group"
+            android:text="@string/join_group"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="buttonJoinClicked"/>
 
         <Button
+            style="@style/Base.Widget.AppCompat.Button"
             android:id="@+id/button_create"
-            android:text="Create Group"
+            android:text="@string/create_group"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
