@@ -5,25 +5,60 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.Transaction;
 
 public class GroupActivity extends AppCompatActivity {
 
     ListParticipantsAdapter adapter;
-    ArrayList<ListParticipantsAdapter.Participant> participants = new ArrayList<>();
+
+    public static final String KEY_GROUP_ID = "key_group_id";
+    private Group group;
+
+    TextView tvDefaultParticipant;
+    TextView tvDefToPay;
+    LinearLayout linLayDef;
+
+    UUID userUuid;
+
+    String TAG = "GroupActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        //getting intent
+        Intent intent = getIntent();
+        try {
+            group = loadGroup(intent.getStringExtra(KEY_GROUP_ID));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
+        }
+        //todo: get name of device owner (default payer)
+        group.setDefaultParticipant("Toni");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -34,14 +69,44 @@ public class GroupActivity extends AppCompatActivity {
         });
 
 
-        ListParticipantsAdapter.Participant p = new ListParticipantsAdapter.Participant();
-        p.Name = "First"; p.Account = "+16";
-        participants.add(p);
-
-        adapter = new ListParticipantsAdapter(this, participants);
+        adapter = new ListParticipantsAdapter(this, group);
 
         ListView listView = findViewById(R.id.listView_main);
         listView.setAdapter(adapter);
+
+        //textView default participant
+        tvDefaultParticipant = findViewById(R.id.textView_defaultParticipant);
+        tvDefToPay = findViewById(R.id.textView_defToPay);
+        linLayDef = findViewById(R.id.lin_lay_defaultParticipant);
+
+        //todo: get user UUID from file (we are now getting a random one
+        userUuid = UUID.randomUUID();
+
+        //update view
+        updateViews();
+    }
+
+    private Group loadGroup(String stringExtra) throws JSONException {
+        //todo: load group from fileHelper
+        String content = emptyGroup();
+        Group g = new Group(new JSONObject(content));
+        return g;
+    }
+
+
+    /**
+     * for testing
+     * @return empty group (i.e. no transactions, no participants, random sessionId)
+     */
+    private String emptyGroup() throws JSONException {
+        JSONObject groupJson = new JSONObject();
+        groupJson.put(Group.SESSION_ID_KEY, UUID.randomUUID().toString());
+        JSONArray transArray = new JSONArray();
+        JSONArray partArray = new JSONArray();
+        groupJson.put(Group.TRANSACTIONS_KEY, transArray);
+        groupJson.put(Group.PARTICIPANTS_KEY, partArray);
+
+        return groupJson.toString();
     }
 
     @Override
@@ -82,13 +147,33 @@ public class GroupActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK){
                 // Transaction was finished with save
                 double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
-                String desciption = data.getStringExtra(TransactionCreationActivity.KEY_DESCRIPTION);
+                String comment = data.getStringExtra(TransactionCreationActivity.KEY_DESCRIPTION);
                 String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
-                String[] involved = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
-                //TODO: Create transaction from the intent data.
+                String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+                List<String> involved = Arrays.asList(involvedString);
+
+                //TODO: Create transaction from the intent data and save to file
+                Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
+                group.addTransaction(transaction);
+
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+                updateViews();
+                return;
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void updateViews() {
+        String defPart = group.getDefaultParticipant();
+        if(defPart == null){
+            linLayDef.setVisibility(View.GONE);
+        } else {
+            linLayDef.setVisibility(View.VISIBLE);
+            tvDefaultParticipant.setText(defPart);
+            tvDefToPay.setText(String.valueOf(group.toPay(defPart)));
+
+        }
+        adapter.notifyDataSetChanged();
     }
 }
