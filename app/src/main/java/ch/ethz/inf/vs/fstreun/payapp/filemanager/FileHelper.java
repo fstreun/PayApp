@@ -31,8 +31,7 @@ public class FileHelper {
         FileOutputStream outputStream;
         try {
             outputStream = context.openFileOutput(fileName, Context.MODE_PRIVATE);
-            outputStream.write(data.getBytes());
-            outputStream.close();
+            toFile(outputStream, data);
         } catch (FileNotFoundException e) {
             // Not able to create a file
             // If it can be created it will create a file!
@@ -40,6 +39,25 @@ public class FileHelper {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void addToFile(String fileName, String data){
+        FileOutputStream outputStream;
+        try {
+            outputStream = context.openFileOutput(fileName, Context.MODE_APPEND);
+            toFile(outputStream, data);
+        } catch (FileNotFoundException e) {
+            // Not able to create a file
+            // If it can be created it will create a file!
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void toFile(FileOutputStream outputStream, String data) throws IOException {
+        outputStream.write(data.getBytes());
+        outputStream.close();
     }
 
     public String readFromFile(String fileName) throws FileNotFoundException {
