@@ -8,7 +8,17 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.Socket;
+import java.net.SocketException;
 
 public class SessionSubscribeService extends Service {
 
@@ -19,6 +29,8 @@ public class SessionSubscribeService extends Service {
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager.ResolveListener mResolveListener;
+    private InetAddress mHost;
+    private int mPort;
 
     public SessionSubscribeService() {
     }
@@ -114,13 +126,72 @@ public class SessionSubscribeService extends Service {
                     return;
                 }
                 mService = serviceInfo;
-                int port = mService.getPort();
-                InetAddress host = mService.getHost();
+                mPort = mService.getPort();
+                mHost = mService.getHost();
+
+                new Thread(new ClientThread()).start();
             }
         };
     }
 
+    class ClientThread implements Runnable {
+
+        private Socket mSocket;
+
+        public void run() {
+            Log.i("ClientThread", "run()");
+            try {
+                mSocket = new Socket(mHost, mPort);
+                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup");
+
+                OutputStream mOutputStream = mSocket.getOutputStream();
+
+                PrintWriter wtr = new PrintWriter(mOutputStream);
+                wtr.print(get_message);
+                //mOutputStream.write(get_message.getBytes());
+                wtr.flush();
+
+                BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                // parse all header fields
+                String result = "";
+                String line;
+                while ((line = input.readLine()) != null){
+                    if (line.isEmpty()){
+                        Log.i(TAG, result);
+                        break;
+                    }else {
+                        result = result + line + "\r\n";
+                    }
+                }
+                /*InputStream mInputStream = mSocket.getInputStream();
+
+                String result = "";
+                int c;
+                while ((c = mInputStream.read()) != -1) {
+                    result = result + (char) c;
+                }
+                */
+                Log.i(TAG, "Result: " + result);
+                mSocket.close();
+                return;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public String generateRequest(String host, int port, String path) {
+            String accept = "text/plain";
+            String connect = "Closed";
 
 
+            String request = "GET " + path + " HTTP/1.1\r\n"
+                    + "Host: " + host + ":" + port + "\r\n"
+                    + "Accept: " + accept + "\r\n"
+                    + "Connection: " + connect + "\r\n"
+                    + "\r\n";
 
+            return request;
+        }
+
+    }
 }

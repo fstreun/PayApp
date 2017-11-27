@@ -11,13 +11,15 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import ch.ethz.inf.vs.fstreun.finance.Group;
+
 /**
  * Created by fabio on 11/24/17.
  */
 
-public class ListGroupAdapter extends ArrayAdapter<String> {
+public class ListGroupAdapter extends ArrayAdapter<MainActivity.Group> {
 
-    public ListGroupAdapter(Context context, List<String> content){
+    public ListGroupAdapter(Context context, List<MainActivity.Group> content){
         super(context, R.layout.list_item_group, content);
     }
 
@@ -26,7 +28,7 @@ public class ListGroupAdapter extends ArrayAdapter<String> {
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 
         // Get the data item for this position
-        String groupName = getItem(position);
+        String groupName = getItem(position).groupName;
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
             // TODO: this is not the correct way...

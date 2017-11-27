@@ -19,17 +19,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".PublishGroupActivity" />
-        <activity android:name=".JoinGroupActivity" />
+        <activity android:name=".PublishGroupActivity"
+            android:parentActivityName=".GroupActivity"/>
+        <activity android:name=".JoinGroupActivity"
+            android:parentActivityName=".MainActivity"/>
         <activity
             android:name=".GroupActivity"
             android:exported="true"
             android:label="@string/title_activity_group"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".TransactionCreationActivity"
             android:parentActivityName=".GroupActivity" />
+
+        <activity android:name=".CreateGroupActivity"
+            android:parentActivityName=".MainActivity"/>
+
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublishService"
             android:enabled="true"
@@ -38,6 +44,7 @@
             android:name="ch.ethz.inf.vs.fstreun.network.SessionSubscribeService"
             android:enabled="true"
             android:exported="true" />
+        <service android:name=".DataService" />
 
     </application>
 

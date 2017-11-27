@@ -8,8 +8,15 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 
 public class SessionPublishService extends Service {
 
@@ -59,7 +66,7 @@ public class SessionPublishService extends Service {
         // Initialize a server socket on the next available port.
         try {
             mServerSocket = new ServerSocket(0);
-
+            new Thread(new ServerThread()).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -94,5 +101,53 @@ public class SessionPublishService extends Service {
         };
     }
 
+    class ServerThread implements Runnable {
+
+        Thread mThread;
+
+        public void run() {
+            Log.i("ServerThread", "run()");
+            while (mServerSocket != null) {
+                try {
+                    Log.i("ServerThread", "run() - open RequestThread");
+                    Socket mSocket = mServerSocket.accept();
+
+                    BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+
+                    // parse all header fields
+                    String result = "";
+                    String line;
+                    while ((line = input.readLine()) != null){
+                        if (line.isEmpty()){
+                            Log.i(TAG, result);
+                            break;
+                        }else {
+                           result = result + line + "\r\n";
+                        }
+                    }
+
+                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+
+                    PrintWriter wtr = new PrintWriter(output);
+                    wtr.print(generateResponse("Success"));
+                    wtr.flush();
+                    wtr.close();
+
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public String generateResponse(String body) {
+            String response =    "HTTP/1.1 200 OK\r\n" +
+                                "Content-Length: " + body.length() + "\r\n" +
+                                "Content-Type: text/plain\r\n" +
+                                "Connection: Closed\r\n" + body;
+            return response;
+        }
+    }
 
 }
