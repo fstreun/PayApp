@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -23,13 +24,24 @@ public class TransactionCreationActivity extends AppCompatActivity {
     public final static String KEY_PARTICIPANTS_CHECKED = "checked"; // boolean[] in
     public final static String KEY_PARTICIPANTS_INVOLVED = "involved"; // String[] out
 
-    ListParticipantsCheckAdapter adapter;
-    Spinner spinner;
+    ListParticipantsCheckAdapter adapterParticipants;
+    Spinner spinnerPayer;
+    EditText editTextAmount;
+    EditText editTextComment;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction_creation);
+
+        //reading participants list from intent
+
+
+        //find views for editTexts
+        editTextAmount = findViewById(R.id.editText_amount);
+        editTextComment = findViewById(R.id.editText_comment);
 
         // TODO: just test data
         ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> data = new ArrayList<>();
@@ -37,14 +49,14 @@ public class TransactionCreationActivity extends AppCompatActivity {
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Toni"));
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Fabio"));
 
-        adapter = new ListParticipantsCheckAdapter(this, data);
+        adapterParticipants = new ListParticipantsCheckAdapter(this, data);
         ListView listView = findViewById(R.id.listView_participants);
-        listView.setAdapter(adapter);
+        listView.setAdapter(adapterParticipants);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                adapter.getItem(position).changeCheck();
-                adapter.notifyDataSetChanged();
+                adapterParticipants.getItem(position).changeCheck();
+                adapterParticipants.notifyDataSetChanged();
             }
         });
 
@@ -55,30 +67,64 @@ public class TransactionCreationActivity extends AppCompatActivity {
         spinnerData.add("Fabio");
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerData);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner = findViewById(R.id.spinner);
-        spinner.setAdapter(spinnerAdapter);
-        spinner.setSelection(1);
+        spinnerPayer = findViewById(R.id.spinner);
+        spinnerPayer.setAdapter(spinnerAdapter);
+        spinnerPayer.setSelection(1);
     }
 
 
-    private double getAmount(){
-        // TODO
-        return 0.0;
+    private Double getAmount(){
+        String amountString = String.valueOf(editTextAmount.getText());
+        if (amountString != null) {
+            try {
+
+                //case: everything ok
+                double result = Double.parseDouble(amountString);
+                return result;
+            }catch (NumberFormatException e) {
+
+                // case: get amount did not work
+                return null;
+            }
+        }
+
+        // case: get amount did not work
+        return null;
     }
 
     private String getPayer(){
-        // TODO
-        return (String) spinner.getSelectedItem();
+        return (String) spinnerPayer.getSelectedItem();
     }
 
-    private String getDescription(){
-        // TODO
-        return "Description";
+    private String getComment(){
+        String comment = String.valueOf(editTextComment.getText());
+        if (comment.isEmpty() || comment == null){
+            return "no comment";
+        } else {
+            return comment;
+        }
     }
 
     private String[] getInvolved(){
-        // TODO (with the adapter)
-        return new String[0];
+        int n = adapterParticipants.getCount();
+        String[] result = new String[n];
+        int j = 0;
+
+        //get items as string array
+        for (int i =0; i<n; i++){
+            ListParticipantsCheckAdapter.ParticipantCheck item = adapterParticipants.getItem(i);
+            if(item.checked) {
+                result[j++] = item.name;
+            }
+        }
+
+        //shorten array
+        String[] result2 = new String[j];
+        for (int i=0; i<j; i++){
+            result2[i] = result[i];
+        }
+
+        return result2;
     }
 
 
@@ -96,9 +142,40 @@ public class TransactionCreationActivity extends AppCompatActivity {
             case R.id.menu_save:
                 //TODO: close activity and transfer transaction information over intent.
                 Intent intent = new Intent();
-                intent.putExtra(KEY_AMOUNT, getAmount());
-                intent.putExtra(KEY_PAYER, getPayer());
-                intent.putExtra(KEY_DESCRIPTION, getDescription());
+
+                //case: wrong amount
+                Double amount = getAmount();
+                if (amount == null){
+                    Toast.makeText(this, "wrong amount input format (try eg 5.85)",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
+
+                //case: payer was null
+                String payer = getPayer();
+                if (payer == null){
+                    Toast.makeText(this, "somehow the payer was not specified",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
+                //case: no involved participants or involved == null
+                String[] involved = getInvolved();
+                if (involved == null){
+                    Toast.makeText(this, "involved string array is null",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                } else if (involved.length < 1){
+                    Toast.makeText(this, "at least one participant must be involved",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
+                //putting values
+                intent.putExtra(KEY_AMOUNT, amount);
+                intent.putExtra(KEY_PAYER, payer);
+                intent.putExtra(KEY_DESCRIPTION, getComment());
                 intent.putExtra(KEY_PARTICIPANTS_INVOLVED, getInvolved());
                 setResult(RESULT_OK, intent);
                 finish();
@@ -110,9 +187,11 @@ public class TransactionCreationActivity extends AppCompatActivity {
                 return true;
 
             case android.R.id.home:
-                Toast.makeText(this, "home clicked", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "cancelled transaction creation",
+                        Toast.LENGTH_SHORT).show();
                 setResult(RESULT_CANCELED);
                 finish();
+                return true;
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.

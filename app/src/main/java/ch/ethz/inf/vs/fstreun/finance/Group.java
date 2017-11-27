@@ -25,9 +25,13 @@ public class Group {
     // ID of the corresponding session of this group
     private final UUID sessionID;
 
+    // default Participant owner of the device where this group is stored
+    private String defaultParticipant;
+
     public static final String PARTICIPANTS_KEY = "participants_key";
     public static final String TRANSACTIONS_KEY = "transactions_key";
     public static final String SESSION_ID_KEY = "session_id_key";
+    public static final String DEFAULT_PARTICIPANT_KEY = "default_participant_key";
 
     private static final String TAG = "GroupTAG";
 
@@ -37,6 +41,7 @@ public class Group {
      *          JSONArray of Strings: participants as names
      *          JSONArray of JSONObjects: transaction
      *          String: containing the UUID
+     *          String: default participant
      * @throws JSONException
      */
     public Group (JSONObject o) throws JSONException {
@@ -61,6 +66,13 @@ public class Group {
         // sessionID
         sessionID = UUID.fromString(o.getString(SESSION_ID_KEY));
 
+        // default participant
+        try {
+            defaultParticipant = o.getString(DEFAULT_PARTICIPANT_KEY);
+        } catch (JSONException e){
+            defaultParticipant = null;
+        }
+
         //check if all involved users are in the participants list. if not: add them
         for (Transaction t : transactions){
             for (String p : t.involved){
@@ -84,6 +96,22 @@ public class Group {
      */
     public List<Transaction> getTransactions() {
         return transactions;
+    }
+
+    /**
+     * getter function for default participant
+     * @return defaultparticipant as String, null if not defined
+     */
+    public String getDefaultParticipant() {
+        return defaultParticipant;
+    }
+
+    /**
+     * setter function for default participant
+     * @param defaultParticipant
+     */
+    public void setDefaultParticipant(String defaultParticipant) {
+        this.defaultParticipant = defaultParticipant;
     }
 
     /**
@@ -142,6 +170,9 @@ public class Group {
         //session ID
         o.put(SESSION_ID_KEY, sessionID.toString());
 
+        //default user
+        o.put(DEFAULT_PARTICIPANT_KEY, defaultParticipant);
+
         return o;
     }
 
@@ -159,7 +190,7 @@ public class Group {
     /**
      * this function is used to determine the value which a participant p has to pay
      * (resp. how much p will get from other users)
-     * @param p a person
+     * @param p a participant
      * @return
      */
     public double toPay(String p){
