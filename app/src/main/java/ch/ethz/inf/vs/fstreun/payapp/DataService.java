@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import ch.ethz.inf.vs.fstreun.datasharing.Chain;
 import ch.ethz.inf.vs.fstreun.datasharing.Session;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 /**
  * Created by fabio on 11/26/17.
@@ -25,7 +27,6 @@ import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
  */
 
 public class DataService extends Service {
-
 
     /*
     Binding of the service:
@@ -39,6 +40,14 @@ public class DataService extends Service {
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
     public class LocalBinder extends Binder {
+
+        /**
+         * Return this instance of LocalService so clients can call public methods
+         * @return instance of service
+         */
+        DataService getService(){
+            return DataService.this;
+        }
 
         /**
          * access for client manipulating one session.
@@ -57,6 +66,7 @@ public class DataService extends Service {
         }
     }
 
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -70,50 +80,69 @@ public class DataService extends Service {
     TODO: access for network services
      */
 
-    private final static String filePath ="sessions/";
     // all sessions stored in the device
     private Map<UUID, SessionImpl> sessions;
 
+    public final boolean addSession(UUID sessionID, SessionImpl session){
+        if (sessions.containsKey(sessionID)){
+            return false;
+        }else {
+            sessions.put(sessionID, session);
+            return true;
+        }
+    }
+
+    public final boolean removeSession(UUID sessionID){
+        return !(null == sessions.remove(sessionID));
+    }
 
     /**
      * load session from file
-     * @param sessionID
-     * @return
+     * @param sessionID to be loaded (also file name of session)
+     * @return session if exists and possible to be parsed
      */
+    @Nullable
     private SessionImpl loadSession(UUID sessionID){
-        String fileName = filePath+sessionID.toString();
-        //TODO: get file String
-        String content = null;
-        if (content == null){
+        String path = getString(R.string.path_sessions);
+        String fileName = sessionID.toString();
+        FileHelper fileHelper = new FileHelper(this);
+        String content;
+        try {
+            content = fileHelper.readFromFile(path, fileName);
+        } catch (FileNotFoundException e) {
             return null;
-        }else {
-            SessionImpl s = null;
-            try {
-                s = new SessionImpl(new JSONObject(content));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return s;
         }
+
+        SessionImpl s = null;
+        try {
+            s = new SessionImpl(new JSONObject(content));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return s;
     }
 
     /**
      * stores session to file
      * @param session
      */
-    private void storeSession(SessionImpl session){
+    private boolean storeSession(SessionImpl session){
         if (session == null){
-            return;
+            return true;
         }
 
-        String fileName = filePath+session.getSessionID().toString();
-        //TODO: write content to file
         String content = null;
         try {
             content = session.toJSON().toString();
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        if (content == null){
+            return false;
+        }
+
+        FileHelper fileHelper = new FileHelper(this);
+        return fileHelper.writeToFile(getString(R.string.path_sessions), session.getSessionID().toString(), content);
     }
 
 
