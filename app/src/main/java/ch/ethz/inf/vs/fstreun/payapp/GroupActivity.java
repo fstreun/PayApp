@@ -14,8 +14,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -24,6 +22,7 @@ import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
 
@@ -32,13 +31,18 @@ public class GroupActivity extends AppCompatActivity {
     public static final String KEY_GROUP_ID = "key_group_id";
     private Group group;
 
+    //gui stuff
     TextView tvDefaultParticipant;
     TextView tvDefToPay;
     LinearLayout linLayDef;
 
+    //file stuff
+    FileHelper fileHelper;
+
     UUID userUuid;
 
-    String TAG = "GroupActivity";
+    String TAG = "###GroupActivity###";
+    private UUID groupID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,16 +50,37 @@ public class GroupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
 
+        //create fileHelper
+        fileHelper = new FileHelper(this);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         //getting intent
         Intent intent = getIntent();
         try {
-            group = loadGroup(intent.getStringExtra(KEY_GROUP_ID));
-        } catch (JSONException e) {
+            String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
+            if(groupIdString != null && !groupIdString.isEmpty()) {
+                groupID = UUID.fromString(groupIdString);
+                group = loadGroup();
+            } else {
+                //todo: take this out as soon as createGroupActivity is implemented
+                Log.d(TAG, "creating random uuid");
+                groupID = UUID.randomUUID();
+                group = new Group(groupID);
+                fileHelper.writeToFile(getString(R.string.path_groups) + groupID,
+                        group.toString());
+                try {
+                    group = loadGroup();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                    group = new Group(UUID.randomUUID());
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
+
         }
         //todo: get name of device owner (default payer)
         group.setDefaultParticipant("Toni");
@@ -86,28 +111,20 @@ public class GroupActivity extends AppCompatActivity {
         updateViews();
     }
 
-    private Group loadGroup(String stringExtra) throws JSONException {
-        //todo: load group from fileHelper
-        String content = emptyGroup();
-        Group g = new Group(new JSONObject(content));
+    private Group loadGroup(){
+        Group g = null;
+        try {
+            JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
+                    getString(R.string.path_groups) + groupID));
+            g = new Group(groupJson);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //if fail return null
+            Toast.makeText(this, "no group loaded", Toast.LENGTH_SHORT);
+        }
         return g;
     }
 
-
-    /**
-     * for testing
-     * @return empty group (i.e. no transactions, no participants, random sessionId)
-     */
-    private String emptyGroup() throws JSONException {
-        JSONObject groupJson = new JSONObject();
-        groupJson.put(Group.SESSION_ID_KEY, UUID.randomUUID().toString());
-        JSONArray transArray = new JSONArray();
-        JSONArray partArray = new JSONArray();
-        groupJson.put(Group.TRANSACTIONS_KEY, transArray);
-        groupJson.put(Group.PARTICIPANTS_KEY, partArray);
-
-        return groupJson.toString();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,6 +172,8 @@ public class GroupActivity extends AppCompatActivity {
                 //TODO: Create transaction from the intent data and save to file
                 Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
                 group.addTransaction(transaction);
+                fileHelper.writeToFile(getString(R.string.path_groups) + groupID,
+                        group.toString());
 
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
                 updateViews();

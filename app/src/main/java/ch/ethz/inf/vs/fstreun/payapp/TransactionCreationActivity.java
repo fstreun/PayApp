@@ -140,7 +140,6 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_save:
-                //TODO: close activity and transfer transaction information over intent.
                 Intent intent = new Intent();
 
                 //case: wrong amount
@@ -154,7 +153,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
                 //case: payer was null
                 String payer = getPayer();
-                if (payer == null){
+                if (payer == null || payer.isEmpty()){
                     Toast.makeText(this, "somehow the payer was not specified",
                             Toast.LENGTH_SHORT).show();
                     return true;
