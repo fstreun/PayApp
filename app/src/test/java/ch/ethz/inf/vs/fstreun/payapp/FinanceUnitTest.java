@@ -118,5 +118,113 @@ public class FinanceUnitTest {
     }
 
 
-    //todo: write test, that converts a transaction to a JSONObject (or even String) and back
+    //convert a transaction to a JSONObject and back
+    @Test
+    public void test3() throws JSONException {
+        // creating transaction
+        UUID creatorUuid = UUID.randomUUID();
+        List<String> involved = new ArrayList<>(2);
+        involved.add("Sepp Payer");
+        involved.add("John Consumer");
+        double amount = 2000;
+        Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
+                "beer");
+        String transactionJsonString = t.toString();
+        System.out.println("created transaction in usual way: \n" + transactionJsonString);
+
+        //////////////////////////////// IMPORTANT PART /////////////////////////////////////
+        //reading Json object into transaction object
+        Transaction transaction = new Transaction(t.toJson());
+        transactionJsonString = transaction.toString();
+        System.out.println("created transaction from t.toJson(): \n" + transactionJsonString);
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        // creating group
+        UUID sessionId = UUID.randomUUID();
+        JSONArray parti= new JSONArray();
+        //parti.put("Sepp Payer");
+        JSONObject groupJson = new JSONObject();
+        JSONArray transJsonArray = new JSONArray();
+        groupJson.put(Group.PARTICIPANTS_KEY, parti);
+        groupJson.put(Group.TRANSACTIONS_KEY, transJsonArray);
+        groupJson.put(Group.SESSION_ID_KEY, sessionId.toString());
+        Group testWG = new Group(groupJson);
+        testWG.addTransaction(t);
+        String groupJsonString = testWG.toString();
+        System.out.println("created group in the normal way: \n" + groupJsonString);
+        System.out.println("number of participants: " + testWG.numParticipants());
+
+        //////////////////////////////// IMPORTANT PART /////////////////////////////////////
+        //creating group object from jsonobject
+        Group group = new Group(testWG.toJson());
+        groupJsonString = group.toString();
+        System.out.println("created group from testWG.toJson(): \n" + groupJsonString);
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        // get toPay value
+        double seppToPay = testWG.toPay("Sepp Payer");
+        double johnToPay = testWG.toPay("John Consumer");
+
+        //System.out.println("John has to pay: " + johnToPay);
+        System.out.println("Sepp has to pay " + seppToPay + "\n" +
+                "John has to pay " + johnToPay);
+        System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
+        assert(1 == seppToPay+johnToPay);
+
+    }
+
+    //convert a transaction to a String and back
+    @Test
+    public void test4() throws JSONException {
+        // creating transaction
+        UUID creatorUuid = UUID.randomUUID();
+        List<String> involved = new ArrayList<>(2);
+        involved.add("Sepp Payer");
+        involved.add("John Consumer");
+        double amount = 2000.0;
+        Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
+                "beer");
+        String transactionJsonString = t.toString();
+        System.out.println("created transaction in usual way: \n" + transactionJsonString);
+
+        //////////////////////////////// IMPORTANT PART /////////////////////////////////////
+        //reading Json object into transaction object
+        Transaction transaction = new Transaction(new JSONObject(transactionJsonString));
+        transactionJsonString = transaction.toString();
+        System.out.println("created transaction from t.toJson(): \n" + transactionJsonString);
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        // creating group
+        UUID sessionId = UUID.randomUUID();
+        JSONArray parti= new JSONArray();
+        //parti.put("Sepp Payer");
+        JSONObject groupJson = new JSONObject();
+        JSONArray transJsonArray = new JSONArray();
+        groupJson.put(Group.PARTICIPANTS_KEY, parti);
+        groupJson.put(Group.TRANSACTIONS_KEY, transJsonArray);
+        groupJson.put(Group.SESSION_ID_KEY, sessionId.toString());
+        Group testWG = new Group(groupJson);
+        testWG.addTransaction(t);
+        String groupJsonString = testWG.toString();
+        System.out.println("created group in the normal way: \n" + groupJsonString);
+        System.out.println("number of participants: " + testWG.numParticipants());
+
+        //////////////////////////////// IMPORTANT PART /////////////////////////////////////
+        //creating group object from jsonobject
+        Group group = new Group(new JSONObject(testWG.toString()));
+        groupJsonString = group.toString();
+        System.out.println("created group from testWG.toJson(): \n" + groupJsonString);
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        // get toPay value
+        double seppToPay = testWG.toPay("Sepp Payer");
+        double johnToPay = testWG.toPay("John Consumer");
+
+        //System.out.println("John has to pay: " + johnToPay);
+        System.out.println("Sepp has to pay " + seppToPay + "\n" +
+                "John has to pay " + johnToPay);
+        System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
+        assert(1 == seppToPay+johnToPay);
+    }
+
 }

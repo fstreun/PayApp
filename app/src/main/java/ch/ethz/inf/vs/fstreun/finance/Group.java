@@ -139,6 +139,9 @@ public class Group {
         }
         o.put(TRANSACTIONS_KEY, transJson);
 
+        //session ID
+        o.put(SESSION_ID_KEY, sessionID.toString());
+
         return o;
     }
 

@@ -72,7 +72,7 @@ public class Transaction {
         for(int i=0; i<numInv; i++){
            involved.add(involvedJson.getString(i));
         }
-        amount = (double) o.get(AMOUNT_KEY);
+        amount = (double) o.getDouble(AMOUNT_KEY);
         comment = o.getString(COMMENT_KEY);
 
     }
