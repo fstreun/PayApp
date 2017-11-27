@@ -26,6 +26,7 @@
             android:exported="true"
             android:label="@string/title_activity_group"
             android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation|screenSize"
             android:parentActivityName=".MainActivity"/>
         <activity
             android:name=".TransactionCreationActivity"

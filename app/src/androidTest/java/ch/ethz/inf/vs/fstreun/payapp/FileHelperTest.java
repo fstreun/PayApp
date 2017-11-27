@@ -71,4 +71,6 @@ public class FileHelperTest {
         assertEquals(data1 + data2, s);
 
     }
+
+    //todo: test with non existing folder name
 }

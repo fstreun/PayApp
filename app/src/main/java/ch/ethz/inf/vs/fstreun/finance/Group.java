@@ -36,6 +36,17 @@ public class Group {
     private static final String TAG = "GroupTAG";
 
     /**
+     * creates an empty group from sessionID
+     * @param sessionID
+     */
+    public Group (UUID sessionID){
+        this.sessionID = sessionID;
+
+        //empty participant list and empty transaction list and no default participant
+        //alread done
+    }
+
+    /**
      * creates a group
      * @param o is a JSONObject containing:
      *          JSONArray of Strings: participants as names
