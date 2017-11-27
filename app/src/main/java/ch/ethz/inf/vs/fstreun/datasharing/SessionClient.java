@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public interface SessionClient {
 
-    public void add (String content);
+    public boolean add (String content);
     public List<String> getContent ();
     public List<String> getContentAfter (Map<UUID, Integer> start);
     public Map<UUID, ? extends Chain> getContentMap();
