@@ -6,7 +6,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.UUID;
+
+import ch.ethz.inf.vs.fstreun.finance.Group;
+
 public class JoinGroupActivity extends AppCompatActivity {
+
+    public static final String KEY_GROUP_ID = "group_id"; //Not empty unique String out
+    public static final String KEY_GROUP_NAME = "group_name"; //Not empty (unique?) String out
 
     EditText editTextGroupSecret;
 
@@ -29,5 +36,22 @@ public class JoinGroupActivity extends AppCompatActivity {
     private void buttonJoinClicked(){
         //TODO: try to join group (sessions ID)
         String groupHint = editTextGroupSecret.getText().toString();
+    }
+
+    private String getGroupName(){
+        //TODO: group name
+        return "group Name";
+    }
+
+
+    private void join(UUID sessionID){
+        // TODO: create group with that sessionID
+        UUID groupID = UUID.randomUUID();
+        Group group = null;// = new Group();
+
+        //TODO: store group into corresponding file (with filehelper)
+
+        //TODO: return groupID and groupName to MainActivity
+
     }
 }

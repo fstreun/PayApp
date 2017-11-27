@@ -6,4 +6,6 @@
     <string name="group_secret">Group Secret</string>
     <string name="join">Join</string>
     <string name="change_secret">Change Secret</string>
+
+    <string name="key_groups">key_groups</string>
 </resources>
