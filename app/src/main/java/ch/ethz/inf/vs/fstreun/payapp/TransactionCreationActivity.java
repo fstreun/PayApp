@@ -19,7 +19,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
     public final static String KEY_PAYER = "payer"; // String in and out
     public final static String KEY_AMOUNT = "amount"; // double in and out
-    public final static String KEY_DESCRIPTION = "description"; // String in and out
+    public final static String KEY_COMMENT = "comment"; // String in and out
     public final static String KEY_PARTICIPANTS = "participants"; // String[] in
     public final static String KEY_PARTICIPANTS_CHECKED = "checked"; // boolean[] in
     public final static String KEY_PARTICIPANTS_INVOLVED = "involved"; // String[] out
@@ -36,18 +36,26 @@ public class TransactionCreationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction_creation);
 
-        //reading participants list from intent
+        //reading participants information from intent
+        Intent intent = getIntent();
+        String[] participants = intent.getStringArrayExtra(KEY_PARTICIPANTS);
+        String payer = intent.getStringExtra(KEY_PAYER);
+        boolean[] participantsChecked = intent.getBooleanArrayExtra(KEY_PARTICIPANTS_CHECKED);
 
 
         //find views for editTexts
         editTextAmount = findViewById(R.id.editText_amount);
         editTextComment = findViewById(R.id.editText_comment);
 
-        // TODO: just test data
+        //read data for checkboxes (involved selector)
         ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> data = new ArrayList<>();
+        for(int i=0; i<participants.length; i++)
+            data.add(new ListParticipantsCheckAdapter.ParticipantCheck(participants[i]));
+        //TODO: delete test data as soon as add participant has been implemented for this activity
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Kaan"));
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Toni"));
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Fabio"));
+        //todo: tick the previously checked boxes (participantsChecked)
 
         adapterParticipants = new ListParticipantsCheckAdapter(this, data);
         ListView listView = findViewById(R.id.listView_participants);
@@ -60,8 +68,11 @@ public class TransactionCreationActivity extends AppCompatActivity {
             }
         });
 
-        //TODO: just test data
+        //read data for potential payer
         ArrayList<String> spinnerData = new ArrayList<>();
+        for(int i=0; i<participants.length; i++)
+            spinnerData.add(participants[i]);
+        //TODO: delete test data as soon as add participant has been implemented for this activity
         spinnerData.add("Kaan");
         spinnerData.add("Toni");
         spinnerData.add("Fabio");
@@ -174,7 +185,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
                 //putting values
                 intent.putExtra(KEY_AMOUNT, amount);
                 intent.putExtra(KEY_PAYER, payer);
-                intent.putExtra(KEY_DESCRIPTION, getComment());
+                intent.putExtra(KEY_COMMENT, getComment());
                 intent.putExtra(KEY_PARTICIPANTS_INVOLVED, getInvolved());
                 setResult(RESULT_OK, intent);
                 finish();

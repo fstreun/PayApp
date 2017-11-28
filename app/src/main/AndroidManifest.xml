@@ -33,6 +33,7 @@
       
         <activity
             android:name=".TransactionCreationActivity"
+            android:configChanges="orientation|screenSize"
             android:parentActivityName=".GroupActivity" />
 
         <activity android:name=".CreateGroupActivity"

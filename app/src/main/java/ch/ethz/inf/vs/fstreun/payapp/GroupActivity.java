@@ -68,7 +68,7 @@ public class GroupActivity extends AppCompatActivity {
                 Log.d(TAG, "creating random uuid");
                 groupID = UUID.randomUUID();
                 group = new Group(groupID);
-                fileHelper.writeToFile(getString(R.string.path_groups) + groupID,
+                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
                         group.toString());
                 try {
                     group = loadGroup();
@@ -115,7 +115,7 @@ public class GroupActivity extends AppCompatActivity {
         Group g = null;
         try {
             JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
-                    getString(R.string.path_groups) + groupID));
+                    getString(R.string.path_groups), groupID.toString()));
             g = new Group(groupJson);
         } catch (Exception e) {
             e.printStackTrace();
@@ -154,6 +154,27 @@ public class GroupActivity extends AppCompatActivity {
     public final static int CREATE_TRANSACTION_REQUEST = 666;
     private void createTransaction(){
         Intent intent = new Intent(this, TransactionCreationActivity.class);
+
+        //getting participants of group into String array
+        String[] participants = new String[0];
+        if (group != null){
+            int n = group.numParticipants();
+            participants = new String[n];
+            List<String> participantsList = group.getParticipants();
+            for (int i=0; i<n; i++){
+                participants[i] = participantsList.get(i);
+            }
+        }
+
+        //todo: get payer from shared prefs
+        String payer = "";
+
+        //todo: get initially checked participants from shared prefs
+        boolean[] checkedParticipants = new boolean[0];
+
+        intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS, participants);
+        intent.putExtra(TransactionCreationActivity.KEY_PAYER, payer);
+        intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS_CHECKED, checkedParticipants);
         startActivityForResult(intent, CREATE_TRANSACTION_REQUEST);
     }
 
@@ -164,7 +185,7 @@ public class GroupActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK){
                 // Transaction was finished with save
                 double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
-                String comment = data.getStringExtra(TransactionCreationActivity.KEY_DESCRIPTION);
+                String comment = data.getStringExtra(TransactionCreationActivity.KEY_COMMENT);
                 String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
@@ -172,7 +193,7 @@ public class GroupActivity extends AppCompatActivity {
                 //TODO: Create transaction from the intent data and save to file
                 Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
                 group.addTransaction(transaction);
-                fileHelper.writeToFile(getString(R.string.path_groups) + groupID,
+                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
                         group.toString());
 
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
