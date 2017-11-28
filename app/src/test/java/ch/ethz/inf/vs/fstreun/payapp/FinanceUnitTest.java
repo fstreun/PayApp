@@ -42,7 +42,7 @@ public class FinanceUnitTest {
         groupJson.put(Group.PARTICIPANTS_KEY, parti);
         groupJson.put(Group.TRANSACTIONS_KEY, transJsonArray);
         groupJson.put(Group.SESSION_ID_KEY, sessionId.toString());
-        groupJson.put(Group.DEFAULT_PARTICIPANT_KEY, "Sepp");
+        groupJson.put(Group.DEVICE_OWNER_KEY, "Sepp");
         Group testWG = new Group(groupJson);
         testWG.addTransaction(t);
         String groupJsonString = testWG.toString();
@@ -97,7 +97,7 @@ public class FinanceUnitTest {
         groupJson.put(Group.TRANSACTIONS_KEY, transArray);
         groupJson.put(Group.SESSION_ID_KEY, sessionID.toString());
         groupJson.put(Group.PARTICIPANTS_KEY, partiArray);
-        groupJson.put(Group.DEFAULT_PARTICIPANT_KEY, "richi");
+        groupJson.put(Group.DEVICE_OWNER_KEY, "richi");
 
         //creating group
         Group awesomeWG = new Group(groupJson);
@@ -150,7 +150,7 @@ public class FinanceUnitTest {
         groupJson.put(Group.PARTICIPANTS_KEY, parti);
         groupJson.put(Group.TRANSACTIONS_KEY, transJsonArray);
         groupJson.put(Group.SESSION_ID_KEY, sessionId.toString());
-        groupJson.put(Group.DEFAULT_PARTICIPANT_KEY, "richi");
+        groupJson.put(Group.DEVICE_OWNER_KEY, "richi");
         Group testWG = new Group(groupJson);
         testWG.addTransaction(t);
         String groupJsonString = testWG.toString();
@@ -206,7 +206,7 @@ public class FinanceUnitTest {
         groupJson.put(Group.PARTICIPANTS_KEY, parti);
         groupJson.put(Group.TRANSACTIONS_KEY, transJsonArray);
         groupJson.put(Group.SESSION_ID_KEY, sessionId.toString());
-        groupJson.put(Group.DEFAULT_PARTICIPANT_KEY, "richi");
+        groupJson.put(Group.DEVICE_OWNER_KEY, "richi");
         Group testWG = new Group(groupJson);
         testWG.addTransaction(t);
         String groupJsonString = testWG.toString();

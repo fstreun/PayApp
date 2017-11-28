@@ -32,9 +32,9 @@ public class GroupActivity extends AppCompatActivity {
     private Group group;
 
     //gui stuff
-    TextView tvDefaultParticipant;
-    TextView tvDefToPay;
-    LinearLayout linLayDef;
+    TextView tvDeviceOwner;
+    TextView tvOwnToPay;
+    LinearLayout linLayOwn;
 
     //file stuff
     FileHelper fileHelper;
@@ -82,8 +82,8 @@ public class GroupActivity extends AppCompatActivity {
             Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
 
         }
-        //todo: get name of device owner (default payer)
-        group.setDefaultParticipant("Toni");
+        //todo: get name of device owner
+        group.setDeviceOwner("Toni");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -99,12 +99,12 @@ public class GroupActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.listView_main);
         listView.setAdapter(adapter);
 
-        //textView default participant
-        tvDefaultParticipant = findViewById(R.id.textView_defaultParticipant);
-        tvDefToPay = findViewById(R.id.textView_defToPay);
-        linLayDef = findViewById(R.id.lin_lay_defaultParticipant);
+        //textView device owner
+        tvDeviceOwner = findViewById(R.id.textView_device_owner);
+        tvOwnToPay = findViewById(R.id.textView_ownToPay);
+        linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
 
-        //todo: get user UUID from file (we are now getting a random one
+        //todo: get user UUID from file (we are now getting a random one)
         userUuid = UUID.randomUUID();
 
         //update view
@@ -184,13 +184,15 @@ public class GroupActivity extends AppCompatActivity {
     }
 
     private void updateViews() {
-        String defPart = group.getDefaultParticipant();
+        String defPart = group.getDeviceOwner();
         if(defPart == null){
-            linLayDef.setVisibility(View.GONE);
+            linLayOwn.setVisibility(View.GONE);
         } else {
-            linLayDef.setVisibility(View.VISIBLE);
-            tvDefaultParticipant.setText(defPart);
-            tvDefToPay.setText(String.valueOf(group.toPay(defPart)));
+            linLayOwn.setVisibility(View.VISIBLE);
+            tvDeviceOwner.setText(defPart);
+
+            //todo: make values appear like 49.95 (2 digits after the dot)
+            tvOwnToPay.setText(String.valueOf(group.toPay(defPart)));
 
         }
         adapter.notifyDataSetChanged();
