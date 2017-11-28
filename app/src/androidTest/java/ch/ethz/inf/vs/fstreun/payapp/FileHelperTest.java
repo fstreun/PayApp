@@ -7,9 +7,12 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileNotFoundException;
+
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by fabio on 11/25/17.
@@ -27,9 +30,9 @@ public class FileHelperTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         FileHelper fileHelper = new FileHelper(appContext);
-        fileHelper.writeToFile(fileName, data);
+        assertTrue(fileHelper.writeToFile(null, fileName, data));
 
-        String s = fileHelper.readFromFile(fileName);
+        String s = fileHelper.readFromFile(null, fileName);
         assertEquals(data, s);
 
     }
@@ -43,12 +46,12 @@ public class FileHelperTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         FileHelper fileHelper = new FileHelper(appContext);
-        fileHelper.writeToFile(fileName, data1);
+        assertTrue(fileHelper.writeToFile(null, fileName, data1));
 
         String data2 = "test Data2\n";
-        fileHelper.writeToFile(fileName, data2);
+        assertTrue(fileHelper.writeToFile(null, fileName, data2));
 
-        String s = fileHelper.readFromFile(fileName);
+        String s = fileHelper.readFromFile(null, fileName);
         assertEquals(data2, s);
 
     }
@@ -62,13 +65,56 @@ public class FileHelperTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         FileHelper fileHelper = new FileHelper(appContext);
-        fileHelper.writeToFile(fileName, data1);
+        assertTrue(fileHelper.writeToFile(null, fileName, data1));
 
         String data2 = "test Data2\n";
-        fileHelper.addToFile(fileName, data2);
+        assertTrue(fileHelper.appendToFile(null, fileName, data2));
 
-        String s = fileHelper.readFromFile(fileName);
+        String s = fileHelper.readFromFile(null, fileName);
         assertEquals(data1 + data2, s);
 
+    }
+
+    @Test
+    public void fileHelper_path() throws Exception {
+
+        String path = "test/path";
+        String fileName = "testFile";
+        String data1 = "test Data\n second line\n";
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        FileHelper fileHelper = new FileHelper(appContext);
+        assertTrue(fileHelper.writeToFile(path, fileName, data1));
+
+        String s = fileHelper.readFromFile(path, fileName);
+        assertEquals(data1, s);
+
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void fileHelper_wrongFileName() throws Exception {
+
+        String path = null;
+        String fileName = "FileNotExisting";
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        FileHelper fileHelper = new FileHelper(appContext);
+
+        String s = fileHelper.readFromFile(path, fileName);
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void fileHelper_wrongPath() throws Exception {
+
+        String path = "Path/Not/Existing";
+        String fileName = "filename";
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        FileHelper fileHelper = new FileHelper(appContext);
+
+        String s = fileHelper.readFromFile(path, fileName);
     }
 }

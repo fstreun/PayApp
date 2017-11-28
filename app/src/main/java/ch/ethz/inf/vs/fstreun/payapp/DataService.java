@@ -9,23 +9,32 @@ import android.support.annotation.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import ch.ethz.inf.vs.fstreun.datasharing.Block;
 import ch.ethz.inf.vs.fstreun.datasharing.Chain;
-import ch.ethz.inf.vs.fstreun.datasharing.Session;
+import ch.ethz.inf.vs.fstreun.datasharing.ChainImpl;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
+import ch.ethz.inf.vs.fstreun.datasharing.SessionInterface;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 /**
  * Created by fabio on 11/26/17.
  * This service could get create by the SynchronizeService[publish] (since that one runs always)
  * and bounded by any other activity.
+ *
+ * Offers access to manipulation of one session (by client and network),
+ * and creation/removing of sessions.
+ *
+ * Stores sessions in file.
  */
 
 public class DataService extends Service {
-
 
     /*
     Binding of the service:
@@ -41,13 +50,37 @@ public class DataService extends Service {
     public class LocalBinder extends Binder {
 
         /**
+         * Return this instance of LocalService so clients can call public methods
+         * @return instance of service
+         */
+        DataService getService(){
+            return DataService.this;
+        }
+
+        /**
+         * access for network manipulating one session
+         * @param sessionID of the session to be manipulated
+         * @return access interface to session if exists, else null
+         */
+        SessionNetworkAccess getSessionNetworkAccess(UUID sessionID){
+            if (sessions.containsKey(sessionID)) {
+                return new SessionNetworkAccess(sessionID);
+            }else{
+                return null;
+            }
+        }
+
+        /**
          * access for client manipulating one session.
          * @param sessionID of the session
-         * @return session if exists.
+         * @return access interface to session if exists, else null
          */
-        SessionClientImpl getSessionClient(UUID sessionID) {
-            // Return this instance of LocalService so clients can call public methods
-            return new SessionClientImpl(sessionID);
+        SessionClientAccess getSessionClientAccess(UUID sessionID) {
+            if (sessions.containsKey(sessionID)) {
+                return new SessionClientAccess(sessionID);
+            }else{
+                return null;
+            }
         }
 
 
@@ -56,6 +89,7 @@ public class DataService extends Service {
 
         }
     }
+
 
     @Nullable
     @Override
@@ -70,58 +104,76 @@ public class DataService extends Service {
     TODO: access for network services
      */
 
-    private final static String filePath ="sessions/";
     // all sessions stored in the device
     private Map<UUID, SessionImpl> sessions;
 
+    public final boolean addSession(UUID sessionID, SessionImpl session){
+        if (sessions.containsKey(sessionID)){
+            return false;
+        }else {
+            sessions.put(sessionID, session);
+            return true;
+        }
+    }
+
+    public final boolean removeSession(UUID sessionID){
+        return !(null == sessions.remove(sessionID));
+    }
 
     /**
      * load session from file
-     * @param sessionID
-     * @return
+     * @param sessionID to be loaded (also file name of session)
+     * @return session if exists and possible to be parsed
      */
+    @Nullable
     private SessionImpl loadSession(UUID sessionID){
-        String fileName = filePath+sessionID.toString();
-        //TODO: get file String
-        String content = null;
-        if (content == null){
+        String path = getString(R.string.path_sessions);
+        String fileName = sessionID.toString();
+        FileHelper fileHelper = new FileHelper(this);
+        String content;
+        try {
+            content = fileHelper.readFromFile(path, fileName);
+        } catch (FileNotFoundException e) {
             return null;
-        }else {
-            SessionImpl s = null;
-            try {
-                s = new SessionImpl(new JSONObject(content));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return s;
         }
+
+        SessionImpl s = null;
+        try {
+            s = new SessionImpl(new JSONObject(content));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return s;
     }
 
     /**
      * stores session to file
      * @param session
      */
-    private void storeSession(SessionImpl session){
+    private boolean storeSession(SessionImpl session){
         if (session == null){
-            return;
+            return true;
         }
 
-        String fileName = filePath+session.getSessionID().toString();
-        //TODO: write content to file
         String content = null;
         try {
             content = session.toJSON().toString();
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        if (content == null){
+            return false;
+        }
+
+        FileHelper fileHelper = new FileHelper(this);
+        return fileHelper.writeToFile(getString(R.string.path_sessions), session.getSessionID().toString(), content);
     }
 
-
-    public final class SessionClientImpl implements SessionClient{
+    public final class SessionClientAccess implements SessionClient{
 
         private final UUID sessionID;
 
-        private SessionClientImpl(UUID sessionID) {
+        private SessionClientAccess(UUID sessionID) {
             this.sessionID = sessionID;
         }
 
@@ -199,6 +251,63 @@ public class DataService extends Service {
         @Override
         public UUID getSessionID() {
             return sessionID;
+        }
+    }
+
+
+
+
+    public class SessionNetworkAccess implements SessionInterface<ChainImpl> {
+
+        private final UUID sessionID;
+
+        private SessionNetworkAccess(UUID sessionID) {
+            this.sessionID = sessionID;
+        }
+
+        private SessionImpl getSession(){
+            return sessions.get(sessionID);
+        }
+
+
+        @Override
+        public Map<UUID, ChainImpl> getData() {
+            return null;
+        }
+
+        @Override
+        public Map<UUID, ChainImpl> getDataAfter(Map<UUID, Integer> start) {
+            return null;
+        }
+
+        @Override
+        public Map<UUID, Integer> put(Map<UUID, Chain> chainMap, Map<UUID, Integer> expected) {
+            return null;
+        }
+
+        @Override
+        public int put(UUID userID, Chain chain, int expected) {
+            return 0;
+        }
+
+        @Override
+        public int put(UUID userID, Block block, int expected) {
+            return 0;
+        }
+
+        @Override
+        public Map<UUID, Integer> getLength() {
+            return null;
+        }
+
+        @Override
+        public Set<UUID> getAllUserID() {
+            return null;
+        }
+
+        @Override
+        public UUID getSessionID() {
+            return null;
         }
     }
 }

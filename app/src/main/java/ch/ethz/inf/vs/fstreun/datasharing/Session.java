@@ -17,7 +17,7 @@ import java.util.UUID;
  * using Chains of type C
  */
 
-public class Session <C extends Chain>{
+public class Session <C extends Chain> implements SessionInterface<C> {
 
     // identifier of the session
     private final UUID sessionID;
@@ -106,6 +106,7 @@ public class Session <C extends Chain>{
      * accesses all the chains in the session
      * @return a copy of the map with the chains
      */
+    @Override
     public final Map<UUID, C> getData(){
         Map<UUID, C> res = new HashMap<>();
         for (Map.Entry<UUID, C> entry : data.entrySet()){
@@ -120,6 +121,7 @@ public class Session <C extends Chain>{
      * @param start of the beginning of the chain (included)
      * @return a copy map of sub chains
      */
+    @Override
     public final Map<UUID, C> getDataAfter(Map<UUID, Integer> start){
         Map<UUID, C> res = new HashMap<>();
         for (Map.Entry<UUID, C> entry : data.entrySet()){
@@ -139,6 +141,7 @@ public class Session <C extends Chain>{
      * @param expected length of each chain (position of first block to be appended)
      * @return actual length of the chain before appending
      */
+    @Override
     public final Map<UUID, Integer> put (Map<UUID, Chain> chainMap, Map<UUID, Integer> expected){
         Map<UUID, Integer> res = new HashMap<>();
         for (Map.Entry<UUID, Chain> entry : chainMap.entrySet()){
@@ -159,6 +162,7 @@ public class Session <C extends Chain>{
      * @param expected length of the current chain (position of first block to be appended)
      * @return actual length of the current chain before appending
      */
+    @Override
     public final int put(UUID userID, Chain chain, int expected){
         if (!data.containsKey(userID)){
             data.put(userID, chainFactory.createEmpty());
@@ -173,6 +177,7 @@ public class Session <C extends Chain>{
      * @param expected length of the current chain (position of the block to be appended)
      * @return
      */
+    @Override
     public final int put(UUID userID, Block block, int expected){
         if (!data.containsKey(userID)){
             data.put(userID, chainFactory.createEmpty());
@@ -184,6 +189,7 @@ public class Session <C extends Chain>{
     /**
      * @return length of current chains
      */
+    @Override
     public final Map<UUID, Integer> getLength(){
         Map<UUID, Integer> res = new HashMap<>();
         for (Map.Entry<UUID, C> entry : data.entrySet()){
@@ -197,6 +203,7 @@ public class Session <C extends Chain>{
      * @return all user UUID the session has a chain of
      */
     @NonNull
+    @Override
     public final Set<UUID> getAllUserID(){
         return data.keySet();
     }
@@ -204,6 +211,7 @@ public class Session <C extends Chain>{
     /**
      * @return the UUID of the Session
      */
+    @Override
     public final UUID getSessionID(){
         return sessionID;
     }
