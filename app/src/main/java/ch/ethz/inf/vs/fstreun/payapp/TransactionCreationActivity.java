@@ -1,8 +1,8 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,7 +21,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
     public final static String KEY_AMOUNT = "amount"; // double in and out
     public final static String KEY_COMMENT = "comment"; // String in and out
     public final static String KEY_PARTICIPANTS = "participants"; // String[] in
-    public final static String KEY_PARTICIPANTS_CHECKED = "checked"; // boolean[] in
+    public final static String KEY_PARTICIPANTS_CHECKED = "checked"; // String[] in
     public final static String KEY_PARTICIPANTS_INVOLVED = "involved"; // String[] out
 
     ListParticipantsCheckAdapter adapterParticipants;
@@ -29,7 +29,9 @@ public class TransactionCreationActivity extends AppCompatActivity {
     EditText editTextAmount;
     EditText editTextComment;
 
+    String TAG = "###TransaCreActivity";
 
+    private String[] participants = new String[0];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,10 +40,9 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
         //reading participants information from intent
         Intent intent = getIntent();
-        String[] participants = intent.getStringArrayExtra(KEY_PARTICIPANTS);
+        participants = intent.getStringArrayExtra(KEY_PARTICIPANTS);
         String payer = intent.getStringExtra(KEY_PAYER);
-        boolean[] participantsChecked = intent.getBooleanArrayExtra(KEY_PARTICIPANTS_CHECKED);
-
+        String[] participantsChecked = intent.getStringArrayExtra(KEY_PARTICIPANTS_CHECKED);
 
         //find views for editTexts
         editTextAmount = findViewById(R.id.editText_amount);
@@ -55,11 +56,19 @@ public class TransactionCreationActivity extends AppCompatActivity {
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Kaan"));
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Toni"));
         data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Fabio"));
-        //todo: tick the previously checked boxes (participantsChecked)
 
         adapterParticipants = new ListParticipantsCheckAdapter(this, data);
         ListView listView = findViewById(R.id.listView_participants);
         listView.setAdapter(adapterParticipants);
+
+        //todo: tick the previously checked boxes (participantsChecked)
+        for(int i=0; i<participantsChecked.length; i++){
+            for(int j=0; j<adapterParticipants.getCount(); j++){
+                if(participantsChecked[i].equals(adapterParticipants.getItem(j).name))
+                    adapterParticipants.getItem(j).changeCheck();
+            }
+        }
+        //adapterParticipants.getItem(1).changeCheck();//for testing
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -80,7 +89,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerPayer = findViewById(R.id.spinner);
         spinnerPayer.setAdapter(spinnerAdapter);
-        spinnerPayer.setSelection(1);
+        spinnerPayer.setSelection(spinnerData.indexOf(payer));
     }
 
 

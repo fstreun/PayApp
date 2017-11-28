@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -17,7 +18,9 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
@@ -44,6 +47,12 @@ public class GroupActivity extends AppCompatActivity {
     String TAG = "###GroupActivity###";
     private UUID groupID;
 
+    //Shared Preferences stuff
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
+    String prefName;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate started");
@@ -56,6 +65,11 @@ public class GroupActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //initialize shared Prefs stuff
+        prefName = getString(R.string.pref_name);
+        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
         //getting intent
         Intent intent = getIntent();
         try {
@@ -65,7 +79,7 @@ public class GroupActivity extends AppCompatActivity {
                 group = loadGroup();
             } else {
                 //todo: take this out as soon as createGroupActivity is implemented
-                Log.d(TAG, "creating random uuid");
+                Log.d(TAG, "creating random uuid as groupID");
                 groupID = UUID.randomUUID();
                 group = new Group(groupID);
                 fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
@@ -116,6 +130,7 @@ public class GroupActivity extends AppCompatActivity {
         try {
             JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
                     getString(R.string.path_groups), groupID.toString()));
+            Log.d(TAG, "reading from file: " + groupID.toString());
             g = new Group(groupJson);
         } catch (Exception e) {
             e.printStackTrace();
@@ -155,6 +170,10 @@ public class GroupActivity extends AppCompatActivity {
     private void createTransaction(){
         Intent intent = new Intent(this, TransactionCreationActivity.class);
 
+        //----------------------------------------------------------------------------
+        // GETTING INFORMATION from shared prefs
+        //----------------------------------------------------------------------------
+
         //getting participants of group into String array
         String[] participants = new String[0];
         if (group != null){
@@ -166,12 +185,20 @@ public class GroupActivity extends AppCompatActivity {
             }
         }
 
-        //todo: get payer from shared prefs
-        String payer = "";
+        //get LRU payer from shared prefs (default value is the deviceOwner)
+        String payer = sharedPreferences.getString(getString(R.string.pref_payer_lru),
+                group.getDeviceOwner());
 
-        //todo: get initially checked participants from shared prefs
-        boolean[] checkedParticipants = new boolean[0];
+        //get initially checked participants from shared prefs
+        Set<String> checkedPartiSet = sharedPreferences.getStringSet(
+                getString(R.string.pref_involved_lru), null);
+        String[] checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
 
+        //----------------------------------------------------------------------------
+        // PUTTING INFORMATION to intent
+        //----------------------------------------------------------------------------
+
+        //put intents
         intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS, participants);
         intent.putExtra(TransactionCreationActivity.KEY_PAYER, payer);
         intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS_CHECKED, checkedParticipants);
@@ -183,6 +210,7 @@ public class GroupActivity extends AppCompatActivity {
 
         if (requestCode == CREATE_TRANSACTION_REQUEST){
             if (resultCode == RESULT_OK){
+
                 // Transaction was finished with save
                 double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
                 String comment = data.getStringExtra(TransactionCreationActivity.KEY_COMMENT);
@@ -190,11 +218,19 @@ public class GroupActivity extends AppCompatActivity {
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
 
-                //TODO: Create transaction from the intent data and save to file
+                //store data to shared prefs for next transaction creation
+                editor.putString(getString(R.string.pref_payer_lru), payer);
+                editor.putStringSet(getString(R.string.pref_involved_lru), new HashSet<>(involved));
+                editor.apply();
+
+                //Create transaction from the intent data
                 Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
                 group.addTransaction(transaction);
+
+                // save transaction to file
                 fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
                         group.toString());
+                Log.d(TAG, "writing to file: " + groupID.toString());
 
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
                 updateViews();
