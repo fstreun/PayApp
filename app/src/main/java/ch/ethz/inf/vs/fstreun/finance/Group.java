@@ -26,14 +26,14 @@ public class Group {
     private final UUID sessionID;
 
     // default Participant owner of the device where this group is stored
-    private String defaultParticipant;
+    private String deviceOwner;
 
     public static final String PARTICIPANTS_KEY = "participants_key";
     public static final String TRANSACTIONS_KEY = "transactions_key";
     public static final String SESSION_ID_KEY = "session_id_key";
-    public static final String DEFAULT_PARTICIPANT_KEY = "default_participant_key";
+    public static final String DEVICE_OWNER_KEY = "device_owner_key";
 
-    private static final String TAG = "GroupTAG";
+    private static final String TAG = "###GroupTAG";
 
     /**
      * creates an empty group from sessionID
@@ -43,7 +43,7 @@ public class Group {
         this.sessionID = sessionID;
 
         //empty participant list and empty transaction list and no default participant
-        //alread done
+        //already done
     }
 
     /**
@@ -52,7 +52,7 @@ public class Group {
      *          JSONArray of Strings: participants as names
      *          JSONArray of JSONObjects: transaction
      *          String: containing the UUID
-     *          String: default participant
+     *          String: device owner
      * @throws JSONException
      */
     public Group (JSONObject o) throws JSONException {
@@ -77,11 +77,11 @@ public class Group {
         // sessionID
         sessionID = UUID.fromString(o.getString(SESSION_ID_KEY));
 
-        // default participant
+        // device owner
         try {
-            defaultParticipant = o.getString(DEFAULT_PARTICIPANT_KEY);
+            deviceOwner = o.getString(DEVICE_OWNER_KEY);
         } catch (JSONException e){
-            defaultParticipant = null;
+            deviceOwner = null;
         }
 
         //check if all involved users are in the participants list. if not: add them
@@ -113,16 +113,16 @@ public class Group {
      * getter function for default participant
      * @return defaultparticipant as String, null if not defined
      */
-    public String getDefaultParticipant() {
-        return defaultParticipant;
+    public String getDeviceOwner() {
+        return deviceOwner;
     }
 
     /**
      * setter function for default participant
-     * @param defaultParticipant
+     * @param deviceOwner
      */
-    public void setDefaultParticipant(String defaultParticipant) {
-        this.defaultParticipant = defaultParticipant;
+    public void setDeviceOwner(String deviceOwner) {
+        this.deviceOwner = deviceOwner;
     }
 
     /**
@@ -181,8 +181,8 @@ public class Group {
         //session ID
         o.put(SESSION_ID_KEY, sessionID.toString());
 
-        //default user
-        o.put(DEFAULT_PARTICIPANT_KEY, defaultParticipant);
+        //device owner
+        o.put(DEVICE_OWNER_KEY, deviceOwner);
 
         return o;
     }
