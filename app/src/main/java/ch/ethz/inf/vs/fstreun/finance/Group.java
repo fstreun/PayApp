@@ -80,6 +80,7 @@ public class Group {
         // device owner
         try {
             deviceOwner = o.getString(DEVICE_OWNER_KEY);
+            addParticipant(deviceOwner);
         } catch (JSONException e){
             deviceOwner = null;
         }
@@ -152,7 +153,8 @@ public class Group {
      * @param p will be added to the list of participants
      */
     public void addParticipant(String p){
-        participants.add(p);
+        // if p not already in participants add him to participants
+        if (!participants.contains(p)) participants.add(p);
     }
 
 

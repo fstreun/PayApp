@@ -32,7 +32,9 @@ public class GroupActivity extends AppCompatActivity {
     ListParticipantsAdapter adapter;
 
     public static final String KEY_GROUP_ID = "key_group_id";
+    public static final String KEY_GROUP_NAME = "key_group_name";
     private Group group;
+    private String groupName;
 
     //gui stuff
     TextView tvDeviceOwner;
@@ -77,8 +79,10 @@ public class GroupActivity extends AppCompatActivity {
             if(groupIdString != null && !groupIdString.isEmpty()) {
                 groupID = UUID.fromString(groupIdString);
                 group = loadGroup();
+                Log.d(TAG, "got groupID from intent: " + groupID.toString());
+                /*
             } else {
-                //todo: take this out as soon as createGroupActivity is implemented
+                //todo: take this out as soon as createGroupActivity is implemented and rather use some kind of error message
                 Log.d(TAG, "creating random uuid as groupID");
                 groupID = UUID.randomUUID();
                 group = new Group(groupID);
@@ -90,13 +94,19 @@ public class GroupActivity extends AppCompatActivity {
                     e1.printStackTrace();
                     group = new Group(UUID.randomUUID());
                 }
+                */
             }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
 
         }
-        //todo: get name of device owner
+
+        //set group name as title
+        groupName = intent.getStringExtra(KEY_GROUP_NAME);
+        setTitle(groupName);
+
+        //todo maybe: get name of device owner
         group.setDeviceOwner("Toni");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -192,7 +202,12 @@ public class GroupActivity extends AppCompatActivity {
         //get initially checked participants from shared prefs
         Set<String> checkedPartiSet = sharedPreferences.getStringSet(
                 getString(R.string.pref_involved_lru), null);
-        String[] checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
+        String[] checkedParticipants;
+        if(checkedPartiSet != null) {
+            checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
+        } else {
+            checkedParticipants = new String[0];
+        }
 
         //----------------------------------------------------------------------------
         // PUTTING INFORMATION to intent
@@ -248,8 +263,10 @@ public class GroupActivity extends AppCompatActivity {
             linLayOwn.setVisibility(View.VISIBLE);
             tvDeviceOwner.setText(defPart);
 
-            //todo: make values appear like 49.95 (2 digits after the dot)
-            tvOwnToPay.setText(String.valueOf(group.toPay(defPart)));
+            //make values appear like 49.99 (2 digits after the dot)
+            double toPay = group.toPay(defPart);
+            String toPayString = String.format("%1$.2f", toPay);
+            tvOwnToPay.setText(toPayString);
 
         }
         adapter.notifyDataSetChanged();

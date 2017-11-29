@@ -1,8 +1,8 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -11,6 +11,7 @@ import android.widget.Toast;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class CreateGroupActivity extends AppCompatActivity {
 
@@ -19,12 +20,17 @@ public class CreateGroupActivity extends AppCompatActivity {
 
     EditText editTextGroupName;
 
+    FileHelper fileHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_group);
+        setTitle("New Group");
 
         editTextGroupName = findViewById(R.id.editText_groupName);
+
+        fileHelper = new FileHelper(this);
     }
 
 
@@ -59,9 +65,14 @@ public class CreateGroupActivity extends AppCompatActivity {
                 }
 
                 //TODO: create group with sessionID
-                Group group;// = new Group(sessionID);
-                //TODO: store newly created group in file
+                Group group = new Group(sessionID);
 
+                //todo maybe: add deviceOwner in participants
+                //group.addParticipant(deviceOwner);
+
+                //store newly created group in file
+                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
+                        group.toString());
                 Intent intent = new Intent();
                 intent.putExtra(KEY_GROUP_NAME, groupName);
                 intent.putExtra(KEY_GROUP_ID, groupID.toString());

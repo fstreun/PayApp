@@ -1,11 +1,15 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -25,6 +29,8 @@ public class TransactionCreationActivity extends AppCompatActivity {
     public final static String KEY_PARTICIPANTS_INVOLVED = "involved"; // String[] out
 
     ListParticipantsCheckAdapter adapterParticipants;
+    ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> data = new ArrayList<>();
+    ArrayList<String> spinnerData = new ArrayList<>();
     Spinner spinnerPayer;
     EditText editTextAmount;
     EditText editTextComment;
@@ -37,6 +43,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction_creation);
+        setTitle("New Transaction");
 
         //reading participants information from intent
         Intent intent = getIntent();
@@ -49,7 +56,6 @@ public class TransactionCreationActivity extends AppCompatActivity {
         editTextComment = findViewById(R.id.editText_comment);
 
         //read data for checkboxes (involved selector)
-        ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> data = new ArrayList<>();
         for(int i=0; i<participants.length; i++)
             data.add(new ListParticipantsCheckAdapter.ParticipantCheck(participants[i]));
         //TODO: delete test data as soon as add participant has been implemented for this activity
@@ -61,7 +67,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.listView_participants);
         listView.setAdapter(adapterParticipants);
 
-        //todo: tick the previously checked boxes (participantsChecked)
+        //tick the previously checked boxes (participantsChecked)
         for(int i=0; i<participantsChecked.length; i++){
             for(int j=0; j<adapterParticipants.getCount(); j++){
                 if(participantsChecked[i].equals(adapterParticipants.getItem(j).name))
@@ -78,7 +84,6 @@ public class TransactionCreationActivity extends AppCompatActivity {
         });
 
         //read data for potential payer
-        ArrayList<String> spinnerData = new ArrayList<>();
         for(int i=0; i<participants.length; i++)
             spinnerData.add(participants[i]);
         //TODO: delete test data as soon as add participant has been implemented for this activity
@@ -201,8 +206,8 @@ public class TransactionCreationActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_addName:
-                //TODO: open dialog to add name and add result to both lists (payer and participants)
-                Toast.makeText(this, "User Added", Toast.LENGTH_SHORT).show();
+                //open dialog to add name and add result to both lists (payer and participants)
+                showAddNameDialog();
                 return true;
 
             case android.R.id.home:
@@ -218,4 +223,48 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
         }
     }
+    private void showAddNameDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add Name");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+
+        // Set up the buttons
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                AddNameDialogResult(input.getText().toString());
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                AddNameDialogResult(null);
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // show keyboard
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
+
+    }
+
+    private void AddNameDialogResult(String name){
+        if (name == null || name.isEmpty()){
+            return;
+        }
+
+        //TODO: check if name is not already in list.
+        Toast.makeText(this, "Name added: " + name, Toast.LENGTH_SHORT).show();
+    }
+
 }

@@ -42,7 +42,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
     public Participant getItem(int position) {
         Participant result = new Participant();
         result.name = group.getParticipants().get(position);
-        result.toPay = String.valueOf(group.toPay(result.name));
+        result.toPay = String.format("%1$.2f", group.toPay(result.name));
         return result;
     }
 
