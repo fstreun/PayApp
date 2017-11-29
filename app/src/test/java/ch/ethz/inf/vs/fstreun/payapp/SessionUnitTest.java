@@ -53,14 +53,14 @@ public class SessionUnitTest {
         assert 0 == session.put(user1ID, new ChainImpl().createEmpty(), 0);
         assert 0 == session.put(user1ID, new ChainImpl().createEmpty(), 0);
 
-        assertTrue("no data expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
+        assertTrue("no listData expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
 
         String s = session.toJSON().toString();
 
         session = new Session<ChainImpl>(new JSONObject(s), new ChainImpl());
 
         assertEquals("session ID expected", sessionID, session.getSessionID());
-        assertTrue("no data expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
+        assertTrue("no listData expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
     }
 
     @Test
@@ -89,14 +89,14 @@ public class SessionUnitTest {
         chain.append(Block.createWithContent("sixth"), 1);
         session.put(user1ID, chain, 4);
 
-        assertEquals("data size expected", new Integer(6), session.getLength().get(user1ID));
+        assertEquals("listData size expected", new Integer(6), session.getLength().get(user1ID));
 
         String s = session.toJSON().toString();
 
         session = new Session<ChainImpl>(new JSONObject(s), new ChainImpl());
 
         assertEquals("session ID expected", sessionID, session.getSessionID());
-        assertEquals("data size expected", new Integer(6), session.getLength().get(user1ID));
+        assertEquals("listData size expected", new Integer(6), session.getLength().get(user1ID));
     }
 
 

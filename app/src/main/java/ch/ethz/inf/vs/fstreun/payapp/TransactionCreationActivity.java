@@ -28,16 +28,17 @@ public class TransactionCreationActivity extends AppCompatActivity {
     public final static String KEY_PARTICIPANTS_CHECKED = "checked"; // String[] in
     public final static String KEY_PARTICIPANTS_INVOLVED = "involved"; // String[] out
 
-    ListParticipantsCheckAdapter adapterParticipants;
-    ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> data = new ArrayList<>();
+    ListParticipantsCheckAdapter listAdapterParticipants;
+    ArrayList<ListParticipantsCheckAdapter.ParticipantCheck> listData = new ArrayList<>();
+
+    ArrayAdapter<String> spinnerAdapterPayer;
     ArrayList<String> spinnerData = new ArrayList<>();
     Spinner spinnerPayer;
+
     EditText editTextAmount;
     EditText editTextComment;
 
     String TAG = "###TransaCreActivity";
-
-    private String[] participants = new String[0];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +48,7 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
         //reading participants information from intent
         Intent intent = getIntent();
-        participants = intent.getStringArrayExtra(KEY_PARTICIPANTS);
+        String[] participants = intent.getStringArrayExtra(KEY_PARTICIPANTS);
         String payer = intent.getStringExtra(KEY_PAYER);
         String[] participantsChecked = intent.getStringArrayExtra(KEY_PARTICIPANTS_CHECKED);
 
@@ -55,45 +56,37 @@ public class TransactionCreationActivity extends AppCompatActivity {
         editTextAmount = findViewById(R.id.editText_amount);
         editTextComment = findViewById(R.id.editText_comment);
 
-        //read data for checkboxes (involved selector)
-        for(int i=0; i<participants.length; i++)
-            data.add(new ListParticipantsCheckAdapter.ParticipantCheck(participants[i]));
-        //TODO: delete test data as soon as add participant has been implemented for this activity
-        data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Kaan"));
-        data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Toni"));
-        data.add(new ListParticipantsCheckAdapter.ParticipantCheck("Fabio"));
+        //read listData for checkboxes (involved selector)
+        for(int i = 0; i< participants.length; i++)
+            listData.add(new ListParticipantsCheckAdapter.ParticipantCheck(participants[i]));
 
-        adapterParticipants = new ListParticipantsCheckAdapter(this, data);
+        listAdapterParticipants = new ListParticipantsCheckAdapter(this, listData);
         ListView listView = findViewById(R.id.listView_participants);
-        listView.setAdapter(adapterParticipants);
+        listView.setAdapter(listAdapterParticipants);
 
         //tick the previously checked boxes (participantsChecked)
         for(int i=0; i<participantsChecked.length; i++){
-            for(int j=0; j<adapterParticipants.getCount(); j++){
-                if(participantsChecked[i].equals(adapterParticipants.getItem(j).name))
-                    adapterParticipants.getItem(j).changeCheck();
+            for(int j = 0; j< listAdapterParticipants.getCount(); j++){
+                if(participantsChecked[i].equals(listAdapterParticipants.getItem(j).name))
+                    listAdapterParticipants.getItem(j).changeCheck();
             }
         }
-        //adapterParticipants.getItem(1).changeCheck();//for testing
+        //listAdapterParticipants.getItem(1).changeCheck();//for testing
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                adapterParticipants.getItem(position).changeCheck();
-                adapterParticipants.notifyDataSetChanged();
+                listAdapterParticipants.getItem(position).changeCheck();
+                listAdapterParticipants.notifyDataSetChanged();
             }
         });
 
-        //read data for potential payer
-        for(int i=0; i<participants.length; i++)
+        //read listData for potential payer
+        for(int i = 0; i< participants.length; i++)
             spinnerData.add(participants[i]);
-        //TODO: delete test data as soon as add participant has been implemented for this activity
-        spinnerData.add("Kaan");
-        spinnerData.add("Toni");
-        spinnerData.add("Fabio");
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerData);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAdapterPayer = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerData);
+        spinnerAdapterPayer.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerPayer = findViewById(R.id.spinner);
-        spinnerPayer.setAdapter(spinnerAdapter);
+        spinnerPayer.setAdapter(spinnerAdapterPayer);
         spinnerPayer.setSelection(spinnerData.indexOf(payer));
     }
 
@@ -131,13 +124,13 @@ public class TransactionCreationActivity extends AppCompatActivity {
     }
 
     private String[] getInvolved(){
-        int n = adapterParticipants.getCount();
+        int n = listAdapterParticipants.getCount();
         String[] result = new String[n];
         int j = 0;
 
         //get items as string array
         for (int i =0; i<n; i++){
-            ListParticipantsCheckAdapter.ParticipantCheck item = adapterParticipants.getItem(i);
+            ListParticipantsCheckAdapter.ParticipantCheck item = listAdapterParticipants.getItem(i);
             if(item.checked) {
                 result[j++] = item.name;
             }
@@ -263,8 +256,27 @@ public class TransactionCreationActivity extends AppCompatActivity {
             return;
         }
 
-        //TODO: check if name is not already in list.
-        Toast.makeText(this, "Name added: " + name, Toast.LENGTH_SHORT).show();
+        // check if name is already in list
+        for (String s: spinnerData){
+            if (s.equalsIgnoreCase(name)){
+                // same name already in list
+                Toast.makeText(this, "Name already in List", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // add name to spinner
+        spinnerData.add(name);
+        // update spinner
+        spinnerAdapterPayer.notifyDataSetChanged();
+
+        // add name to list as checked
+        ListParticipantsCheckAdapter.ParticipantCheck p = new ListParticipantsCheckAdapter.ParticipantCheck(name, true);
+        listData.add(p);
+        // update list
+        listAdapterParticipants.notifyDataSetChanged();
+
     }
+
 
 }

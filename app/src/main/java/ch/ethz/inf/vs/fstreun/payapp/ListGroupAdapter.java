@@ -11,8 +11,6 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import ch.ethz.inf.vs.fstreun.finance.Group;
-
 /**
  * Created by fabio on 11/24/17.
  */

@@ -67,6 +67,7 @@ public class GroupActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // TODO: store all this in group file
         //initialize shared Prefs stuff
         prefName = getString(R.string.pref_name);
         sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
@@ -233,12 +234,12 @@ public class GroupActivity extends AppCompatActivity {
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
 
-                //store data to shared prefs for next transaction creation
+                //store listData to shared prefs for next transaction creation
                 editor.putString(getString(R.string.pref_payer_lru), payer);
                 editor.putStringSet(getString(R.string.pref_involved_lru), new HashSet<>(involved));
                 editor.apply();
 
-                //Create transaction from the intent data
+                //Create transaction from the intent listData
                 Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
                 group.addTransaction(transaction);
 
