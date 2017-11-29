@@ -28,6 +28,11 @@ public class ListParticipantsCheckAdapter extends ArrayAdapter<ListParticipantsC
             this.name = name;
         }
 
+        public ParticipantCheck(String name, boolean checked){
+            this.name = name;
+            this.checked = checked;
+        }
+
         public void changeCheck(){
             checked = !checked;
         }
