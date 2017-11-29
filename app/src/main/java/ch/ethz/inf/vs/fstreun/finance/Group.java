@@ -25,11 +25,26 @@ public class Group {
     // ID of the corresponding session of this group
     private final UUID sessionID;
 
+    // default Participant owner of the device where this group is stored
+    private String deviceOwner;
+
     public static final String PARTICIPANTS_KEY = "participants_key";
     public static final String TRANSACTIONS_KEY = "transactions_key";
     public static final String SESSION_ID_KEY = "session_id_key";
+    public static final String DEVICE_OWNER_KEY = "device_owner_key";
 
-    private static final String TAG = "GroupTAG";
+    private static final String TAG = "###GroupTAG";
+
+    /**
+     * creates an empty group from sessionID
+     * @param sessionID
+     */
+    public Group (UUID sessionID){
+        this.sessionID = sessionID;
+
+        //empty participant list and empty transaction list and no default participant
+        //already done
+    }
 
     /**
      * creates a group
@@ -37,6 +52,7 @@ public class Group {
      *          JSONArray of Strings: participants as names
      *          JSONArray of JSONObjects: transaction
      *          String: containing the UUID
+     *          String: device owner
      * @throws JSONException
      */
     public Group (JSONObject o) throws JSONException {
@@ -61,6 +77,14 @@ public class Group {
         // sessionID
         sessionID = UUID.fromString(o.getString(SESSION_ID_KEY));
 
+        // device owner
+        try {
+            deviceOwner = o.getString(DEVICE_OWNER_KEY);
+            addParticipant(deviceOwner);
+        } catch (JSONException e){
+            deviceOwner = null;
+        }
+
         //check if all involved users are in the participants list. if not: add them
         for (Transaction t : transactions){
             for (String p : t.involved){
@@ -84,6 +108,22 @@ public class Group {
      */
     public List<Transaction> getTransactions() {
         return transactions;
+    }
+
+    /**
+     * getter function for default participant
+     * @return defaultparticipant as String, null if not defined
+     */
+    public String getDeviceOwner() {
+        return deviceOwner;
+    }
+
+    /**
+     * setter function for default participant
+     * @param deviceOwner
+     */
+    public void setDeviceOwner(String deviceOwner) {
+        this.deviceOwner = deviceOwner;
     }
 
     /**
@@ -113,7 +153,8 @@ public class Group {
      * @param p will be added to the list of participants
      */
     public void addParticipant(String p){
-        participants.add(p);
+        // if p not already in participants add him to participants
+        if (!participants.contains(p)) participants.add(p);
     }
 
 
@@ -142,6 +183,9 @@ public class Group {
         //session ID
         o.put(SESSION_ID_KEY, sessionID.toString());
 
+        //device owner
+        o.put(DEVICE_OWNER_KEY, deviceOwner);
+
         return o;
     }
 
@@ -159,7 +203,7 @@ public class Group {
     /**
      * this function is used to determine the value which a participant p has to pay
      * (resp. how much p will get from other users)
-     * @param p a person
+     * @param p a participant
      * @return
      */
     public double toPay(String p){

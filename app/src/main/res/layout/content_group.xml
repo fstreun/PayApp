@@ -10,11 +10,24 @@
     tools:showIn="@layout/activity_group">
 
 
-    <TextView
-        android:id="@+id/textView_main"
+    <LinearLayout
+        android:id="@+id/lin_lay_deviceOwner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Main Text View" />
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/textView_device_owner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="name" />
+        <TextView
+            android:id="@+id/textView_ownToPay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="1000" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/listView_main"

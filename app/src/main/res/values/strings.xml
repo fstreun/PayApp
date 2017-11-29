@@ -6,6 +6,10 @@
     <string name="group_secret">Group Secret</string>
     <string name="join">Join</string>
     <string name="change_secret">Change Secret</string>
+    <string name="path_groups">groups</string>
     <string name="key_groups">key_groups</string>
     <string name="path_sessions">sessions</string>
+    <string name="pref_name">preferences</string>
+    <string name="pref_payer_lru">pref_payer_from_last_transaction</string>
+    <string name="pref_involved_lru">pref_involved_from_last_trans_crea</string>
 </resources>

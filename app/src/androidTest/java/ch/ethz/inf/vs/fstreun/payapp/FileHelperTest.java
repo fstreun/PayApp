@@ -11,8 +11,8 @@ import java.io.FileNotFoundException;
 
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by fabio on 11/25/17.

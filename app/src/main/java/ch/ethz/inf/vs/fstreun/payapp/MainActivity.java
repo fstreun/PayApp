@@ -3,27 +3,22 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
-import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,9 +39,12 @@ public class MainActivity extends AppCompatActivity {
         listViewGroup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                groups.get(position);
+                Group g = groups.get(position);
                 Intent intent = new Intent(getApplicationContext(), GroupActivity.class);
-                // TODO: add group id and group name to intent
+
+                // add group id and group name to intent
+                intent.putExtra(GroupActivity.KEY_GROUP_ID, g.groupID.toString());
+                intent.putExtra(GroupActivity.KEY_GROUP_NAME, g.groupName);
                 startActivity(intent);
             }
         });
@@ -146,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * minimal class definition of groups
      */
-    class Group implements Serializable {
+    class Group {
         // identifies group
         final static String KEY_UUID = "key_id";
         final UUID groupID;
