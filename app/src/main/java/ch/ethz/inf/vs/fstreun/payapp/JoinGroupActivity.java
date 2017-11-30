@@ -24,7 +24,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
         editTextGroupSecret = findViewById(R.id.edittext_group_secret);
 
-        final Button buttonJoin = findViewById(R.id.button_join);
+        final Button buttonJoin = findViewById(R.id.button_search);
         buttonJoin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

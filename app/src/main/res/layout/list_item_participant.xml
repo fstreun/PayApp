@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
     <LinearLayout
@@ -13,17 +14,17 @@
             android:id="@+id/textView_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Participant"
             android:layout_margin="8dp"
+            tools:text="Participant"
             />
 
         <TextView
             android:id="@+id/textView_toPay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="right"
-            android:text="+ CHF 16"
-            android:layout_margin="8dp"/>
+            android:gravity="end"
+            android:layout_margin="8dp"
+            tools:text="+ 16.50"/>
 
     </LinearLayout>
 

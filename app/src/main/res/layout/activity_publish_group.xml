@@ -12,14 +12,27 @@
         android:text="@string/group_secret"/>
 
     <TextView
+        android:id="@+id/textView_groupSecret"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="8855"/>
+        tools:text="8855"/>
 
     <Button
+        android:id="@+id/button_changeSecret"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/change_secret"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Group ID"/>
+
+    <TextView
+        android:id="@+id/groupID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="ACTUAL GROUP ID"/>
 
 
 
