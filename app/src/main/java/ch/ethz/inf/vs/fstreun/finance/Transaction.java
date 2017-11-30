@@ -77,6 +77,12 @@ public class Transaction {
 
     }
 
+    public Transaction reverse(){
+        String newComment = "DELETE TRANSACTION: " + comment;
+        Transaction result = new Transaction(creator, payer, involved, -amount, newComment);
+        return result;
+    }
+
     /**
      * getter function for amount
      * @return

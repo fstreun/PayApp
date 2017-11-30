@@ -22,6 +22,7 @@ public class FinanceUnitTest {
 
     @Test
     public void test1() throws JSONException {
+
         // creating transaction
         UUID creatorUuid = UUID.randomUUID();
         List<String> involved = new ArrayList<>(2);
@@ -229,6 +230,42 @@ public class FinanceUnitTest {
                 "John has to pay " + johnToPay);
         System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
         assert(1 == seppToPay+johnToPay);
+
+
+    }
+
+    // reverse transaction
+    @Test
+    public void test5(){
+        // creating transaction1
+        UUID creatorUuid = UUID.randomUUID();
+        List<String> involved = new ArrayList<>(2);
+        involved.add("Sepp Payer");
+        involved.add("John Consumer");
+        double amount = 2000.0;
+        Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
+                "beer");
+
+        // creating transaction2
+        Transaction tReverse = t.reverse();
+
+        //creating group
+        Group g = new Group(UUID.randomUUID());
+        g.addTransaction(t);
+        g.addTransaction(tReverse);
+        g.addTransaction(t);
+
+        // get toPay value
+        double seppToPay = g.toPay("Sepp Payer");
+        double johnToPay = g.toPay("John Consumer");
+
+        //System.out.println("John has to pay: " + johnToPay);
+        System.out.println("Sepp has to pay " + seppToPay + "\n" +
+                "John has to pay " + johnToPay);
+        System.out.println("sumOfAllTransactions " + g.sumOfAllTransactions());
+
+
+
     }
 
 }
