@@ -1,62 +1,160 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by fabio on 11/12/17.
- * Basic interface of a chain.
+ * possibly data implementation
  */
 
-public interface Chain extends Iterable<Block>{
+public class Chain implements ChainJSON, ChainInterface {
 
-
-    /**
-     * Appends block to the end of the chain if length == elength
-     * @param ablock to be appended
-     * @param elength expected length of the chain (elength >= 0)
-     * @return actual length before appending
-     */
-    public int append(Block ablock, int elength);
+    private ArrayList<Block> data = new ArrayList<>();
 
     /**
-     * Appends chain to the end of the chain if elength <= length
-     * @param achain chain to be appended
-     * @param elength expected length of chain (elength >= 0)
-     * @return actuall length before appending
+     * simple creation of chain
      */
-    public int append(Chain achain, int elength);
+    public Chain(){}
 
-    /**
-     * To access a block in the chain
-     * @param position of the block in the chain
-     * @return a read only block
-     */
-    public Block get(int position);
+    public Chain(JSONArray object) throws JSONException {
+        int length = object.length();
+        for (int i = 0; i < length; i++){
+            data.add((Block.createFromJSON(object.getJSONObject(i))));
+        }
+    }
 
-    /**
-     * To access a contiguous list of blocks.
-     * NOT THE ACTUAL DATA REPRESENTATION OF THE CHAIN!
-     * @param start position of the first block to be in the list
-     * @return a copy of the sub chain
-     */
-    public Chain getSubChain(int start);
-
-    /**
-     * To access a contiguous list of all blocks of the chain
-     * NOT THE ACTUAL DATA REPRESENTATION OF THE CHAIN!
-     * @return a copy of the data
-     */
-    public List<Block> getBlocks();
+    public JSONArray toJSON() throws JSONException {
+        JSONArray array = new JSONArray();
+        for (Block b : data){
+            array.put(b.getJSONObject());
+        }
+        return array;
+    }
 
 
-    /**
-     * number of blocks in the chain
-     * @return length
-     */
-    public int length();
+    public String toString(){
+        try {
+            return toJSON().toString();
+        } catch (JSONException e) {
+            return "Failed to create String of Chain";
+        }
+    }
 
+
+    @Override
+    public int append(Chain chain, int elength) {
+        int length = data.size();
+        for (int i = length - elength; i < chain.length(); i++){
+            data.add(chain.data.get(i).clone());
+        }
+        return length;
+    }
+
+    @Override
+    public int append(Block block, int elength) {
+        int length = data.size();
+        if (length == elength){
+            data.add(block.clone());
+        }
+        return length;
+    }
+
+    @Override
+    public Chain getSubChain(int start){
+        Chain res = new Chain();
+        int size = data.size();
+        for (int i = start; i < size; i++){
+            res.data.add(data.get(i).clone());
+        }
+        return res;
+    }
+
+
+    @Override
+    public Block getBlock(int position) {
+        return data.get(position).clone();
+    }
+
+    @Override
+    public int length() {
+        return data.size();
+    }
+
+
+    @Override
+    public Chain clone() {
+        Chain res = new Chain();
+        for (Block b : data){
+            res.data.add(b.clone());
+        }
+        return res;
+    }
+
+
+
+    @Override
+    public List<Block> getBlocks() {
+        ArrayList<Block> res = new ArrayList<>(data.size());
+        for (Block b : data){
+            res.add(b.clone());
+        }
+        return res;
+    }
+
+    @Override
+    public List<Block> getBlocks(int start) {
+        ArrayList<Block> res = new ArrayList<>();
+        int i = data.size() - start;
+        for (;i < data.size(); i++){
+            res.add(data.get(i).clone());
+        }
+        return res;
+    }
+
+
+
+    @Override
+    public Integer appendJSON(JSONArray chain, int expected) throws JSONException {
+        int actual = data.size();
+
+        if (actual < expected) {
+            // block misses
+            return actual;
+        }
+
+        // first element to be added from chain
+        int start = actual - expected;
+
+        List<Block> toAppend = new ArrayList<>();
+        for (int i = start; i < chain.length(); i++){
+            // append as many blocks as possible
+            Block b = Block.createFromJSON(chain.getJSONObject(i));
+            data.add(b);
+        }
+        return actual;
+    }
+
+    @Override
+    public Integer appendJSON(JSONObject block, int expected) {
+        return null;
+    }
+
+    @Override
+    public JSONArray subChainJSON(int start) throws JSONException {
+        JSONArray array = new JSONArray();
+        for (int i = start; i < data.size(); i++){
+            array.put(data.get(i).getJSONObject());
+        }
+        return array;
+    }
+
+    @Override
+    public JSONObject getBlockJSON(int position) {
+        return null;
+    }
 }

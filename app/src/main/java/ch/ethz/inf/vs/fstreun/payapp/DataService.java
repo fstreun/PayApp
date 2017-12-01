@@ -15,12 +15,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import ch.ethz.inf.vs.fstreun.datasharing.Block;
-import ch.ethz.inf.vs.fstreun.datasharing.Chain;
-import ch.ethz.inf.vs.fstreun.datasharing.ChainImpl;
-import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
+import ch.ethz.inf.vs.fstreun.datasharing.ChainInterface;
+import ch.ethz.inf.vs.fstreun.datasharing.SessionClientInterface;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
-import ch.ethz.inf.vs.fstreun.datasharing.SessionInterface;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 /**
@@ -51,41 +48,44 @@ public class DataService extends Service {
 
         /**
          * Return this instance of LocalService so clients can call public methods
+         *
          * @return instance of service
          */
-        DataService getService(){
+        DataService getService() {
             return DataService.this;
         }
 
         /**
          * access for network manipulating one session
+         *
          * @param sessionID of the session to be manipulated
          * @return access interface to session if exists, else null
          */
-        SessionNetworkAccess getSessionNetworkAccess(UUID sessionID){
+        SessionNetworkAccess getSessionNetworkAccess(UUID sessionID) {
             if (sessions.containsKey(sessionID)) {
                 return new SessionNetworkAccess(sessionID);
-            }else{
+            } else {
                 return null;
             }
         }
 
         /**
          * access for client manipulating one session.
+         *
          * @param sessionID of the session
          * @return access interface to session if exists, else null
          */
         SessionClientAccess getSessionClientAccess(UUID sessionID) {
             if (sessions.containsKey(sessionID)) {
                 return new SessionClientAccess(sessionID);
-            }else{
+            } else {
                 return null;
             }
         }
 
 
         // TODO: return access for network
-        void getNetworkAccess(){
+        void getNetworkAccess() {
 
         }
     }
@@ -107,26 +107,27 @@ public class DataService extends Service {
     // all sessions stored in the device
     private Map<UUID, SessionImpl> sessions;
 
-    public final boolean addSession(UUID sessionID, SessionImpl session){
-        if (sessions.containsKey(sessionID)){
+    public final boolean addSession(UUID sessionID, SessionImpl session) {
+        if (sessions.containsKey(sessionID)) {
             return false;
-        }else {
+        } else {
             sessions.put(sessionID, session);
             return true;
         }
     }
 
-    public final boolean removeSession(UUID sessionID){
+    public final boolean removeSession(UUID sessionID) {
         return !(null == sessions.remove(sessionID));
     }
 
     /**
      * load session from file
+     *
      * @param sessionID to be loaded (also file name of session)
      * @return session if exists and possible to be parsed
      */
     @Nullable
-    private SessionImpl loadSession(UUID sessionID){
+    private SessionImpl loadSession(UUID sessionID) {
         String path = getString(R.string.path_sessions);
         String fileName = sessionID.toString();
         FileHelper fileHelper = new FileHelper(this);
@@ -148,10 +149,11 @@ public class DataService extends Service {
 
     /**
      * stores session to file
+     *
      * @param session
      */
-    private boolean storeSession(SessionImpl session){
-        if (session == null){
+    private boolean storeSession(SessionImpl session) {
+        if (session == null) {
             return true;
         }
 
@@ -161,7 +163,7 @@ public class DataService extends Service {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        if (content == null){
+        if (content == null) {
             return false;
         }
 
@@ -169,7 +171,8 @@ public class DataService extends Service {
         return fileHelper.writeToFile(getString(R.string.path_sessions), session.getSessionID().toString(), content);
     }
 
-    public final class SessionClientAccess implements SessionClient{
+
+    public final class SessionClientAccess implements SessionClientInterface {
 
         private final UUID sessionID;
 
@@ -177,73 +180,46 @@ public class DataService extends Service {
             this.sessionID = sessionID;
         }
 
-        private SessionClient getSession(){
+        private SessionClientInterface getSession() {
             return sessions.get(sessionID);
-        }
-
-        /**
-         * TODO: calls synchronize on the network service for this session
-         */
-        public void synchronize(){
-
         }
 
         @Override
         public boolean add(String content) {
-            SessionClient s = getSession();
-            if (s == null){
+            SessionClientInterface s = getSession();
+            if (s == null) {
                 return false;
-            }else {
+            } else {
                 return s.add(content);
             }
         }
 
         @Override
         public List<String> getContent() {
-            SessionClient s = getSession();
-            if (s == null){
+            SessionClientInterface s = getSession();
+            if (s == null) {
                 return null;
-            }else {
+            } else {
                 return s.getContent();
             }
         }
 
         @Override
         public List<String> getContentAfter(Map<UUID, Integer> start) {
-            SessionClient s = getSession();
-            if (s == null){
+            SessionClientInterface s = getSession();
+            if (s == null) {
                 return null;
-            }else {
+            } else {
                 return s.getContentAfter(start);
             }
         }
 
         @Override
-        public Map<UUID, ? extends Chain> getContentMap() {
-            SessionClient s = getSession();
-            if (s == null){
-                return null;
-            }else {
-                return s.getContentMap();
-            }
-        }
-
-        @Override
-        public Map<UUID, ? extends Chain> getContentMapAfter(Map<UUID, Integer> start) {
-            SessionClient s = getSession();
-            if (s == null){
-                return null;
-            }else {
-                return s.getContentMapAfter(start);
-            }
-        }
-
-        @Override
         public UUID getUserID() {
-            SessionClient s = getSession();
-            if (s == null){
+            SessionClientInterface s = getSession();
+            if (s == null) {
                 return null;
-            }else {
+            } else {
                 return s.getUserID();
             }
         }
@@ -255,9 +231,7 @@ public class DataService extends Service {
     }
 
 
-
-
-    public class SessionNetworkAccess implements SessionInterface<ChainImpl> {
+    public final class SessionNetworkAccess {
 
         private final UUID sessionID;
 
@@ -265,49 +239,26 @@ public class DataService extends Service {
             this.sessionID = sessionID;
         }
 
-        private SessionImpl getSession(){
+        private SessionImpl getSession() {
             return sessions.get(sessionID);
         }
 
-
-        @Override
-        public Map<UUID, ChainImpl> getData() {
+        public JSONObject getData(){
             return null;
         }
 
-        @Override
-        public Map<UUID, ChainImpl> getDataAfter(Map<UUID, Integer> start) {
+        public JSONObject getData(Map<UUID, Integer> after){
             return null;
         }
 
-        @Override
-        public Map<UUID, Integer> put(Map<UUID, Chain> chainMap, Map<UUID, Integer> expected) {
+        public Map<UUID, Integer> getLength(){
             return null;
         }
 
-        @Override
-        public int put(UUID userID, Chain chain, int expected) {
-            return 0;
-        }
-
-        @Override
-        public int put(UUID userID, Block block, int expected) {
-            return 0;
-        }
-
-        @Override
-        public Map<UUID, Integer> getLength() {
+        public Map<UUID, Integer> putData(JSONObject mapData, Map<UUID, Integer> expected){
             return null;
         }
 
-        @Override
-        public Set<UUID> getAllUserID() {
-            return null;
-        }
 
-        @Override
-        public UUID getSessionID() {
-            return null;
-        }
     }
 }

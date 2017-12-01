@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.datasharing.Block;
+import ch.ethz.inf.vs.fstreun.datasharing.ChainInterface;
 import ch.ethz.inf.vs.fstreun.datasharing.Chain;
-import ch.ethz.inf.vs.fstreun.datasharing.ChainImpl;
 import ch.ethz.inf.vs.fstreun.datasharing.Session;
-import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
+import ch.ethz.inf.vs.fstreun.datasharing.SessionClientInterface;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
 
 import static org.junit.Assert.*;
@@ -25,9 +25,29 @@ public class SessionUnitTest {
 
 
     @Test
+    public void session_test() throws Exception {
+        UUID sessionID = UUID.randomUUID();
+        Session session = new Session(sessionID);
+        assertEquals("session ID expected", sessionID, session.getSessionID());
+
+        System.out.println(session);
+
+        UUID id = UUID.randomUUID();
+        Chain chain = new Chain();
+        chain.append(Block.createWithContent("content"),0);
+        System.out.println(chain);
+
+        session.putChain(id, chain, 0);
+
+        System.out.println(session);
+
+
+    }
+
+    @Test
     public void session_creation() throws Exception {
         UUID sessionID = UUID.randomUUID();
-        Session<ChainImpl> session = new Session<>(sessionID, new ChainImpl());
+        Session session = new Session(sessionID);
         assertEquals("session ID expected", sessionID, session.getSessionID());
     }
 
@@ -35,29 +55,29 @@ public class SessionUnitTest {
     @Test
     public void session_json() throws Exception {
         UUID sessionID = UUID.randomUUID();
-        Session<ChainImpl> session = new Session<>(sessionID, new ChainImpl());
+        Session session = new Session(sessionID);
         String s = session.toJSON().toString();
 
-        session = new Session<ChainImpl>(new JSONObject(s), new ChainImpl());
+        session = new Session(new JSONObject(s));
         assertEquals("session ID expected", sessionID, session.getSessionID());
     }
 
     @Test
     public void session_emptyData() throws Exception {
         UUID sessionID = UUID.randomUUID();
-        Session<ChainImpl> session = new Session<>(sessionID, new ChainImpl());
+        Session session = new Session(sessionID);
 
-        assert session.put(new HashMap<UUID, Chain>(0), new HashMap<UUID, Integer>(0)).isEmpty();
+        assert session.putData(new HashMap<UUID, Chain>(0), new HashMap<UUID, Integer>(0)).isEmpty();
 
         UUID user1ID = UUID.randomUUID();
-        assert 0 == session.put(user1ID, new ChainImpl().createEmpty(), 0);
-        assert 0 == session.put(user1ID, new ChainImpl().createEmpty(), 0);
+        assert 0 == session.putChain(user1ID, new Chain(), 0);
+        assert 0 == session.putChain(user1ID, new Chain(), 0);
 
         assertTrue("no listData expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
 
         String s = session.toJSON().toString();
 
-        session = new Session<ChainImpl>(new JSONObject(s), new ChainImpl());
+        session = new Session(new JSONObject(s));
 
         assertEquals("session ID expected", sessionID, session.getSessionID());
         assertTrue("no listData expected", ( null == session.getLength().get(user1ID) || 0 == session.getLength().get(user1ID)));
@@ -66,34 +86,36 @@ public class SessionUnitTest {
     @Test
     public void session_data() throws Exception {
         UUID sessionID = UUID.randomUUID();
-        Session<ChainImpl> session = new Session<>(sessionID, new ChainImpl());
+        Session session = new Session(sessionID);
 
         UUID user1ID = UUID.randomUUID();
-        Chain chain1 = session.chainFactory.createEmpty();
-        chain1.append(Block.createWithContent("first"), 0);
-        chain1.append(Block.createWithContent("second"), 1);
+        Chain chain1 = new Chain();
+        Integer i = chain1.append(Block.createWithContent("first"), 0);
+        assertEquals("listData size expected", new Integer(0), i);
+        i = chain1.append(Block.createWithContent("second"), 1);
+        assertEquals("listData size expected", new Integer(1), i);
 
 
         HashMap<UUID, Chain> data = new HashMap<>(2);
         data.put(user1ID, chain1);
         HashMap<UUID, Integer> expected = new HashMap<>(2);
         expected.put(user1ID, 0);
-        session.put(data, expected);
+        session.putData(data, expected);
 
-        session.put(user1ID, new ChainImpl().createEmpty(), 2);
-        session.put(user1ID, Block.createWithContent("third"), 2);
-        session.put(user1ID, Block.createWithContent("fourth"),3);
+        session.putChain(user1ID, new Chain(), 2);
+        session.putBlock(user1ID, Block.createWithContent("third"), 2);
+        session.putBlock(user1ID, Block.createWithContent("fourth"),3);
 
-        ChainImpl chain = session.chainFactory.createEmpty();
+        Chain chain = new Chain();
         chain.append(Block.createWithContent("fifth"), 0);
         chain.append(Block.createWithContent("sixth"), 1);
-        session.put(user1ID, chain, 4);
+        session.putChain(user1ID, chain, 4);
 
         assertEquals("listData size expected", new Integer(6), session.getLength().get(user1ID));
 
         String s = session.toJSON().toString();
 
-        session = new Session<ChainImpl>(new JSONObject(s), new ChainImpl());
+        session = new Session(new JSONObject(s));
 
         assertEquals("session ID expected", sessionID, session.getSessionID());
         assertEquals("listData size expected", new Integer(6), session.getLength().get(user1ID));
@@ -127,7 +149,7 @@ public class SessionUnitTest {
         assertEquals("user ID expected", userID, session.getUserID());
 
 
-        String content_j = session.getData().get(userID).get(0).getContent();
+        String content_j = session.getData().get(userID).getBlock(0).getContent();
         assertEquals("content compared", content, content_j);
     }
 
@@ -137,7 +159,7 @@ public class SessionUnitTest {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
         SessionImpl session = new SessionImpl(sessionID, userID);
-        SessionClient client = session;
+        SessionClientInterface client = session;
 
         String content = "this is content";
         client.add(content);
@@ -156,7 +178,7 @@ public class SessionUnitTest {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
         SessionImpl session = new SessionImpl(sessionID, userID);
-        SessionClient client = session;
+        SessionClientInterface client = session;
 
         String content = "this is content";
         String content2 = "2nd";
