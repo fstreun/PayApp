@@ -13,7 +13,7 @@ import java.util.UUID;
  *
  */
 
-public class SessionImpl extends Session<ChainImpl> implements SessionClient {
+public class SessionImpl extends Session implements SessionClientInterface {
 
 
     // identifier of the user which uses this object
@@ -21,12 +21,12 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
     private static final String JSON_KEY_USER_ID = "user_id";
 
     public SessionImpl(UUID sessionID, UUID userID) {
-        super(sessionID, new ChainImpl());
+        super(sessionID);
         this.userID = userID;
     }
 
     public SessionImpl(JSONObject object) throws JSONException {
-        super(object, new ChainImpl());
+        super(object);
 
         String errors = "";
         boolean error = false;
@@ -59,7 +59,7 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
         if (length == null){
             length = 0;
         }
-        return length == put(userID, Block.createWithContent(content), length);
+        return length == putBlock(userID, Block.createWithContent(content), length);
     }
 
     @Override
@@ -69,17 +69,7 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
 
     @Override
     public List<String> getContentAfter(Map<UUID, Integer> start) {
-        return chainsToList(getDataAfter(start));
-    }
-
-    @Override
-    public Map<UUID, ? extends Chain> getContentMap() {
-        return getData();
-    }
-
-    @Override
-    public Map<UUID, ? extends Chain> getContentMapAfter(Map<UUID, Integer> start) {
-        return getDataAfter(start);
+        return chainsToList(getData(start));
     }
 
     @Override
@@ -88,9 +78,9 @@ public class SessionImpl extends Session<ChainImpl> implements SessionClient {
     }
 
 
-    private List<String> chainsToList(Map<UUID, ChainImpl> chains){
+    private List<String> chainsToList(Map<UUID, Chain> chains){
         List<String> res = new ArrayList<>();
-        for (ChainImpl c : chains.values()){
+        for (Chain c : chains.values()){
             List<Block> blocks = c.getBlocks();
             for (Block b : blocks){
                 res.add(b.getContent());

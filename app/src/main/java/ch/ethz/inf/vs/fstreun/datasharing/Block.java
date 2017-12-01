@@ -36,4 +36,8 @@ public final class Block {
     public String getContent() {
         return content;
     }
+
+    public Block clone(){
+        return new Block(content);
+    }
 }
