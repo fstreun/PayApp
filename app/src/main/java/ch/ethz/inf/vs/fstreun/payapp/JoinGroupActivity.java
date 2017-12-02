@@ -45,7 +45,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
 
     private void join(UUID sessionID){
-        // TODO: create group with that sessionID
+        // TODO: create group with that sessionIDs
         UUID groupID = UUID.randomUUID();
         Group group = null;// = new Group();
 

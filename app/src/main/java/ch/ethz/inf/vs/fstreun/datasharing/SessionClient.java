@@ -13,19 +13,19 @@ import java.util.UUID;
  *
  */
 
-public class SessionImpl extends Session implements SessionClientInterface {
+public class SessionClient extends Session implements SessionClientInterface {
 
 
     // identifier of the user which uses this object
     private final UUID userID;
     private static final String JSON_KEY_USER_ID = "user_id";
 
-    public SessionImpl(UUID sessionID, UUID userID) {
+    public SessionClient(UUID sessionID, UUID userID) {
         super(sessionID);
         this.userID = userID;
     }
 
-    public SessionImpl(JSONObject object) throws JSONException {
+    public SessionClient(JSONObject object) throws JSONException {
         super(object);
 
         String errors = "";
@@ -59,7 +59,7 @@ public class SessionImpl extends Session implements SessionClientInterface {
         if (length == null){
             length = 0;
         }
-        return length == putBlock(userID, Block.createWithContent(content), length);
+        return (length == putBlock(userID, Block.createWithContent(content), length));
     }
 
     @Override

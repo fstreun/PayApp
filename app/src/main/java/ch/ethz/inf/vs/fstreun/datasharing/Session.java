@@ -24,7 +24,7 @@ public class Session implements SessionInterface, SessionJSON{
     private static final String JSON_KEY_SESSION_ID = "session_id";
 
     // data in the session
-    final Map<UUID, Chain> data = new HashMap<>();
+    private final Map<UUID, Chain> data = new HashMap<>();
     private static final String JSON_KEY_DATA = "data";
 
 

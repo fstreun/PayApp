@@ -7,11 +7,10 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.datasharing.Block;
-import ch.ethz.inf.vs.fstreun.datasharing.ChainInterface;
 import ch.ethz.inf.vs.fstreun.datasharing.Chain;
 import ch.ethz.inf.vs.fstreun.datasharing.Session;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClientInterface;
-import ch.ethz.inf.vs.fstreun.datasharing.SessionImpl;
+import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
 
 import static org.junit.Assert.*;
 
@@ -127,7 +126,7 @@ public class SessionUnitTest {
     public void sessionImpl_creation() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        SessionImpl s = new SessionImpl(sessionID, userID);
+        SessionClient s = new SessionClient(sessionID, userID);
         assertEquals("session ID expected", sessionID, s.getSessionID());
         assertEquals("user ID expected", userID, s.getUserID());
     }
@@ -136,14 +135,14 @@ public class SessionUnitTest {
     public void sessionImpl_json() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        SessionImpl session = new SessionImpl(sessionID, userID);
+        SessionClient session = new SessionClient(sessionID, userID);
 
         String content = "this is content";
         session.add(content);
 
         String s = session.toJSON().toString();
 
-        session = new SessionImpl(new JSONObject(s));
+        session = new SessionClient(new JSONObject(s));
 
         assertEquals("session ID expected", sessionID, session.getSessionID());
         assertEquals("user ID expected", userID, session.getUserID());
@@ -158,7 +157,7 @@ public class SessionUnitTest {
     public void sessionClient_json() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        SessionImpl session = new SessionImpl(sessionID, userID);
+        SessionClient session = new SessionClient(sessionID, userID);
         SessionClientInterface client = session;
 
         String content = "this is content";
@@ -166,7 +165,7 @@ public class SessionUnitTest {
 
         JSONObject jSession = session.toJSON();
 
-        session = new SessionImpl(jSession);
+        session = new SessionClient(jSession);
         client = session;
 
         String jContent = client.getContent().get(0);
@@ -177,7 +176,7 @@ public class SessionUnitTest {
     public void sessionClient_data() throws Exception {
         UUID sessionID = UUID.randomUUID();
         UUID userID = UUID.randomUUID();
-        SessionImpl session = new SessionImpl(sessionID, userID);
+        SessionClient session = new SessionClient(sessionID, userID);
         SessionClientInterface client = session;
 
         String content = "this is content";
@@ -187,7 +186,7 @@ public class SessionUnitTest {
 
         JSONObject j = session.toJSON();
 
-        session = new SessionImpl(j);
+        session = new SessionClient(j);
 
         assertEquals("content 1 compared", content, client.getContent().get(0));
         assertEquals("content 2 compared", content2, client.getContent().get(1));

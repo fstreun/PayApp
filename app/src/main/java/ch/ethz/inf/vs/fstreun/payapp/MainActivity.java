@@ -1,9 +1,12 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +24,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+    private final String TAG = "MainActivity";
+
+    DataService dataService;
+    boolean bound = false;
 
     ArrayAdapter<Group> adapter;
     List<Group> groups;
@@ -49,6 +56,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind DataService
+        Intent intent = new Intent(this, DataService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            bound = false;
+        }
+    }
+
+    ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (name.getClassName().equals(DataService.class.getName())){
+                DataService.LocalBinder binder = (DataService.LocalBinder) service;
+                dataService = binder.getService();
+                bound = true;
+                Log.d(TAG, "onServiceConnected: " + name.getClassName());
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
 
 
     private final static int RESULT_CREATE = 1;
