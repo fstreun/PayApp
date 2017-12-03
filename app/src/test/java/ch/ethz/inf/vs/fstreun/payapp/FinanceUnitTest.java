@@ -12,6 +12,8 @@ import java.util.UUID;
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by anton on 23.11.17.
  */
@@ -58,7 +60,7 @@ public class FinanceUnitTest {
         System.out.println("Sepp has to pay " + seppToPay + "\n" +
                 "John has to pay " + johnToPay);
         System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
-        assert(1 == seppToPay+johnToPay);
+        assertEquals("some Message", 1.0, seppToPay+johnToPay, 0.001);
 
     }
 
@@ -173,7 +175,7 @@ public class FinanceUnitTest {
         System.out.println("Sepp has to pay " + seppToPay + "\n" +
                 "John has to pay " + johnToPay);
         System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
-        assert(1 == seppToPay+johnToPay);
+        assertEquals("some Message", 1.0, seppToPay+johnToPay, 0.001);
 
     }
 
@@ -229,7 +231,7 @@ public class FinanceUnitTest {
         System.out.println("Sepp has to pay " + seppToPay + "\n" +
                 "John has to pay " + johnToPay);
         System.out.println("sumOfAllTransactions " + testWG.sumOfAllTransactions());
-        assert(1 == seppToPay+johnToPay);
+        assertEquals("some Message", 1.0, seppToPay+johnToPay, 0.001);
 
 
     }
@@ -265,7 +267,7 @@ public class FinanceUnitTest {
         System.out.println("sumOfAllTransactions " + g.sumOfAllTransactions());
 
 
-
+        assertFalse("some message", true);
     }
 
 }
