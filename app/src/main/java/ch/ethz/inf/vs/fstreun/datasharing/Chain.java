@@ -37,6 +37,7 @@ public class Chain implements ChainJSON, ChainInterface {
     }
 
 
+     @Override
     public String toString(){
         try {
             return toJSON().toString();

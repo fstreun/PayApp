@@ -96,6 +96,7 @@ public class Session implements SessionInterface, SessionJSON{
     }
 
 
+    @Override
     public String toString(){
         try {
             return toJSON().toString();
@@ -243,7 +244,7 @@ public class Session implements SessionInterface, SessionJSON{
         JSONObject res = new JSONObject();
 
         for (Map.Entry<UUID, Chain> entry : data.entrySet()){
-            Integer s = start.get(start.get(entry.getKey()));
+            Integer s = start.get(entry.getKey());
             if (s == null){
                 s = 0;
             }

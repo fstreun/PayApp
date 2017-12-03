@@ -242,24 +242,30 @@ public class DataServiceTest {
         }
 
 
-        // second round TODO: still fails
+        // second round
         // add data
         for (int i = 0; i < DATANUMBER; i++){
             session1.add("data2 " + i);
         }
 
+        Log.e(TAG, "session1: " + session1.getContent());
+        Log.e(TAG, "session2: " + session2.getContent());
         // get data
         start.put(userID, DATANUMBER);
         data = network1.getData(start);
+        assertEquals(DATANUMBER, data.getJSONArray(userID.toString()).length());
 
         // receive data
         network2.putData(data, start);
 
+        Log.e(TAG, "session2: " + session2.getContent());
         // read data
-        content = session2.getContent();
+        content = session2.getContentAfter(start);
         for (int i = 0; i < DATANUMBER; i++){
             assertTrue(content.get(i).equals("data2 " + i));
         }
+
+
     }
 
 }
