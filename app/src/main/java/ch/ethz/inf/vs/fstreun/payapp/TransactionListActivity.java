@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -31,6 +33,7 @@ public class TransactionListActivity extends AppCompatActivity {
     private String type;
     private Group group;
 
+    // also referred to by the adapter
     List<Transaction> transactionList = new ArrayList<>();
     ListView listView;
 
@@ -43,7 +46,7 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //get information from intent
         Intent intent = getIntent();
-        groupName = intent.getStringExtra(KEY_GROUP_NAME);
+        groupName = intent.getStringExtra(KEY_GROUP_NAME); //TODO: set title
         groupID = UUID.fromString(intent.getStringExtra(KEY_GROUP_ID));
         type = intent.getStringExtra(KEY_FILTER_TYPE);
 
@@ -69,6 +72,7 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //-----------------------------------------------------------------
         //type case distinction
+        // TODO: move to special method which takes the filter string and changes the transactionList
         //-----------------------------------------------------------------
 
         Log.d(TAG, "entering type case distinction");
@@ -110,12 +114,16 @@ public class TransactionListActivity extends AppCompatActivity {
         //todo: take out nextline
         transactionList = group.getTransactions();
 
-        ListTransactionAdapter adapter = new ListTransactionAdapter(this, type,
-                participantName, transactionList);
+        ListTransactionAdapter adapter = new ListTransactionAdapter(this, transactionList);
         listView = findViewById(R.id.listView_transaction);
         listView.setAdapter(adapter);
 
-
-
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // TODO: define action on click
+                // open transaction view
+            }
+        });
     }
 }

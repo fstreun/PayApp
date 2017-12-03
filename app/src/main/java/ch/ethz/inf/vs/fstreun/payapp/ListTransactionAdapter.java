@@ -20,49 +20,24 @@ import ch.ethz.inf.vs.fstreun.finance.Transaction;
 public class ListTransactionAdapter extends BaseAdapter {
 
     private final Context context;
-    private int count;
-
-    // filter
-    private final String type;
-    private final String participantName;
 
 
-    private List<TransactionInList> viewTransactionList;
+    private List<Transaction> transactionList;
 
-    public ListTransactionAdapter(Context context, String type, String participantName, List<Transaction> transactions){
+    public ListTransactionAdapter(Context context, List<Transaction> transactions){
         this.context = context;
-        this.type = type;
-        this.participantName = participantName;
-        viewTransactionList = new ArrayList<>();
-
-        //iterate over all transactions to get the necessary values
-        TransactionInList til = new TransactionInList();
-        for (Transaction t : transactions){
-            til.payer = t.getPayer();
-            til.amount = String.format("%1$.2f", t.getAmount());
-            til.comment = t.getComment();
-            viewTransactionList.add(til);
-            count++;
-        }
-
-    }
-
-    // the necessary values for the listView of transactions
-    public class TransactionInList {
-        public String payer;
-        public String amount;
-        public String comment;
+        transactionList = transactions;
 
     }
 
     @Override
     public int getCount() {
-        return count;
+        return transactionList.size();
     }
 
     @Override
-    public TransactionInList getItem(int position) {
-        return viewTransactionList.get(position);
+    public Transaction getItem(int position) {
+        return transactionList.get(position);
     }
 
     @Override
@@ -73,7 +48,7 @@ public class ListTransactionAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         // Get the data item for this position
-        TransactionInList til = getItem(position);
+        Transaction transaction = getItem(position);
 
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
@@ -82,22 +57,18 @@ public class ListTransactionAdapter extends BaseAdapter {
                     parent, false);
         }
         // Lookup view for data population
-        TextView tvPayer = convertView.findViewById(R.id.textView_payer);
+        TextView tvPayer = convertView.findViewById(R.id.textView_payer_name);
         TextView tvAmount = convertView.findViewById(R.id.textView_amount);
         TextView tvComment = convertView.findViewById(R.id.textView_comment);
 
         // Populate the data into the template view using the data object
-        tvPayer.setText(til.payer);
-        tvAmount.setText(til.amount);
-        tvComment.setText(til.comment);
+        tvPayer.setText(transaction.getPayer());
+        //TODO: define number format somewehre!
+        // tvAmount.setText(transaction.getAmount());
+        tvComment.setText(transaction.getComment());
 
         // Return the completed view to render on screen
         return convertView;
     }
 
-    @Nullable
-    @Override
-    public CharSequence[] getAutofillOptions() {
-        return new CharSequence[0];
-    }
 }
