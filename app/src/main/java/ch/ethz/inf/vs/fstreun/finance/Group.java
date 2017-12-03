@@ -17,10 +17,10 @@ import java.util.UUID;
 public class Group {
 
     // all participants that are involved in or have paid a transaction
-    protected List<String> participants = new ArrayList<>();
+    private List<String> participants = new ArrayList<>();
 
     // list of all transactions in this group
-    protected List<Transaction> transactions = new ArrayList<>();
+    private List<Transaction> transactions = new ArrayList<>();
 
     // ID of the corresponding session of this group
     private final UUID sessionID;
@@ -116,6 +116,10 @@ public class Group {
      */
     public String getDeviceOwner() {
         return deviceOwner;
+    }
+
+    public UUID getSessionID(){
+        return sessionID;
     }
 
     /**

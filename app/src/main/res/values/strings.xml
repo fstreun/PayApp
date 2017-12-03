@@ -14,4 +14,5 @@
     <string name="pref_involved_lru">pref_involved_from_last_trans_crea</string>
     <string name="search">Search</string>
     <string name="group_name">Group Name</string>
+    <string name="key_list_sessionID">key_list_sessionID</string>
 </resources>

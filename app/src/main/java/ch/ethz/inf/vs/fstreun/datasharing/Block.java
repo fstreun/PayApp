@@ -40,4 +40,13 @@ public final class Block {
     public Block clone(){
         return new Block(content);
     }
+
+    @Override
+    public String toString() {
+        try {
+            return getJSONObject().toString();
+        } catch (JSONException e) {
+            return "Failed to create String of Block";
+        }
+    }
 }

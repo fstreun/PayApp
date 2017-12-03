@@ -56,7 +56,7 @@ public class CreateGroupActivity extends AppCompatActivity {
                 // create unique ID for group
                 UUID groupID = UUID.randomUUID();
 
-                //TODO: create new session and get sessionID
+                //TODO: create new session and get sessionIDs
                 UUID sessionID = UUID.randomUUID();
 
                 if (sessionID == null){
@@ -64,7 +64,7 @@ public class CreateGroupActivity extends AppCompatActivity {
                     return true;
                 }
 
-                //TODO: create group with sessionID
+                //TODO: create group with sessionIDs
                 Group group = new Group(sessionID);
 
                 //todo maybe: add deviceOwner in participants
