@@ -1,11 +1,14 @@
 package ch.ethz.inf.vs.fstreun.datasharing;
 
+import android.support.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -59,15 +62,17 @@ public class SessionClient extends Session implements SessionClientInterface {
         if (length == null){
             length = 0;
         }
-        return (length == putBlock(userID, Block.createWithContent(content), length));
+        return (length.equals(putBlock(userID, Block.createWithContent(content), length)));
     }
 
     @Override
+    @NonNull
     public List<String> getContent() {
         return chainsToList(getData());
     }
 
     @Override
+    @NonNull
     public List<String> getContentAfter(Map<UUID, Integer> start) {
         return chainsToList(getData(start));
     }
@@ -78,6 +83,7 @@ public class SessionClient extends Session implements SessionClientInterface {
     }
 
 
+    @NonNull
     private List<String> chainsToList(Map<UUID, Chain> chains){
         List<String> res = new ArrayList<>();
         for (Chain c : chains.values()){

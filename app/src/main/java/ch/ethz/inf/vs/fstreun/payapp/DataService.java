@@ -140,11 +140,24 @@ public class DataService extends Service {
     private Map<UUID, SessionClient> loadedSessions = new HashMap<>();
 
     public final boolean createSession(UUID sessionID, UUID userID) {
-        return sessionIDs.add(sessionID);
+        boolean add = sessionIDs.add(sessionID);
+        if (add){
+            // not yet in the list
+            SessionClient session = new SessionClient(sessionID, userID);
+            loadedSessions.put(sessionID, session);
+            storeSession(session);
+        }
+        return add;
     }
 
     public final boolean removeSession(UUID sessionID) {
-        return sessionIDs.remove(sessionID);
+        boolean remove = sessionIDs.remove(sessionID);
+        if (remove){
+            // session is in the list
+            loadedSessions.remove(sessionID);
+            removeSession(sessionID);
+        }
+        return remove;
     }
 
     public final SessionClient getSession(UUID sessionID){
@@ -229,6 +242,7 @@ public class DataService extends Service {
             this.sessionID = sessionID;
         }
 
+        //TODO: throw exception if session not any more exists
         private SessionClientInterface getSession() {
             return DataService.this.getSession(sessionID);
         }
@@ -292,22 +306,44 @@ public class DataService extends Service {
             return DataService.this.getSession(sessionID);
         }
 
-        public JSONObject getData(){
-            return null;
+        public UUID getSessionID(){
+            return sessionID;
         }
 
-        public JSONObject getData(Map<UUID, Integer> after){
-            return null;
+        @Nullable
+        public JSONObject getData() {
+            JSONObject res;
+            try {
+                res = getSession().getJSON();
+            } catch (JSONException e) {
+                return null;
+            }
+            return res;
+        }
+
+        @Nullable
+        public JSONObject getData(Map<UUID, Integer> after) {
+            JSONObject res = null;
+            try {
+                res = getSession().getJSON(after);
+            } catch (JSONException e) {
+                return null;
+            }
+            return res;
         }
 
         public Map<UUID, Integer> getLength(){
-            return null;
+            return getSession().getLength();
         }
 
+        @Nullable
         public Map<UUID, Integer> putData(JSONObject mapData, Map<UUID, Integer> expected){
-            return null;
+            try {
+                return getSession().appendJSON(mapData, expected);
+            } catch (JSONException e) {
+                return null;
+            }
         }
-
 
     }
 }

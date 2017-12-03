@@ -141,7 +141,12 @@ public class Session implements SessionInterface, SessionJSON{
                 data.put(entry.getKey(), new Chain());
             }
 
-            Integer actual = data.get(entry.getKey()).append(entry.getValue(), expected.get(entry.getKey()));
+            Integer e = expected.get(entry.getKey());
+            if (e == null){
+                e = 0;
+            }
+
+            Integer actual = data.get(entry.getKey()).append(entry.getValue(), e);
             res.put(entry.getKey(), actual);
         }
         return res;
@@ -222,8 +227,13 @@ public class Session implements SessionInterface, SessionJSON{
                 data.put(uKey, new Chain());
             }
 
-            Integer actaul = data.get(uKey).appendJSON(chainMap.getJSONArray(key), expected.get(uKey));
-            res.put(uKey, actaul);
+            Integer e = expected.get(uKey);
+            if (e == null){
+                e = 0;
+            }
+
+            Integer actual = data.get(uKey).appendJSON(chainMap.getJSONArray(key), e);
+            res.put(uKey, actual);
         }
         return res;
     }
@@ -231,8 +241,13 @@ public class Session implements SessionInterface, SessionJSON{
     @Override
     public JSONObject getJSON(Map<UUID, Integer> start) throws JSONException {
         JSONObject res = new JSONObject();
+
         for (Map.Entry<UUID, Chain> entry : data.entrySet()){
-            res.put(entry.getKey().toString(), entry.getValue().subChainJSON(start.get(entry.getKey())));
+            Integer s = start.get(start.get(entry.getKey()));
+            if (s == null){
+                s = 0;
+            }
+            res.put(entry.getKey().toString(), entry.getValue().subChainJSON(s));
         }
         return res;
     }
