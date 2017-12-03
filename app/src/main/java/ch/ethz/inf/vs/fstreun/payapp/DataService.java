@@ -36,6 +36,7 @@ import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class DataService extends Service {
 
+    // all sessions on the device
     Set<UUID> sessionIDs = new HashSet<>();
 
     /**
@@ -44,7 +45,8 @@ public class DataService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        // TODO: load all sessions
+
+        // load all session ID on this device
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         Set<String> ids = sharedPref.getStringSet(getString(R.string.key_list_sessionID), null);
         if (ids != null) {
@@ -59,6 +61,7 @@ public class DataService extends Service {
      */
     @Override
     public void onDestroy() {
+        // store all session ID on this device
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Set<String> set = new HashSet<>();
@@ -67,6 +70,12 @@ public class DataService extends Service {
         }
         editor.putStringSet(getString(R.string.key_list_sessionID), set);
         editor.apply();
+
+
+        // write all cached sessions to files
+        for (SessionClient session : loadedSessions.values()){
+            storeSession(session);
+        }
         super.onDestroy();
     }
 
@@ -136,7 +145,7 @@ public class DataService extends Service {
     actual data service:
      */
 
-    // all sessions stored in the device
+    // all sessions loaded from the file (cached)
     private Map<UUID, SessionClient> loadedSessions = new HashMap<>();
 
     public final boolean createSession(UUID sessionID, UUID userID) {
@@ -155,7 +164,7 @@ public class DataService extends Service {
         if (remove){
             // session is in the list
             loadedSessions.remove(sessionID);
-            removeSession(sessionID);
+            removeSessionFile(sessionID);
         }
         return remove;
     }
@@ -233,8 +242,13 @@ public class DataService extends Service {
         return fileHelper.writeToFile(getString(R.string.path_sessions), session.getSessionID().toString(), content);
     }
 
+    private boolean removeSessionFile(UUID sessionID){
+        FileHelper fileHelper = new FileHelper(this);
+        return fileHelper.removeFile(getString(R.string.path_sessions), sessionID.toString());
+    }
 
-    public final class SessionClientAccess implements SessionClientInterface {
+
+    public final class SessionClientAccess {
 
         private final UUID sessionID;
 
@@ -242,12 +256,15 @@ public class DataService extends Service {
             this.sessionID = sessionID;
         }
 
-        //TODO: throw exception if session not any more exists
+        /**
+         * returns session with sessionID
+         * @return null if not exists
+         */
+        @Nullable
         private SessionClientInterface getSession() {
             return DataService.this.getSession(sessionID);
         }
 
-        @Override
         public boolean add(String content) {
             SessionClientInterface s = getSession();
             if (s == null) {
@@ -257,7 +274,6 @@ public class DataService extends Service {
             }
         }
 
-        @Override
         public List<String> getContent() {
             SessionClientInterface s = getSession();
             if (s == null) {
@@ -267,7 +283,6 @@ public class DataService extends Service {
             }
         }
 
-        @Override
         public List<String> getContentAfter(Map<UUID, Integer> start) {
             SessionClientInterface s = getSession();
             if (s == null) {
@@ -277,7 +292,6 @@ public class DataService extends Service {
             }
         }
 
-        @Override
         public UUID getUserID() {
             SessionClientInterface s = getSession();
             if (s == null) {
@@ -287,7 +301,6 @@ public class DataService extends Service {
             }
         }
 
-        @Override
         public UUID getSessionID() {
             return sessionID;
         }
@@ -302,6 +315,11 @@ public class DataService extends Service {
             this.sessionID = sessionID;
         }
 
+        /**
+         * session with sessionID
+         * @return null if not exists
+         */
+        @Nullable
         private SessionClient getSession() {
             return DataService.this.getSession(sessionID);
         }

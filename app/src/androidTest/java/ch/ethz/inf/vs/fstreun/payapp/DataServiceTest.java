@@ -47,8 +47,8 @@ public class DataServiceTest {
     @ClassRule
     public static final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-    static DataService.LocalBinder binder;
-    static UUID userID;
+    private static DataService.LocalBinder binder;
+    private static UUID userID;
 
 
     /**
@@ -264,6 +264,9 @@ public class DataServiceTest {
         for (int i = 0; i < DATANUMBER; i++){
             assertTrue(content.get(i).equals("data2 " + i));
         }
+
+        removeSession(session1ID);
+        removeSession(session2ID);
 
 
     }

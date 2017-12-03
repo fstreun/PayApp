@@ -96,4 +96,23 @@ public class FileHelper {
         return sb.toString();
     }
 
+    public boolean removeFile(@Nullable String path, String fileName){
+
+        File directory = new File(context.getFilesDir(), path);
+        //Creating an internal dir;
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                return false;
+            }
+        }
+        File file = new File(directory, fileName); //Getting a file within the dir.
+        if(!file.exists()){
+            return false;
+        }
+
+        boolean deleted = file.delete();
+
+        return deleted;
+    }
+
 }
