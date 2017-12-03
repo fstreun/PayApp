@@ -21,6 +21,7 @@ public class Transaction {
     protected final String payer;
     protected final List<String> involved = new ArrayList<>();
     protected final double amount;
+
     protected final String comment;
 
     //JSON keys
@@ -89,6 +90,30 @@ public class Transaction {
      */
     public double getAmount() {
         return amount;
+    }
+
+    /**
+     * getter function for comment
+     * @return
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * getter function for payer
+     * @return
+     */
+    public String getPayer() {
+        return payer;
+    }
+
+    /**
+     * getter function for involved
+     * @return
+     */
+    public List<String> getInvolved() {
+        return involved;
     }
 
     /**
