@@ -284,7 +284,7 @@ public class GroupActivity extends AppCompatActivity {
 
             //make values appear like 49.99 (2 digits after the dot)
             double toPay = group.toPay(defPart);
-            String toPayString = String.format("%1$.2f", toPay);
+            String toPayString = Transaction.doubleToString(toPay);
             tvOwnToPay.setText(toPayString);
 
         }

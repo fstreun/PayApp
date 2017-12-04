@@ -160,4 +160,13 @@ public class Transaction {
         }
         return "";
     }
+
+    /**
+     * global method to get an amount of money as a string of the form 49.99
+     * @param x
+     * @return
+     */
+    public static String doubleToString(double x){
+        return String.format("%1$.2f", x);
+    }
 }

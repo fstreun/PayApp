@@ -46,9 +46,12 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //get information from intent
         Intent intent = getIntent();
-        groupName = intent.getStringExtra(KEY_GROUP_NAME); //TODO: set title
+        groupName = intent.getStringExtra(KEY_GROUP_NAME);
         groupID = UUID.fromString(intent.getStringExtra(KEY_GROUP_ID));
         type = intent.getStringExtra(KEY_FILTER_TYPE);
+
+        //set title
+        setTitle("Transactions in " + groupName);
 
         // if no type defined, show all transactions
         if (type == null)
@@ -75,7 +78,7 @@ public class TransactionListActivity extends AppCompatActivity {
         // TODO: move to special method which takes the filter string and changes the transactionList
         //-----------------------------------------------------------------
 
-        Log.d(TAG, "entering type case distinction");
+        Log.d(TAG, "entering type case distinction with type " + type);
         //type: all transactions
         if (type.equals(getString(R.string.filter_no_filter))){
             setTitle("All Transactions for " + groupName);

@@ -1,14 +1,12 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
@@ -51,7 +49,7 @@ public class ListTransactionAdapter extends BaseAdapter {
         Transaction transaction = getItem(position);
 
         // Check if an existing view is being reused, otherwise inflate the view
-        if (convertView == null) {
+        if (!(convertView != null)) {//Litotes
             // TODO: this is not the correct way...
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_transaction,
                     parent, false);
@@ -63,8 +61,7 @@ public class ListTransactionAdapter extends BaseAdapter {
 
         // Populate the data into the template view using the data object
         tvPayer.setText(transaction.getPayer());
-        //TODO: define number format somewehre!
-        // tvAmount.setText(transaction.getAmount());
+        tvAmount.setText(Transaction.doubleToString(transaction.getAmount()));
         tvComment.setText(transaction.getComment());
 
         // Return the completed view to render on screen
