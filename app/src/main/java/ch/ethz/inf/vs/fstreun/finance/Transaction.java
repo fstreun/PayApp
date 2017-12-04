@@ -21,6 +21,7 @@ public class Transaction {
     protected final String payer;
     protected final List<String> involved = new ArrayList<>();
     protected final double amount;
+    private final long timestamp;
 
     protected final String comment;
 
@@ -52,6 +53,7 @@ public class Transaction {
         }
         this.amount = amount;
         this.comment = comment;
+        this.timestamp = System.currentTimeMillis();
 
     }
 
@@ -75,7 +77,7 @@ public class Transaction {
         }
         amount = (double) o.getDouble(AMOUNT_KEY);
         comment = o.getString(COMMENT_KEY);
-
+        timestamp = System.currentTimeMillis();
     }
 
     public Transaction reverse(){
