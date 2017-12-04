@@ -12,7 +12,8 @@
 
         <TextView
             android:id="@+id/textView_payer_name"
-            android:layout_width="20mm"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             tools:text="Payer"
@@ -20,15 +21,17 @@
 
         <TextView
             android:id="@+id/textView_amount"
-            android:layout_width="wrap_content"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:layout_margin="8dp"
-            tools:text="+ 39.50"/>
+            tools:text="+ 39.50"
+            android:layout_width="0dp" />
 
         <TextView
             android:id="@+id/textView_comment"
-            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="right"
             android:layout_margin="8dp"

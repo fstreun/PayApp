@@ -50,7 +50,9 @@
             android:exported="true" />
         <service android:name=".DataService" />
 
-        <activity android:name=".TransactionListActivity"></activity>
+        <activity android:name=".TransactionListActivity">
+            android:configChanges="orientation|screenSize"
+        </activity>
     </application>
 
 </manifest>
