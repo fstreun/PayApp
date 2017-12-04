@@ -81,14 +81,12 @@ public class TransactionListActivity extends AppCompatActivity {
         Log.d(TAG, "entering type case distinction with type " + type);
         //type: all transactions
         if (type.equals(getString(R.string.filter_no_filter))){
-            setTitle("All Transactions for " + groupName);
             transactionList = group.getTransactions();
 
         //type: filter paid by
         } else if (type.equals(getString(R.string.filter_paid_by_name))) {
             //get payer name
             participantName = intent.getStringExtra(KEY_PARTICIPANT);
-            setTitle(participantName + "'s expenses for " + groupName);
 
             //iterate over all transactions of this group
             for (Transaction t : group.getTransactions()){
@@ -102,7 +100,6 @@ public class TransactionListActivity extends AppCompatActivity {
         } else if (type.equals(getString(R.string.filter_name_involved))){
             //get name
             participantName = intent.getStringExtra(KEY_PARTICIPANT);
-            setTitle("All " + participantName + "'s transactions for " + groupName);
 
             //iterate over all transactions of this group
             for (Transaction t : group.getTransactions()){

@@ -131,6 +131,7 @@ public class GroupActivity extends AppCompatActivity {
                         TransactionListActivity.class);
                 intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_paid_by_name));
+                Log.d(TAG, "type = " + getString(R.string.filter_paid_by_name));
                 intent1.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         adapter.getItem(position).name);
                 intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
