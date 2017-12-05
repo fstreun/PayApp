@@ -148,6 +148,21 @@ public class DataService extends Service {
     // all sessions loaded from the file (cached)
     private Map<UUID, SessionClient> loadedSessions = new HashMap<>();
 
+    public final UUID getUserID(){
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String stringID = sharedPref.getString(getString(R.string.key_deviceID), null);
+        UUID userID;
+        if (stringID == null){
+            userID = UUID.randomUUID();
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(getString(R.string.key_deviceID), userID.toString());
+            editor.apply();
+        }else {
+            userID = UUID.fromString(stringID);
+        }
+        return userID;
+    }
+
     public final boolean createSession(UUID sessionID, UUID userID) {
         boolean add = sessionIDs.add(sessionID);
         if (add){
