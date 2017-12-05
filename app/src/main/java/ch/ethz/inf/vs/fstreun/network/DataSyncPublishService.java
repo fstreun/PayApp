@@ -18,21 +18,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class SessionPublishService extends Service {
+/**
+ * Created by Kaan on 30.11.17.
+ */
 
-    String TAG = "SessionPublishService";
+public class DataSyncPublishService extends Service {
+
+    String TAG = "DataSyncPublishService";
     String SERVICE_TYPE = "_http._tcp.";
-    String SERVICE_NAME = "SessionPublisher";
+    String SERVICE_NAME = "DataSyncPublisher";
     private NsdManager mNsdManager;
     private NsdServiceInfo mServiceInfo;
     private String mServiceName;
     private ServerSocket mServerSocket;
     private int mLocalPort;
     private NsdManager.RegistrationListener mRegistrationListener;
-    private int sessionKey;
 
-    public SessionPublishService(int key) {
-        sessionKey = key;
+    public DataSyncPublishService() {
     }
 
     @Override
@@ -124,13 +126,15 @@ public class SessionPublishService extends Service {
                             Log.i(TAG, result);
                             break;
                         }else {
-                           result = result + line + "\r\n";
+                            result = result + line + "\r\n";
                         }
                     }
 
                     BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
 
                     PrintWriter wtr = new PrintWriter(output);
+
+                    // Create Here Response String (favourably JSON)
                     wtr.print(generateResponse("Success"));
                     wtr.flush();
                     wtr.close();
@@ -145,11 +149,10 @@ public class SessionPublishService extends Service {
 
         public String generateResponse(String body) {
             String response =    "HTTP/1.1 200 OK\r\n" +
-                                "Content-Length: " + body.length() + "\r\n" +
-                                "Content-Type: text/plain\r\n" +
-                                "Connection: Closed\r\n" + body;
+                    "Content-Length: " + body.length() + "\r\n" +
+                    "Content-Type: text/plain\r\n" +
+                    "Connection: Closed\r\n" + body;
             return response;
         }
     }
-
 }
