@@ -15,7 +15,7 @@
         android:id="@+id/edittext_group_secret"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/group_secret"/>
+        android:hint="@string/temp_group_secret"/>
 
     <Button
         android:id="@+id/button_search"

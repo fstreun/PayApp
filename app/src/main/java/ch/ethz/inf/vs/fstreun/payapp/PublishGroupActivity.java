@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ public class PublishGroupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_publish_group);
+
         Intent intent = getIntent();
 
         jsonString = intent.getStringExtra(KEY_SIMPLEGROUP);
@@ -38,10 +40,12 @@ public class PublishGroupActivity extends AppCompatActivity {
 
         textViewGroupSecret = findViewById(R.id.textView_groupSecret);
         // create random 4 digit number
-        setSecret(getRandom());
+        setSecret(Integer.toString(getRandom()));
 
         textViewGroupID = findViewById(R.id.textView_groupID);
         textViewGroupID.setText(group.groupID.toString());
+
+        startPublish();
     }
 
     public final void startPublish(){
@@ -59,7 +63,21 @@ public class PublishGroupActivity extends AppCompatActivity {
         return  1000 + rnd.nextInt(9000);
     }
 
-    public void setSecret(int i){
-        textViewGroupSecret.setText(i);
+    public void setSecret(String secret){
+        textViewGroupSecret.setText(secret);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

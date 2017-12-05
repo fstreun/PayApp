@@ -1,12 +1,14 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telecom.ConnectionService;
@@ -15,13 +17,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +36,7 @@ import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
@@ -70,6 +77,8 @@ public class GroupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
 
+        // TODO: Add UpButton
+
         //create fileHelper
         fileHelper = new FileHelper(this);
 
@@ -84,27 +93,17 @@ public class GroupActivity extends AppCompatActivity {
 
         //getting intent
         Intent intent = getIntent();
+        //TODO: what is this try an catch for?
         try {
             String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
             if(groupIdString != null && !groupIdString.isEmpty()) {
+                Log.d(TAG, "groupID: " + groupIdString);
                 groupID = UUID.fromString(groupIdString);
                 group = loadGroup();
                 Log.d(TAG, "got groupID from intent: " + groupID.toString());
-                /*
+
             } else {
-                //todo: take this out as soon as createGroupActivity is implemented and rather use some kind of error message
-                Log.d(TAG, "creating random uuid as groupID");
-                groupID = UUID.randomUUID();
-                group = new Group(groupID);
-                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
-                        group.toString());
-                try {
-                    group = loadGroup();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                    group = new Group(UUID.randomUUID());
-                }
-                */
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,9 +114,6 @@ public class GroupActivity extends AppCompatActivity {
         //set group name as title
         groupName = intent.getStringExtra(KEY_GROUP_NAME);
         setTitle(groupName);
-
-        //todo maybe: get name of device owner
-        group.setDeviceOwner("Toni");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -227,18 +223,26 @@ public class GroupActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_publishGroup:
-                //TODO: add information (SessionID's to be shared) to the intent
+                // create SimpleGroup to be published
+                SimpleGroup simpleGroup = new SimpleGroup(groupID, groupName, group.getSessionID());
                 Intent intent = new Intent(this, PublishGroupActivity.class);
+                try {
+                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, simpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    // failed to create SimpleGroup JSON
+                }
                 startActivity(intent);
                 return true;
 
             //todo: case view all transactions
 
+            case R.id.menu_setMainParticipant:
+                chooseMainParticipant();
+                return true;
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
-
         }
     }
 
@@ -337,5 +341,40 @@ public class GroupActivity extends AppCompatActivity {
 
         }
         adapter.notifyDataSetChanged();
+    }
+
+    private void chooseMainParticipant(){
+        List<String> partList = group.getParticipants();
+        int current = partList.indexOf(group.getDeviceOwner());
+        if (current < 0){
+            current = group.numParticipants();
+        }
+        final String[] participants = group.getParticipants().toArray(new String[group.numParticipants()+1]);
+        participants[group.numParticipants()] = "(None)";
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Main Participant");
+        builder.setSingleChoiceItems(participants, current, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String main = participants[which];
+                setMainParticipant(main);
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void setMainParticipant(String participant){
+        if (participant.equalsIgnoreCase("(None)")){
+            group.setDeviceOwner(null);
+        }else {
+            group.setDeviceOwner(participant);
+        }
+        updateViews();
+
+        fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
+                group.toString());
+        Log.d(TAG, "writing to file: " + groupID.toString());
     }
 }
