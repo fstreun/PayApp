@@ -9,32 +9,31 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 
-public class SessionSubscribeService extends Service {
+/**
+ * Created by Kaan on 30.11.17.
+ */
 
-    String TAG = "SessionSubscribeService";
+public class DataSyncSubscribeService extends Service {
+
+    String TAG = "DataSyncSubscribeService";
     String SERVICE_TYPE = "_http._tcp.";
-    String SERVICE_NAME = "SessionSubscriber";
+    String SERVICE_NAME = "DataSyncSubscriber";
     private NsdManager mNsdManager;
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager.ResolveListener mResolveListener;
     private InetAddress mHost;
     private int mPort;
-    private int sessionKey;
 
-    public SessionSubscribeService(int key) {
-        sessionKey = key;
+    public DataSyncSubscribeService() {
+
     }
 
     @Override
@@ -91,7 +90,7 @@ public class SessionSubscribeService extends Service {
                     // The name of the service tells the user what they'd be
                     // connecting to. It could be "Bob's Chat App".
                     Log.d(TAG, "Same machine: " + SERVICE_NAME);
-                } else if (service.getServiceName().contains("SessionPublisher")){
+                } else if (service.getServiceName().contains("DataSyncPublisher")){
                     Log.d(TAG, "Resolve service: ");
                     mNsdManager.resolveService(service, mResolveListener);
                 }
@@ -140,7 +139,7 @@ public class SessionSubscribeService extends Service {
             Log.i("ClientThread", "run()");
             try {
                 mSocket = new Socket(mHost, mPort);
-                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup");
+                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/dataSync");
 
                 OutputStream mOutputStream = mSocket.getOutputStream();
 
@@ -161,14 +160,6 @@ public class SessionSubscribeService extends Service {
                         result = result + line + "\r\n";
                     }
                 }
-                /*InputStream mInputStream = mSocket.getInputStream();
-
-                String result = "";
-                int c;
-                while ((c = mInputStream.read()) != -1) {
-                    result = result + (char) c;
-                }
-                */
                 Log.i(TAG, "Result: " + result);
                 mSocket.close();
                 return;
