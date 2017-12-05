@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Pay App!</string>
+
+    <string name="key_deviceID">key_device_id</string>
+
     <string name="title_activity_group">GroupActivity</string>
     <string name="join_group">Join Group</string>
     <string name="create_group">Create Group</string>

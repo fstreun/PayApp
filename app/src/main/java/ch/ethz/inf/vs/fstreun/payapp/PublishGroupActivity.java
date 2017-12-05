@@ -1,13 +1,65 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Random;
+
+import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 
 public class PublishGroupActivity extends AppCompatActivity {
+
+    public final static String KEY_SIMPLEGROUP = "key_group";
+    private SimpleGroup group;
+    String jsonString;
+
+    TextView textViewGroupSecret;
+    TextView textViewGroupID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_publish_group);
+        Intent intent = getIntent();
+
+        jsonString = intent.getStringExtra(KEY_SIMPLEGROUP);
+        try {
+            group = new SimpleGroup(new JSONObject(jsonString));
+        } catch (Exception e) {
+            Toast.makeText(this, "Can not share Group", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        textViewGroupSecret = findViewById(R.id.textView_groupSecret);
+        // create random 4 digit number
+        setSecret(getRandom());
+
+        textViewGroupID = findViewById(R.id.textView_groupID);
+        textViewGroupID.setText(group.groupID.toString());
+    }
+
+    public final void startPublish(){
+        String secret = textViewGroupSecret.getText().toString();
+        String group = jsonString;
+        // TODO: publish secret with group
+    }
+
+    /**
+     *
+     * @return 4 digit random number
+     */
+    public int getRandom(){
+        Random rnd = new Random();
+        return  1000 + rnd.nextInt(9000);
+    }
+
+    public void setSecret(int i){
+        textViewGroupSecret.setText(i);
     }
 }
