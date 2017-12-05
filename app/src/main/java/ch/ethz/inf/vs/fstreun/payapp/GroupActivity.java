@@ -1,11 +1,15 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telecom.ConnectionService;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,6 +33,10 @@ import ch.ethz.inf.vs.fstreun.finance.Transaction;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
+
+    boolean bound;
+    DataService.SessionClientAccess sessionAccess;
+
 
     ListParticipantsAdapter adapter;
 
@@ -151,6 +159,45 @@ public class GroupActivity extends AppCompatActivity {
         //update view
         updateViews();
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind DataService
+        Intent intent = new Intent(this, DataService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            bound = false;
+        }
+    }
+
+    ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (name.getClassName().equals(DataService.class.getName())){
+                DataService.LocalBinder binder = (DataService.LocalBinder) service;
+                // TODO check if group is null:
+                sessionAccess = binder.getSessionClientAccess(group.getSessionID());
+                bound = true;
+                Log.d(TAG, "onServiceConnected: " + name.getClassName());
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
+
+
 
     private Group loadGroup(){
         Group g = null;

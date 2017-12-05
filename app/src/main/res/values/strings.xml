@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Pay App!</string>
+
+    <string name="key_deviceID">key_device_id</string>
+
     <string name="title_activity_group">GroupActivity</string>
     <string name="join_group">Join Group</string>
     <string name="create_group">Create Group</string>
@@ -14,7 +17,11 @@
     <string name="pref_involved_lru">pref_involved_from_last_trans_crea</string>
     <string name="search">Search</string>
     <string name="group_name">Group Name</string>
+  
     <string name="filter_paid_by_name">PAID_BY_NAME</string>
     <string name="filter_no_filter">NO_FILTER</string>
     <string name="filter_name_involved">name_involved</string>
+  
+    <string name="key_list_sessionID">key_list_sessionID</string>
+  
 </resources>

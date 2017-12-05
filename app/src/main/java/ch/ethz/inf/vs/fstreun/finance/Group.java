@@ -122,6 +122,10 @@ public class Group {
         return deviceOwner;
     }
 
+    public UUID getSessionID(){
+        return sessionID;
+    }
+
     /**
      * setter function for default participant
      * @param deviceOwner
