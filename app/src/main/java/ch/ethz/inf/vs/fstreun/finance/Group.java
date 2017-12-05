@@ -94,6 +94,10 @@ public class Group {
         }
     }
 
+    public void removeTransaction(Transaction t){
+        addTransaction(t.reverse(System.currentTimeMillis()));
+    }
+
     /**
      * getter function for participants
      * @return participants as List<String>
@@ -107,7 +111,7 @@ public class Group {
      * @return transactions as List<Transaction>
      */
     public List<Transaction> getTransactions() {
-        return transactions;
+        return new ArrayList<>(transactions);
     }
 
     /**

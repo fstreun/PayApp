@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -131,6 +132,21 @@ public class GroupActivity extends AppCompatActivity {
 
         ListView listView = findViewById(R.id.listView_main);
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent1 = new Intent(GroupActivity.this,
+                        TransactionListActivity.class);
+                intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                        getString(R.string.filter_paid_by_name));
+                intent1.putExtra(TransactionListActivity.KEY_PARTICIPANT,
+                        adapter.getItem(position).name);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, groupID.toString());
+
+                GroupActivity.this.startActivity(intent1);
+            }
+        });
 
         //textView device owner
         tvDeviceOwner = findViewById(R.id.textView_device_owner);
@@ -216,6 +232,8 @@ public class GroupActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
 
+            //todo: case view all transactions
+
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -287,7 +305,8 @@ public class GroupActivity extends AppCompatActivity {
                 editor.apply();
 
                 //Create transaction from the intent listData
-                Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
+                Transaction transaction = new Transaction(userUuid, payer, involved, amount,
+                        System.currentTimeMillis(), comment);
                 group.addTransaction(transaction);
 
                 // save transaction to file
@@ -313,7 +332,7 @@ public class GroupActivity extends AppCompatActivity {
 
             //make values appear like 49.99 (2 digits after the dot)
             double toPay = group.toPay(defPart);
-            String toPayString = String.format("%1$.2f", toPay);
+            String toPayString = Transaction.doubleToString(toPay);
             tvOwnToPay.setText(toPayString);
 
         }
