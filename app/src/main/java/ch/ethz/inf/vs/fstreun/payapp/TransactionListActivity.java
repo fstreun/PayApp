@@ -94,7 +94,6 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //set button text
         if(participantName != null){
-            //todo: buttons are moved down a bit when name is too long
             btnPaid.setText("Paid by " + participantName);
             btnInvolved.setText("" + participantName + " involved");
         }
@@ -121,6 +120,7 @@ public class TransactionListActivity extends AppCompatActivity {
         // call filter function
         transactionList = getFilteredList(type);
 
+        // call updated function
         updateListView(transactionList);
     }
 

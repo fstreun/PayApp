@@ -95,7 +95,7 @@ public class Group {
     }
 
     public void removeTransaction(Transaction t){
-        addTransaction(t.reverse());
+        addTransaction(t.reverse(System.currentTimeMillis()));
     }
 
     /**

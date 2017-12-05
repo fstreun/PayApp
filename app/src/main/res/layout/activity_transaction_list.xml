@@ -11,26 +11,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/btn_show_all_transaction"
-            android:text="All"
             android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_height="wrap_content" />
+            android:text="All" />
 
         <Button
             android:id="@+id/btn_show_paid_by"
-            android:text="Paid by"
             android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_height="wrap_content" />
+            android:text="Paid by" />
 
         <Button
             android:id="@+id/btn_show_involved"
-            android:text="Involved"
             android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_height="wrap_content" />
+            android:singleLine="false"
+            android:text="Involved" />
 
     </LinearLayout>
 

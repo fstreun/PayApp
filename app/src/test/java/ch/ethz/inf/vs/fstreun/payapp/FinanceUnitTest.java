@@ -32,7 +32,7 @@ public class FinanceUnitTest {
         involved.add("John Consumer");
         double amount = 2000;
         Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
-                "beer");
+                timestamp, "beer");
         String transactionJsonString = t.toString();
         System.out.println("created transaction: \n" + transactionJsonString);
 
@@ -133,7 +133,7 @@ public class FinanceUnitTest {
         involved.add("John Consumer");
         double amount = 2000;
         Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
-                "beer");
+                timestamp, "beer");
         String transactionJsonString = t.toString();
         System.out.println("created transaction in usual way: \n" + transactionJsonString);
 
@@ -189,7 +189,7 @@ public class FinanceUnitTest {
         involved.add("John Consumer");
         double amount = 2000.0;
         Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
-                "beer");
+                timestamp, "beer");
         String transactionJsonString = t.toString();
         System.out.println("created transaction in usual way: \n" + transactionJsonString);
 
@@ -246,7 +246,7 @@ public class FinanceUnitTest {
         involved.add("John Consumer");
         double amount = 2000.0;
         Transaction t = new Transaction(creatorUuid, "Sepp Payer", involved, amount,
-                "beer");
+                timestamp, "beer");
 
         // creating transaction2
         Transaction tReverse = t.reverse();

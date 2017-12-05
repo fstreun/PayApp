@@ -258,7 +258,8 @@ public class GroupActivity extends AppCompatActivity {
                 editor.apply();
 
                 //Create transaction from the intent listData
-                Transaction transaction = new Transaction(userUuid, payer, involved, amount, comment);
+                Transaction transaction = new Transaction(userUuid, payer, involved, amount,
+                        System.currentTimeMillis(), comment);
                 group.addTransaction(transaction);
 
                 // save transaction to file
