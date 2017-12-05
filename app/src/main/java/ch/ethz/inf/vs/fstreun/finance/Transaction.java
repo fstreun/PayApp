@@ -187,8 +187,6 @@ public class Transaction implements Comparable<Transaction>{
      */
     @Override
     public int compareTo(@NonNull Transaction o) {
-            if(timestamp < o.timestamp) return -1;
-            else if (timestamp == o.timestamp) return 0;
-            else return 1;
+        return Long.compare(timestamp, o.timestamp);
     }
 }

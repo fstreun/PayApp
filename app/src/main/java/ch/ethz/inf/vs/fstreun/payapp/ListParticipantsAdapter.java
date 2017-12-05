@@ -62,7 +62,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_participant, parent, false);
         }
         // Lookup view for data population
-        TextView tvName = (TextView) convertView.findViewById(R.id.textView_name);
+        TextView tvName = convertView.findViewById(R.id.textView_name);
         TextView tvToPay = convertView.findViewById(R.id.textView_toPay);
         // Populate the data into the template view using the data object
         tvName.setText(participant.name);

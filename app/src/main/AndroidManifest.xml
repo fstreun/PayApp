@@ -53,6 +53,7 @@
         <activity android:name=".TransactionListActivity">
             android:configChanges="orientation|screenSize"
         </activity>
+        <activity android:name=".TransactionInfoActivity"></activity>
     </application>
 
 </manifest>

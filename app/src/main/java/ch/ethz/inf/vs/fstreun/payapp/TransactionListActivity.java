@@ -13,6 +13,7 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -162,15 +163,19 @@ public class TransactionListActivity extends AppCompatActivity {
 
     }
 
-    private void updateListView(List<Transaction> transactionList) {
+    private void updateListView(final List<Transaction> transactionList) {
+        Collections.sort(transactionList);
         ListTransactionAdapter adapter = new ListTransactionAdapter(this, transactionList);
         listView.setAdapter(adapter);
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // TODO: define action on click
                 // open transaction view
+                Intent intent = new Intent(TransactionListActivity.this,
+                        TransactionInfoActivity.class);
+                intent.putExtra(TransactionInfoActivity.KEY_TRANSACTION, transactionList.get(position).toString());
+                startActivity(intent);
             }
         });
     }
