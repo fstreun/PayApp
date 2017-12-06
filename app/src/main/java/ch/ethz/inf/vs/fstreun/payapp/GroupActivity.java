@@ -11,23 +11,19 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telecom.ConnectionService;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +65,7 @@ public class GroupActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
     String prefName;
+    String payerKey, involvedKey;
 
 
     @Override
@@ -86,10 +83,6 @@ public class GroupActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         // TODO: store all this in group file
-        //initialize shared Prefs stuff
-        prefName = getString(R.string.pref_name);
-        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
-        editor = sharedPreferences.edit();
 
         //getting intent
         Intent intent = getIntent();
@@ -115,7 +108,16 @@ public class GroupActivity extends AppCompatActivity {
         groupName = intent.getStringExtra(KEY_GROUP_NAME);
         setTitle(groupName);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        //set shared prefsKeys
+        payerKey = getString(R.string.pref_payer_lru);
+        involvedKey = getString(R.string.pref_involved_lru);
+
+        //initialize shared Prefs stuff
+        prefName = getString(R.string.pref_name) + groupID;
+        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -266,12 +268,12 @@ public class GroupActivity extends AppCompatActivity {
         }
 
         //get LRU payer from shared prefs (default value is the deviceOwner)
-        String payer = sharedPreferences.getString(getString(R.string.pref_payer_lru),
+        String payer = sharedPreferences.getString(payerKey,
                 group.getDeviceOwner());
 
         //get initially checked participants from shared prefs
         Set<String> checkedPartiSet = sharedPreferences.getStringSet(
-                getString(R.string.pref_involved_lru), null);
+                involvedKey, null);
         String[] checkedParticipants;
         if(checkedPartiSet != null) {
             checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
@@ -304,8 +306,8 @@ public class GroupActivity extends AppCompatActivity {
                 List<String> involved = Arrays.asList(involvedString);
 
                 //store listData to shared prefs for next transaction creation
-                editor.putString(getString(R.string.pref_payer_lru), payer);
-                editor.putStringSet(getString(R.string.pref_involved_lru), new HashSet<>(involved));
+                editor.putString(payerKey, payer);
+                editor.putStringSet(involvedKey, new HashSet<>(involved));
                 editor.apply();
 
                 //Create transaction from the intent listData
@@ -314,8 +316,7 @@ public class GroupActivity extends AppCompatActivity {
                 group.addTransaction(transaction);
 
                 // save transaction to file
-                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
-                        group.toString());
+                writeGroup();
                 Log.d(TAG, "writing to file: " + groupID.toString());
 
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
@@ -373,8 +374,11 @@ public class GroupActivity extends AppCompatActivity {
         }
         updateViews();
 
-        fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
-                group.toString());
+        writeGroup();
         Log.d(TAG, "writing to file: " + groupID.toString());
+    }
+
+    private void writeGroup() {
+        fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(), group.toString());
     }
 }
