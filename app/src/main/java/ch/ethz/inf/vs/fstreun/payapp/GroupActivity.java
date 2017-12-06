@@ -62,11 +62,14 @@ public class GroupActivity extends AppCompatActivity {
     String TAG = "###GroupActivity###";
     private UUID groupID;
 
-    //Shared Preferences stuff
+    //Shared Preferences for specific group
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
     String prefName;
     String payerKey, involvedKey;
+
+    //shared preferences for MainActivity
+    SharedPreferences sharedPrefsMain;
 
 
     @Override
@@ -106,10 +109,13 @@ public class GroupActivity extends AppCompatActivity {
         payerKey = getString(R.string.pref_payer_lru);
         involvedKey = getString(R.string.pref_involved_lru);
 
-        //initialize shared Prefs stuff
+        //initialize shared Prefs for this group
         prefName = getString(R.string.pref_name) + groupID;
         sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
         editor = sharedPreferences.edit();
+
+        //initialize shared prefs for main
+        sharedPrefsMain = getSharedPreferences(getString(R.string.pref_name), MODE_PRIVATE);
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -241,6 +247,10 @@ public class GroupActivity extends AppCompatActivity {
 
             case R.id.menu_setMainParticipant:
                 chooseMainParticipant();
+                return true;
+
+            case R.id.menu_deleteGroup:
+                deleteGroup();
                 return true;
             default:
                 // If we got here, the user's action was not recognized.
@@ -394,5 +404,51 @@ public class GroupActivity extends AppCompatActivity {
 
     private void writeGroup() {
         fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(), group.toString());
+    }
+
+    private void deleteGroup(){
+        //todo: fix bug that the shared prefs are deleted after force closing the app
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete group: " + groupName + " ?");
+        builder.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Set<String> groups = sharedPrefsMain.getStringSet(getString(R.string.key_groups),
+                        null);
+                JSONObject gJson;
+                if (groups == null) return;
+                int i=0;
+                for(String gString : groups){
+                    Log.d(TAG, "starting iteration ");
+                    if(i>=groups.size()) break;
+                    try {
+                        gJson = new JSONObject(gString);
+                        if (gJson.getString(MainActivity.Group.KEY_UUID).equals(groupID.toString())){
+                            groups.remove(gString);
+                            break;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    i++;
+                }
+                //store to sharedPrefsMain
+                SharedPreferences.Editor mainEditor = sharedPrefsMain.edit();
+                mainEditor.putStringSet(getString(R.string.key_groups), groups);
+                mainEditor.apply();
+                Log.d(TAG, "storing groups in GroupActivity: \n" + sharedPrefsMain.getStringSet(getString(R.string.key_groups), null));
+
+                return;
+            }
+        });
+        builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });
+        builder.create().show();
+
+        return;
     }
 }

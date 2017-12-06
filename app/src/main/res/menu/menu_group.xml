@@ -15,4 +15,8 @@
         android:id="@+id/menu_setMainParticipant"
         android:title="Set Main Participant"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/menu_deleteGroup"
+        android:title="Delete Group"
+        app:showAsAction="never"/>
 </menu>

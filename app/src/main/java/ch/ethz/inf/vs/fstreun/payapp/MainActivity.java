@@ -32,10 +32,17 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<Group> adapter;
     List<Group> groups;
 
+    SharedPreferences sharedPref;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        //initialize sharedPrefs
+        String prefName = getString(R.string.pref_name);
+        sharedPref = getSharedPreferences(prefName, Context.MODE_PRIVATE);
 
         groups = loadGroups();
 
@@ -55,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        Log.d(TAG, "onCreate number of groups = " + groups.size());
     }
 
     @Override
@@ -147,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private List<Group> loadGroups(){
         List<Group> groups = new ArrayList<>();
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         Set<String> objects = sharedPref.getStringSet(getString(R.string.key_groups), null);
         if (objects != null) {
             for (String o : objects) {
@@ -175,10 +183,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putStringSet(getString(R.string.key_groups), objects);
         editor.apply();
+        Log.d(TAG, "putting set of strings in storeGroups()\n" +objects.toString());
     }
 
     /**
