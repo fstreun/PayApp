@@ -31,7 +31,6 @@ public class ListSimpleGroupAdapter extends ArrayAdapter<SimpleGroup> {
         final SimpleGroup group = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_participant_check, parent, false);
         }
 

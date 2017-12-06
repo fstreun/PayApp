@@ -29,7 +29,6 @@ public class ListGroupAdapter extends ArrayAdapter<MainActivity.Group> {
         String groupName = getItem(position).groupName;
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_group, parent, false);
         }
         // Lookup view for data population

@@ -58,7 +58,6 @@ public class ListParticipantsAdapter extends BaseAdapter{
         Participant participant = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_participant, parent, false);
         }
         // Lookup view for data population

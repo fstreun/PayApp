@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -74,34 +75,27 @@ public class GroupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
 
-        // TODO: Add UpButton
+        // add UpButton
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         //create fileHelper
         fileHelper = new FileHelper(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // TODO: store all this in group file
-
         //getting intent
         Intent intent = getIntent();
-        //TODO: what is this try an catch for?
-        try {
-            String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
-            if(groupIdString != null && !groupIdString.isEmpty()) {
-                Log.d(TAG, "groupID: " + groupIdString);
-                groupID = UUID.fromString(groupIdString);
-                group = loadGroup();
-                Log.d(TAG, "got groupID from intent: " + groupID.toString());
-
-            } else {
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
+        if(groupIdString != null && !groupIdString.isEmpty()) {
+            Log.d(TAG, "groupID: " + groupIdString);
+            groupID = UUID.fromString(groupIdString);
+            group = loadGroup();
+            Log.d(TAG, "got groupID from intent: " + groupID.toString());
+        } else {
             Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
-
+            return;
         }
 
         //set group name as title
@@ -150,9 +144,6 @@ public class GroupActivity extends AppCompatActivity {
         tvDeviceOwner = findViewById(R.id.textView_device_owner);
         tvOwnToPay = findViewById(R.id.textView_ownToPay);
         linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
-
-        //todo: get user UUID from file (we are now getting a random one)
-        userUuid = UUID.randomUUID();
 
         //update view
         updateViews();
@@ -236,7 +227,17 @@ public class GroupActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
 
-            //todo: case view all transactions
+            case R.id.menu_showAllTransactions:
+                //case view all transactions
+                Intent intent1 = new Intent(GroupActivity.this,
+                        TransactionListActivity.class);
+                intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                        getString(R.string.filter_no_filter));
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, groupID.toString());
+
+                GroupActivity.this.startActivity(intent1);
+                return true;
 
             case R.id.menu_setMainParticipant:
                 chooseMainParticipant();
@@ -311,6 +312,10 @@ public class GroupActivity extends AppCompatActivity {
                 editor.apply();
 
                 //Create transaction from the intent listData
+                userUuid = getUserUuid();
+                if(userUuid == null){
+                    return;
+                }
                 Transaction transaction = new Transaction(userUuid, payer, involved, amount,
                         System.currentTimeMillis(), comment);
                 group.addTransaction(transaction);
@@ -325,6 +330,15 @@ public class GroupActivity extends AppCompatActivity {
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private UUID getUserUuid() {
+        if(bound){
+            return sessionAccess.getUserID();
+        } else {
+            //todo: return null here as soon as network stuff implemented
+            return UUID.randomUUID();
+        }
     }
 
     private void updateViews() {

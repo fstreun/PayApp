@@ -23,5 +23,6 @@
     <string name="filter_name_involved">name_involved</string>
   
     <string name="key_list_sessionID">key_list_sessionID</string>
-  
+    <string name="show_all_transactions">Show all Transactions</string>
+
 </resources>

@@ -16,7 +16,8 @@
         android:id="@+id/editText_groupName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="Name"/>
+        android:singleLine="true"
+        tools:text="Name" />
 
 
 </LinearLayout>

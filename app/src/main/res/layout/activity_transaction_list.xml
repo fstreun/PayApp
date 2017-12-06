@@ -8,12 +8,14 @@
 
 
     <LinearLayout
+        android:id="@+id/lin_lay_filter_btn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/btn_show_all_transaction"
+            android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -21,6 +23,7 @@
 
         <Button
             android:id="@+id/btn_show_paid_by"
+            android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -28,6 +31,7 @@
 
         <Button
             android:id="@+id/btn_show_involved"
+            android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

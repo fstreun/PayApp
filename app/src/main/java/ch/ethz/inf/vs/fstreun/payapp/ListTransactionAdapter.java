@@ -50,7 +50,6 @@ public class ListTransactionAdapter extends BaseAdapter {
 
         // Check if an existing view is being reused, otherwise inflate the view
         if (!(convertView != null)) {//Litotes
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_transaction,
                     parent, false);
         }

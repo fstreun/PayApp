@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-    private final String TAG = "MainActivity";
+    private final String TAG = "###MainActivity";
 
     DataService dataService;
     boolean bound = false;
@@ -107,11 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int RESULT_JOIN = 2;
     public void buttonJoinClicked(View view){
-        //TODO: open JoinGroupActivity for result
-        Log.d("MainActivity", "buttonJoinClicked()");
-        //Intent intent = new Intent(this, SessionSubscribeService.class);
-        //startService(intent);
-
+        Log.d(TAG, "buttonJoinClicked()");
         Intent intent = new Intent(this, JoinGroupActivity.class);
         startActivityForResult(intent, RESULT_JOIN);
     }

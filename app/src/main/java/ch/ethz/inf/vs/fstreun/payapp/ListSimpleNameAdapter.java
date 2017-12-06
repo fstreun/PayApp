@@ -11,8 +11,6 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
-
 /**
  * Created by fabio on 12/6/17.
  */
@@ -29,7 +27,6 @@ public class ListSimpleNameAdapter extends ArrayAdapter<String> {
         final String string = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_simple_name, parent, false);
         }
 
