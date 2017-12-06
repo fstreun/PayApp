@@ -20,7 +20,7 @@ public class TransactionInfoActivity extends AppCompatActivity {
     public static final String KEY_TRANSACTION = "transaction";
 
     TextView tvComment, tvAmount, tvPayer, tvTimestamp;
-    ListView tvInvolved;
+    ListSimpleNameAdapter adapter;
 
     Transaction transaction;
 
@@ -45,7 +45,10 @@ public class TransactionInfoActivity extends AppCompatActivity {
         tvAmount = findViewById(R.id.textView_info_amount);
         tvPayer = findViewById(R.id.textView_info_payer);
         tvTimestamp = findViewById(R.id.textView_info_timestamp);
-        tvInvolved = findViewById(R.id.listView_info_involved);
+
+        ListView tvInvolved = findViewById(R.id.listView_info_involved);
+        adapter = new ListSimpleNameAdapter(this, transaction.getInvolved());
+        tvInvolved.setAdapter(adapter);
 
         // set transaction info to screen
         tvComment.setText(transaction.comment);

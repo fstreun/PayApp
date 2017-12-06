@@ -63,7 +63,8 @@
         android:id="@+id/listView_info_involved"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:listitem="@layout/list_item_participant_check">
+        android:listSelector="@android:color/transparent"
+        tools:listitem="@layout/list_item_simple_name">
 
     </ListView>
 </LinearLayout>
