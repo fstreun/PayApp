@@ -21,7 +21,9 @@
         </activity>
         <activity
             android:name=".PublishGroupActivity"
-            android:parentActivityName=".GroupActivity" />
+            android:parentActivityName=".GroupActivity"
+        />
+
         <activity
             android:name=".JoinGroupActivity"
             android:parentActivityName=".MainActivity" />
@@ -50,10 +52,13 @@
             android:exported="true" />
         <service android:name=".DataService" />
 
-        <activity android:name=".TransactionListActivity">
-            android:configChanges="orientation|screenSize"
+        <activity android:name=".TransactionListActivity"
+            android:parentActivityName=".GroupActivity"
+            android:configChanges="orientation|screenSize">
         </activity>
-        <activity android:name=".TransactionInfoActivity"></activity>
+        <activity
+            android:name=".TransactionInfoActivity"
+            android:parentActivityName=".TransactionListActivity" />
     </application>
 
 </manifest>

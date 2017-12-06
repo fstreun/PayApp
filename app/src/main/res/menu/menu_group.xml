@@ -6,4 +6,8 @@
         android:id="@+id/menu_publishGroup"
         android:title="Publish Group"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_setMainParticipant"
+        android:title="Set Main Participant"
+        app:showAsAction="never"/>
 </menu>

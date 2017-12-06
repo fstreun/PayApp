@@ -9,19 +9,13 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/group_secret"/>
+        android:text="@string/temp_group_secret"/>
 
     <TextView
         android:id="@+id/textView_groupSecret"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:text="8855"/>
-
-    <Button
-        android:id="@+id/button_changeSecret"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/change_secret"/>
 
     <TextView
         android:layout_width="match_parent"
@@ -32,7 +26,7 @@
         android:id="@+id/textView_groupID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="ACTUAL GROUP ID"/>
+        tools:text="bdku3k4u-0f3j-dke9-4dfb-b028-57ef5504d2a"/>
 
 
 

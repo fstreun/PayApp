@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,7 +20,7 @@ public class TransactionInfoActivity extends AppCompatActivity {
     public static final String KEY_TRANSACTION = "transaction";
 
     TextView tvComment, tvAmount, tvPayer, tvTimestamp;
-    ListView tvInvolved;
+    ListSimpleNameAdapter adapter;
 
     Transaction transaction;
 
@@ -44,7 +45,10 @@ public class TransactionInfoActivity extends AppCompatActivity {
         tvAmount = findViewById(R.id.textView_info_amount);
         tvPayer = findViewById(R.id.textView_info_payer);
         tvTimestamp = findViewById(R.id.textView_info_timestamp);
-        tvInvolved = findViewById(R.id.listView_info_involved);
+
+        ListView tvInvolved = findViewById(R.id.listView_info_involved);
+        adapter = new ListSimpleNameAdapter(this, transaction.getInvolved());
+        tvInvolved.setAdapter(adapter);
 
         // set transaction info to screen
         tvComment.setText(transaction.comment);
@@ -54,5 +58,18 @@ public class TransactionInfoActivity extends AppCompatActivity {
         Date date = new Date(transaction.timestamp);
         String timeAsString = simpleDateFormat.format(date);
         tvTimestamp.setText(timeAsString);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
