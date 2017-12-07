@@ -11,8 +11,6 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
-
 /**
  * Created by fabio on 12/5/17.
  */

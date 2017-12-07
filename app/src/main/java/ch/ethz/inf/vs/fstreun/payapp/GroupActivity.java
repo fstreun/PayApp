@@ -33,21 +33,27 @@ import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
 
+    String TAG = "###GroupActivity###";
+
+    public static final String KEY_RESULT_CODE = "key_result_type";
+    public static final int CODE_DEFAULT = 0;
+    public static final int CODE_DELETE = 1;
+
+    public static final String KEY_SIMPLE_GROUP = "simple_group";
+    private SimpleGroup mSimpleGroup;
+
+    private Group group;
+
     boolean bound;
     DataService.SessionClientAccess sessionAccess;
 
-
     ListParticipantsAdapter adapter;
 
-    public static final String KEY_GROUP_ID = "key_group_id";
-    public static final String KEY_GROUP_NAME = "key_group_name";
-    private Group group;
-    private String groupName;
+
 
     //gui stuff
     TextView tvDeviceOwner;
@@ -59,8 +65,6 @@ public class GroupActivity extends AppCompatActivity {
 
     UUID userUuid;
 
-    String TAG = "###GroupActivity###";
-    private UUID groupID;
 
     //Shared Preferences for specific group
     SharedPreferences sharedPreferences;
@@ -90,27 +94,32 @@ public class GroupActivity extends AppCompatActivity {
 
         //getting intent
         Intent intent = getIntent();
-        String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
-        if(groupIdString != null && !groupIdString.isEmpty()) {
-            Log.d(TAG, "groupID: " + groupIdString);
-            groupID = UUID.fromString(groupIdString);
+        String stringSimpleGroup = intent.getStringExtra(KEY_SIMPLE_GROUP);
+        if(stringSimpleGroup != null && !stringSimpleGroup.isEmpty()) {
+            try {
+                JSONObject object = new JSONObject(stringSimpleGroup);
+                mSimpleGroup = new SimpleGroup(object);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Log.d(TAG, "group: " + stringSimpleGroup);
+
             group = loadGroup();
-            Log.d(TAG, "got groupID from intent: " + groupID.toString());
         } else {
             Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
             return;
         }
 
         //set group name as title
-        groupName = intent.getStringExtra(KEY_GROUP_NAME);
-        setTitle(groupName);
+        setTitle(mSimpleGroup.groupName);
 
         //set shared prefsKeys
         payerKey = getString(R.string.pref_payer_lru);
         involvedKey = getString(R.string.pref_involved_lru);
 
         //initialize shared Prefs for this group
-        prefName = getString(R.string.pref_name) + groupID;
+        prefName = getString(R.string.pref_name) + mSimpleGroup.groupID;
         sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
@@ -139,8 +148,8 @@ public class GroupActivity extends AppCompatActivity {
                         getString(R.string.filter_paid_by_name));
                 intent1.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         adapter.getItem(position).name);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, groupID.toString());
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
 
                 GroupActivity.this.startActivity(intent1);
             }
@@ -198,8 +207,8 @@ public class GroupActivity extends AppCompatActivity {
         Group g = null;
         try {
             JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
-                    getString(R.string.path_groups), groupID.toString()));
-            Log.d(TAG, "reading from file: " + groupID.toString());
+                    getString(R.string.path_groups), mSimpleGroup.groupID.toString()));
+            Log.d(TAG, "reading from file: " + mSimpleGroup.groupID.toString());
             g = new Group(groupJson);
         } catch (Exception e) {
             e.printStackTrace();
@@ -222,11 +231,9 @@ public class GroupActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_publishGroup:
-                // create SimpleGroup to be published
-                SimpleGroup simpleGroup = new SimpleGroup(groupID, groupName, group.getSessionID());
                 Intent intent = new Intent(this, PublishGroupActivity.class);
                 try {
-                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, simpleGroup.toJSON().toString());
+                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
                     // failed to create SimpleGroup JSON
                 }
@@ -239,8 +246,8 @@ public class GroupActivity extends AppCompatActivity {
                         TransactionListActivity.class);
                 intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_no_filter));
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, groupID.toString());
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
 
                 GroupActivity.this.startActivity(intent1);
                 return true;
@@ -250,7 +257,7 @@ public class GroupActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_deleteGroup:
-                deleteGroup();
+                showDeleteGroupDialog();
                 return true;
             default:
                 // If we got here, the user's action was not recognized.
@@ -332,7 +339,7 @@ public class GroupActivity extends AppCompatActivity {
 
                 // save transaction to file
                 writeGroup();
-                Log.d(TAG, "writing to file: " + groupID.toString());
+                Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
 
                 Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
                 updateViews();
@@ -399,45 +406,21 @@ public class GroupActivity extends AppCompatActivity {
         updateViews();
 
         writeGroup();
-        Log.d(TAG, "writing to file: " + groupID.toString());
+        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
     }
 
     private void writeGroup() {
-        fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(), group.toString());
+        fileHelper.writeToFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString(), group.toString());
     }
 
-    private void deleteGroup(){
+    private void showDeleteGroupDialog(){
         //todo: fix bug that the shared prefs are deleted after force closing the app
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Delete group: " + groupName + " ?");
+        builder.setTitle("Delete group: " + mSimpleGroup.groupName + " ?");
         builder.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Set<String> groups = sharedPrefsMain.getStringSet(getString(R.string.key_groups),
-                        null);
-                JSONObject gJson;
-                if (groups == null) return;
-                int i=0;
-                for(String gString : groups){
-                    Log.d(TAG, "starting iteration ");
-                    if(i>=groups.size()) break;
-                    try {
-                        gJson = new JSONObject(gString);
-                        if (gJson.getString(MainActivity.Group.KEY_UUID).equals(groupID.toString())){
-                            groups.remove(gString);
-                            break;
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    i++;
-                }
-                //store to sharedPrefsMain
-                SharedPreferences.Editor mainEditor = sharedPrefsMain.edit();
-                mainEditor.putStringSet(getString(R.string.key_groups), groups);
-                mainEditor.apply();
-                Log.d(TAG, "storing groups in GroupActivity: \n" + sharedPrefsMain.getStringSet(getString(R.string.key_groups), null));
-
+                deleteGroup();
                 return;
             }
         });
@@ -450,5 +433,22 @@ public class GroupActivity extends AppCompatActivity {
         builder.create().show();
 
         return;
+    }
+
+    /**
+     * delets the current group and al its dependence
+     */
+    private void deleteGroup(){
+        //TODO: remove file and sessions
+
+        Intent intent = new Intent();
+        intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);
+        try {
+            intent.putExtra(KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+        } catch (JSONException e) {
+            //TODO: handle exception
+        }
+        setResult(RESULT_OK, intent);
+        finish();
     }
 }

@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.network;
+package ch.ethz.inf.vs.fstreun.payapp;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,7 +9,7 @@ import java.util.UUID;
  * Created by fabio on 12/5/17.
  */
 
-public class SimpleGroup {
+public final class SimpleGroup {
 
     final static String KEY_GROUPID = "groupID";
     public final UUID groupID;
@@ -36,5 +36,14 @@ public class SimpleGroup {
         object.put(KEY_SESSIONID, sessionID);
         object.put(KEY_GROUPNAME, groupName);
         return object;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof SimpleGroup)){
+            return false;
+        }
+        SimpleGroup other = (SimpleGroup) obj;
+        return other.groupID.equals(groupID);
     }
 }

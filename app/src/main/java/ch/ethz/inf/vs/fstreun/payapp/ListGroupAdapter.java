@@ -15,9 +15,9 @@ import java.util.List;
  * Created by fabio on 11/24/17.
  */
 
-public class ListGroupAdapter extends ArrayAdapter<MainActivity.Group> {
+public class ListGroupAdapter extends ArrayAdapter<SimpleGroup> {
 
-    public ListGroupAdapter(Context context, List<MainActivity.Group> content){
+    public ListGroupAdapter(Context context, List<SimpleGroup> content){
         super(context, R.layout.list_item_group, content);
     }
 
