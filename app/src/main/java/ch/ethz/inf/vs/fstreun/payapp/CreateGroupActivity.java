@@ -25,8 +25,6 @@ public class CreateGroupActivity extends AppCompatActivity {
     boolean mBound;
 
     public static final String KEY_SIMPLEGROUP = "simple_group";
-    public static final String KEY_GROUP_ID = "group_id"; //Not empty unique String out
-    public static final String KEY_GROUP_NAME = "group_name"; //Not empty (unique?) String out
 
     EditText editTextGroupName;
 

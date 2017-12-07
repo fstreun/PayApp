@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
@@ -48,11 +49,11 @@ public class GroupActivity extends AppCompatActivity {
 
     private Group group;
 
-    boolean bound;
-    DataService.SessionClientAccess sessionAccess;
+    private boolean bound;
+    private final Object lock = new Object();
+    private DataService.SessionClientAccess sessionAccess;
 
-    ListParticipantsAdapter adapter;
-
+    private ListParticipantsAdapter adapter;
 
 
     //gui stuff
@@ -63,17 +64,11 @@ public class GroupActivity extends AppCompatActivity {
     //file stuff
     FileHelper fileHelper;
 
-    UUID userUuid;
-
-
     //Shared Preferences for specific group
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
     String prefName;
     String payerKey, involvedKey;
-
-    //shared preferences for MainActivity
-    SharedPreferences sharedPrefsMain;
 
 
     @Override
@@ -107,7 +102,7 @@ public class GroupActivity extends AppCompatActivity {
 
             group = loadGroup();
         } else {
-            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -122,9 +117,6 @@ public class GroupActivity extends AppCompatActivity {
         prefName = getString(R.string.pref_name) + mSimpleGroup.groupID;
         sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
         editor = sharedPreferences.edit();
-
-        //initialize shared prefs for main
-        sharedPrefsMain = getSharedPreferences(getString(R.string.pref_name), MODE_PRIVATE);
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -170,6 +162,7 @@ public class GroupActivity extends AppCompatActivity {
         // Bind DataService
         Intent intent = new Intent(this, DataService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
+        Log.d(TAG, "called bindService");
     }
 
     @Override
@@ -178,6 +171,7 @@ public class GroupActivity extends AppCompatActivity {
         // Unbind from service
         if (bound){
             unbindService(connection);
+            Log.d(TAG, "called unbindService");
             bound = false;
         }
     }
@@ -191,6 +185,8 @@ public class GroupActivity extends AppCompatActivity {
                 sessionAccess = binder.getSessionClientAccess(group.getSessionID());
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
+                // if a open transaction exists, try to store it!
+                storeOpenTransaction();
             }
         }
 
@@ -315,10 +311,9 @@ public class GroupActivity extends AppCompatActivity {
 
         if (requestCode == CREATE_TRANSACTION_REQUEST){
             if (resultCode == RESULT_OK){
+                Log.d(TAG, "transaction creation received");
 
-                // Transaction was finished with save
-                double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
-                String comment = data.getStringExtra(TransactionCreationActivity.KEY_COMMENT);
+                // get some infos
                 String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
@@ -328,34 +323,15 @@ public class GroupActivity extends AppCompatActivity {
                 editor.putStringSet(involvedKey, new HashSet<>(involved));
                 editor.apply();
 
-                //Create transaction from the intent listData
-                userUuid = getUserUuid();
-                if(userUuid == null){
-                    return;
-                }
-                Transaction transaction = new Transaction(userUuid, payer, involved, amount,
-                        System.currentTimeMillis(), comment);
-                group.addTransaction(transaction);
-
-                // save transaction to file
-                writeGroup();
-                Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
-
-                Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+                // transaction can only be stored after service was bound.
+                openTransaction = data.getExtras();
+                // try to store transaction (it will fail)
+                storeOpenTransaction();
                 updateViews();
                 return;
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    private UUID getUserUuid() {
-        if(bound){
-            return sessionAccess.getUserID();
-        } else {
-            //todo: return null here as soon as network stuff implemented
-            return UUID.randomUUID();
-        }
     }
 
     private void updateViews() {
@@ -439,7 +415,10 @@ public class GroupActivity extends AppCompatActivity {
      * delets the current group and al its dependence
      */
     private void deleteGroup(){
-        //TODO: remove file and sessions
+        //TODO: sessions
+
+        // remove group file
+        fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
 
         Intent intent = new Intent();
         intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);
@@ -450,5 +429,50 @@ public class GroupActivity extends AppCompatActivity {
         }
         setResult(RESULT_OK, intent);
         finish();
+    }
+
+
+    /**
+     * transaction which was not been saved yet
+     */
+    Bundle openTransaction = null;
+    private synchronized boolean storeOpenTransaction(){
+        if (openTransaction == null){
+            return true;
+        }
+
+        if (!bound){
+            return false;
+        }
+
+        // get Transaction info
+        double amount = openTransaction.getDouble(TransactionCreationActivity.KEY_AMOUNT, 0.0);
+        String comment = openTransaction.getString(TransactionCreationActivity.KEY_COMMENT);
+        String payer = openTransaction.getString(TransactionCreationActivity.KEY_PAYER);
+        String[] involvedString = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+        List<String> involved = Arrays.asList(involvedString);
+
+        //store listData to shared prefs for next transaction creation
+        editor.putString(payerKey, payer);
+        editor.putStringSet(involvedKey, new HashSet<>(involved));
+        editor.apply();
+
+        UUID userUuid = sessionAccess.getUserID();
+        if(userUuid == null){
+            return false;
+        }
+        Transaction transaction = new Transaction(userUuid, payer, involved, amount,
+                System.currentTimeMillis(), comment);
+
+
+        group.addTransaction(transaction);
+
+        // save transaction to file
+        writeGroup();
+        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
+
+        Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+        openTransaction = null;
+        return true;
     }
 }

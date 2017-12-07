@@ -263,6 +263,13 @@ public class DataService extends Service {
     }
 
 
+
+
+
+
+    /**
+     * Access to one Session for one Client
+     */
     public final class SessionClientAccess {
 
         private final UUID sessionID;
@@ -318,6 +325,10 @@ public class DataService extends Service {
 
         public UUID getSessionID() {
             return sessionID;
+        }
+
+        public boolean removeSession(){
+            return DataService.this.removeSession(sessionID);
         }
     }
 
