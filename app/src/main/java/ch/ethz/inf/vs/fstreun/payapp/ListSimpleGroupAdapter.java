@@ -12,13 +12,13 @@ import android.widget.TextView;
 import java.util.List;
 
 /**
- * Created by fabio on 11/24/17.
+ * Created by fabio on 12/5/17.
  */
 
-public class ListGroupAdapter extends ArrayAdapter<SimpleGroup> {
+public class ListSimpleGroupAdapter extends ArrayAdapter<SimpleGroup> {
 
-    public ListGroupAdapter(Context context, List<SimpleGroup> content){
-        super(context, R.layout.list_item_group, content);
+    public ListSimpleGroupAdapter(@NonNull Context context, @NonNull List<SimpleGroup> objects) {
+        super(context, 0, objects);
     }
 
     @NonNull
@@ -26,15 +26,16 @@ public class ListGroupAdapter extends ArrayAdapter<SimpleGroup> {
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 
         // Get the data item for this position
-        String groupName = getItem(position).groupName;
+        final SimpleGroup group = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_group, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_participant_check, parent, false);
         }
+
         // Lookup view for data population
-        TextView tvName = (TextView) convertView.findViewById(R.id.textView_groupName);
-        // Populate the data into the template view using the data object
-        tvName.setText(groupName);
+        TextView tvMain = convertView.findViewById(R.id.textView_main);
+
+        tvMain.setText(group.groupID.toString());
         // Return the completed view to render on screen
         return convertView;
 

@@ -17,38 +17,32 @@ import java.util.UUID;
  * using Chains of type C
  */
 
-public class Session <C extends Chain>{
+public class Session implements SessionInterface, SessionJSON{
 
     // identifier of the session
     private final UUID sessionID;
     private static final String JSON_KEY_SESSION_ID = "session_id";
 
     // data in the session
-    private final Map<UUID, C> data = new HashMap<>();
+    private final Map<UUID, Chain> data = new HashMap<>();
     private static final String JSON_KEY_DATA = "data";
-
-    public final ChainFactory<C> chainFactory;
 
 
     /**
      * Create new basic Session
      * @param sessionID used by the session
-     * @param chainFactory which defines the chain structure
      */
-    public Session(UUID sessionID, ChainFactory<C> chainFactory) {
+    public Session(UUID sessionID) {
         this.sessionID = sessionID;
-        this.chainFactory = chainFactory;
     }
 
 
     /**
      * Create Session of an JSON Object
      * @param object representing the Session Object
-     * @param chainFactory which defines the chain structure
      * @throws JSONException if fails
      */
-    public Session(JSONObject object, ChainFactory<C> chainFactory) throws JSONException {
-        this.chainFactory = chainFactory;
+    public Session(JSONObject object) throws JSONException {
 
         String errors = ""; // string of all errors occurred
         boolean error = false;
@@ -78,7 +72,7 @@ public class Session <C extends Chain>{
             Iterator<String> iterator = map.keys();
             while (iterator.hasNext()){
                 String key = iterator.next();
-                data.put(UUID.fromString(key), chainFactory.createFromJSON(map.getJSONArray(key)));
+                data.put(UUID.fromString(key), new Chain(map.getJSONArray(key)));
             }
         }
 
@@ -94,60 +88,67 @@ public class Session <C extends Chain>{
         JSONObject object = new JSONObject();
         object.put(JSON_KEY_SESSION_ID, sessionID.toString());
         JSONObject map = new JSONObject();
-        for (Map.Entry<UUID, C> entry : data.entrySet()){
-            map.put(entry.getKey().toString(), chainFactory.createJSON(entry.getValue()));
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
+            map.put(entry.getKey().toString(), entry.getValue().toJSON());
         }
         object.put(JSON_KEY_DATA, map);
         return object;
     }
 
 
+    @Override
+    public String toString(){
+        try {
+            return toJSON().toString();
+        } catch (JSONException e) {
+            return "Failed to create String of Session";
+        }
+    }
+
+
+
     /**
      * accesses all the chains in the session
      * @return a copy of the map with the chains
      */
-    public final Map<UUID, C> getData(){
-        Map<UUID, C> res = new HashMap<>();
-        for (Map.Entry<UUID, C> entry : data.entrySet()){
-            res.put(entry.getKey(), chainFactory.copy(entry.getValue()));
+    @Override
+    public final Map<UUID, Chain> getData(){
+        Map<UUID, Chain> res = new HashMap<>();
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
+            res.put(entry.getKey(), (entry.getValue().clone()));
         }
         return res;
     }
 
-
-    /**
-     * accesses all the sub chains in the session
-     * @param start of the beginning of the chain (included)
-     * @return a copy map of sub chains
-     */
-    public final Map<UUID, C> getDataAfter(Map<UUID, Integer> start){
-        Map<UUID, C> res = new HashMap<>();
-        for (Map.Entry<UUID, C> entry : data.entrySet()){
+    @Override
+    public Map<UUID, Chain> getData(Map<UUID, Integer> after) {
+        Map<UUID, Chain> res = new HashMap<>();
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
             UUID key = entry.getKey();
-            Integer s = start.get(key);
+            Integer s = after.get(key);
             if (s == null){
                 s = 0;
             }
-            res.put(key, (C) entry.getValue().getSubChain(s));
+            res.put(key, entry.getValue().getSubChain(s));
         }
         return res;
     }
 
-    /**
-     * appends chains if possible (holes in the chain are not allowed)
-     * @param chainMap chains to be appended
-     * @param expected length of each chain (position of first block to be appended)
-     * @return actual length of the chain before appending
-     */
-    public final Map<UUID, Integer> put (Map<UUID, Chain> chainMap, Map<UUID, Integer> expected){
-        Map<UUID, Integer> res = new HashMap<>();
-        for (Map.Entry<UUID, Chain> entry : chainMap.entrySet()){
-            UUID key = entry.getKey();
-            if (!data.containsKey(key)){
-                data.put(entry.getKey(), chainFactory.createEmpty());
+    @Override
+    public Map<UUID, Integer> putData(Map<UUID, Chain> mapData, Map<UUID, Integer> expected) {
+        Map <UUID, Integer> res = new HashMap<>();
+        for (Map.Entry<UUID, Chain> entry : mapData.entrySet()){
+            if (!data.containsKey(entry.getKey())){
+                data.put(entry.getKey(), new Chain());
             }
-            Integer actual = data.get(key).append(entry.getValue(), expected.get(key));
-            res.put(key, actual);
+
+            Integer e = expected.get(entry.getKey());
+            if (e == null){
+                e = 0;
+            }
+
+            Integer actual = data.get(entry.getKey()).append(entry.getValue(), e);
+            res.put(entry.getKey(), actual);
         }
         return res;
     }
@@ -159,9 +160,10 @@ public class Session <C extends Chain>{
      * @param expected length of the current chain (position of first block to be appended)
      * @return actual length of the current chain before appending
      */
-    public final int put(UUID userID, Chain chain, int expected){
+    @Override
+    public final Integer putChain(UUID userID, Chain chain, int expected){
         if (!data.containsKey(userID)){
-            data.put(userID, chainFactory.createEmpty());
+            data.put(userID, new Chain());
         }
         return data.get(userID).append(chain, expected);
     }
@@ -173,9 +175,10 @@ public class Session <C extends Chain>{
      * @param expected length of the current chain (position of the block to be appended)
      * @return
      */
-    public final int put(UUID userID, Block block, int expected){
+    @Override
+    public final Integer putBlock(UUID userID, Block block, int expected){
         if (!data.containsKey(userID)){
-            data.put(userID, chainFactory.createEmpty());
+            data.put(userID, new Chain());
         }
         return data.get(userID).append(block, expected);
     }
@@ -184,9 +187,10 @@ public class Session <C extends Chain>{
     /**
      * @return length of current chains
      */
+    @Override
     public final Map<UUID, Integer> getLength(){
         Map<UUID, Integer> res = new HashMap<>();
-        for (Map.Entry<UUID, C> entry : data.entrySet()){
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
             res.put(entry.getKey(), entry.getValue().length());
         }
         return res;
@@ -197,6 +201,7 @@ public class Session <C extends Chain>{
      * @return all user UUID the session has a chain of
      */
     @NonNull
+    @Override
     public final Set<UUID> getAllUserID(){
         return data.keySet();
     }
@@ -204,9 +209,56 @@ public class Session <C extends Chain>{
     /**
      * @return the UUID of the Session
      */
+    @Override
     public final UUID getSessionID(){
         return sessionID;
     }
 
 
+
+    @Override
+    public Map<UUID, Integer> appendJSON(JSONObject chainMap, Map<UUID, Integer> expected) throws JSONException {
+        Map<UUID, Integer> res = new HashMap<>();
+
+
+        for (Iterator<String> it1 = chainMap.keys(); it1.hasNext(); ) {
+            String key = it1.next();
+            UUID uKey = UUID.fromString(key);
+            if (!data.containsKey(uKey)){
+                data.put(uKey, new Chain());
+            }
+
+            Integer e = expected.get(uKey);
+            if (e == null){
+                e = 0;
+            }
+
+            Integer actual = data.get(uKey).appendJSON(chainMap.getJSONArray(key), e);
+            res.put(uKey, actual);
+        }
+        return res;
+    }
+
+    @Override
+    public JSONObject getJSON(Map<UUID, Integer> start) throws JSONException {
+        JSONObject res = new JSONObject();
+
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
+            Integer s = start.get(entry.getKey());
+            if (s == null){
+                s = 0;
+            }
+            res.put(entry.getKey().toString(), entry.getValue().subChainJSON(s));
+        }
+        return res;
+    }
+
+    @Override
+    public JSONObject getJSON() throws JSONException {
+        JSONObject res = new JSONObject();
+        for (Map.Entry<UUID, Chain> entry : data.entrySet()){
+            res.put(entry.getKey().toString(), entry.getValue().toJSON());
+        }
+        return res;
+    }
 }

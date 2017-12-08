@@ -19,7 +19,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".PublishGroupActivity" />
+        <activity
+            android:name=".PublishGroupActivity"
+            android:parentActivityName=".GroupActivity"
+        />
+
+        <activity
+            android:name=".JoinGroupActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".GroupActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:label="@string/title_activity_group"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".TransactionCreationActivity"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName=".GroupActivity" />
+        <activity
+            android:name=".CreateGroupActivity"
+            android:parentActivityName=".MainActivity" />
 
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublishService"
@@ -28,7 +49,16 @@
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionSubscribeService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+        <service android:name=".DataService" />
+
+        <activity android:name=".TransactionListActivity"
+            android:parentActivityName=".GroupActivity"
+            android:configChanges="orientation|screenSize">
+        </activity>
+        <activity
+            android:name=".TransactionInfoActivity"
+            android:parentActivityName=".TransactionListActivity" />
     </application>
 
 </manifest>

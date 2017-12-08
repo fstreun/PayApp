@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,18 +9,24 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Group ID:"/>
+        android:text="@string/temp_group_secret"/>
 
-    <EditText
+    <TextView
+        android:id="@+id/textView_groupSecret"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="8855"/>
+        tools:text="8855"/>
 
-    <Button
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Group ID"/>
 
-        />
-
-    <Button />
+    <TextView
+        android:id="@+id/textView_groupID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="bdku3k4u-0f3j-dke9-4dfb-b028-57ef5504d2a"/>
 
 
 
