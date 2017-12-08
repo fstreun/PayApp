@@ -15,9 +15,9 @@ import java.util.List;
  * Created by fabio on 11/24/17.
  */
 
-public class ListGroupAdapter extends ArrayAdapter<MainActivity.Group> {
+public class ListGroupAdapter extends ArrayAdapter<SimpleGroup> {
 
-    public ListGroupAdapter(Context context, List<MainActivity.Group> content){
+    public ListGroupAdapter(Context context, List<SimpleGroup> content){
         super(context, R.layout.list_item_group, content);
     }
 
@@ -29,7 +29,6 @@ public class ListGroupAdapter extends ArrayAdapter<MainActivity.Group> {
         String groupName = getItem(position).groupName;
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
-            // TODO: this is not the correct way...
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_group, parent, false);
         }
         // Lookup view for data population

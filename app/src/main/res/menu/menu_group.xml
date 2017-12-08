@@ -3,11 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/menu_showAllTransactions"
+        android:title="@string/show_all_transactions"
+        android:icon="@drawable/ic_history_white_24dp"
+        app:showAsAction="ifRoom"/>
+    <item
         android:id="@+id/menu_publishGroup"
         android:title="Publish Group"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_setMainParticipant"
         android:title="Set Main Participant"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/menu_deleteGroup"
+        android:title="Delete Group"
         app:showAsAction="never"/>
 </menu>

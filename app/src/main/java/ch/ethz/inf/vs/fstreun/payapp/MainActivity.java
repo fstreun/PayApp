@@ -24,21 +24,27 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-    private final String TAG = "MainActivity";
+    private final String TAG = "###MainActivity";
 
     DataService dataService;
     boolean bound = false;
 
-    ArrayAdapter<Group> adapter;
-    List<Group> groups;
+    ArrayAdapter<SimpleGroup> adapter;
+    List<SimpleGroup> groups;
+
+    SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        groups = loadGroups();
 
+        //initialize sharedPrefs
+        String prefName = getString(R.string.pref_name);
+        sharedPref = getSharedPreferences(prefName, Context.MODE_PRIVATE);
+
+        groups = loadGroups();
         adapter = new ListGroupAdapter(this, groups);
 
         ListView listViewGroup = findViewById(R.id.listView_groups);
@@ -46,15 +52,20 @@ public class MainActivity extends AppCompatActivity {
         listViewGroup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Group g = groups.get(position);
+                SimpleGroup g = groups.get(position);
                 Intent intent = new Intent(getApplicationContext(), GroupActivity.class);
 
                 // add group id and group name to intent
-                intent.putExtra(GroupActivity.KEY_GROUP_ID, g.groupID.toString());
-                intent.putExtra(GroupActivity.KEY_GROUP_NAME, g.groupName);
-                startActivity(intent);
+                try {
+                    intent.putExtra(GroupActivity.KEY_SIMPLE_GROUP, g.toJSON().toString());
+                } catch (JSONException e) {
+                    return;
+                }
+                startActivityForResult(intent, RESULT_GROUP);
             }
         });
+
+        Log.d(TAG, "onCreate number of groups = " + groups.size());
     }
 
     @Override
@@ -107,35 +118,65 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int RESULT_JOIN = 2;
     public void buttonJoinClicked(View view){
-        //TODO: open JoinGroupActivity for result
-        Log.d("MainActivity", "buttonJoinClicked()");
-        //Intent intent = new Intent(this, SessionSubscribeService.class);
-        //startService(intent);
-
+        Log.d(TAG, "buttonJoinClicked()");
         Intent intent = new Intent(this, JoinGroupActivity.class);
         startActivityForResult(intent, RESULT_JOIN);
     }
 
 
+    private final static int RESULT_GROUP = 0;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode){
+            case  RESULT_GROUP:
+                if (resultCode == RESULT_OK){
+                    int code = data.getIntExtra(GroupActivity.KEY_RESULT_CODE, GroupActivity.CODE_DEFAULT);
+                    switch (code){
+                        case GroupActivity.CODE_DEFAULT:
+                            return;
+                        case GroupActivity.CODE_DELETE:
+                            String stringSimpleGroup = data.getStringExtra(GroupActivity.KEY_SIMPLE_GROUP);
+                            try {
+                                JSONObject object = new JSONObject(stringSimpleGroup);
+                                SimpleGroup simpleGroup = new SimpleGroup(object);
+                                groups.remove(simpleGroup);
+                                storeGroups(groups);
+                                adapter.notifyDataSetChanged();
+                            } catch (JSONException e) {
+                                Log.e(TAG, "SimpleGroup JSON Error");
+                                return;
+                            }
+                            return;
+                    }
+
+                }
+                break;
             case RESULT_CREATE:
-                if (resultCode==RESULT_OK){
-                    String groupName = data.getStringExtra(CreateGroupActivity.KEY_GROUP_NAME);
-                    UUID groupID = UUID.fromString(data.getStringExtra(CreateGroupActivity.KEY_GROUP_ID));
-                    Group group = new Group(groupID, groupName);
-                    groups.add(group);
+                if (resultCode==RESULT_OK) {
+                    SimpleGroup simpleGroup;
+                    try {
+                        JSONObject simpleGroupJSON = new JSONObject(data.getStringExtra(CreateGroupActivity.KEY_SIMPLEGROUP));
+                        simpleGroup = new SimpleGroup(simpleGroupJSON);
+                    } catch (JSONException e) {
+                        //TODO: handel exception
+                        return;
+                    }
+                    groups.add(simpleGroup);
                     storeGroups(groups);
                     adapter.notifyDataSetChanged();
                 }
                 break;
             case RESULT_JOIN:
                 if (resultCode==RESULT_OK){
-                    String groupName = data.getStringExtra(JoinGroupActivity.KEY_GROUP_NAME);
-                    UUID groupID = UUID.fromString(data.getStringExtra(JoinGroupActivity.KEY_GROUP_ID));
-                    Group group = new Group(groupID, groupName);
-                    groups.add(group);
+                    SimpleGroup simpleGroup;
+                    try {
+                        JSONObject simpleGroupJSON = new JSONObject(data.getStringExtra(CreateGroupActivity.KEY_SIMPLEGROUP));
+                        simpleGroup = new SimpleGroup(simpleGroupJSON);
+                    } catch (JSONException e) {
+                        //TODO: handel exception
+                        return;
+                    }
+                    groups.add(simpleGroup);
                     storeGroups(groups);
                     adapter.notifyDataSetChanged();
                 }
@@ -149,14 +190,13 @@ public class MainActivity extends AppCompatActivity {
      * loads group objects from the shared preferences with the key defined in key_groups
      * @return List of all groups stored in shared preferences
      */
-    private List<Group> loadGroups(){
-        List<Group> groups = new ArrayList<>();
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    private List<SimpleGroup> loadGroups(){
+        List<SimpleGroup> groups = new ArrayList<>();
         Set<String> objects = sharedPref.getStringSet(getString(R.string.key_groups), null);
         if (objects != null) {
             for (String o : objects) {
                 try {
-                    groups.add(new Group(new JSONObject(o)));
+                    groups.add(new SimpleGroup(new JSONObject(o)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -169,9 +209,9 @@ public class MainActivity extends AppCompatActivity {
      * stores groups to shared preferences with the key defined in key_groups
      * @param groups to be stored
      */
-    private void storeGroups(List<Group> groups){
+    private void storeGroups(List<SimpleGroup> groups){
         Set<String> objects = new HashSet<>(groups.size());
-        for (Group g : groups){
+        for (SimpleGroup g : groups){
             try {
                 objects.add(g.toJSON().toString());
             } catch (JSONException e) {
@@ -179,40 +219,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putStringSet(getString(R.string.key_groups), objects);
         editor.apply();
-    }
-
-    /**
-     * minimal class definition of groups
-     */
-    class Group {
-        // identifies group
-        final static String KEY_UUID = "key_id";
-        final UUID groupID;
-        // name of group
-        final static String KEY_NAME = "key_name";
-        final String groupName;
-
-        Group(UUID groupID, String groupName){
-            this.groupID = groupID;
-            this.groupName = groupName;
-        }
-
-        Group(JSONObject object) throws JSONException {
-            groupID = UUID.fromString(object.getString(KEY_UUID));
-            groupName = object.getString(KEY_NAME);
-        }
-
-        JSONObject toJSON() throws JSONException {
-            JSONObject object = new JSONObject();
-            object.put(KEY_UUID, groupID.toString());
-            object.put(KEY_NAME, groupName);
-            return object;
-        }
-
-
+        Log.d(TAG, "putting set of strings in storeGroups()\n" +objects.toString());
     }
 }

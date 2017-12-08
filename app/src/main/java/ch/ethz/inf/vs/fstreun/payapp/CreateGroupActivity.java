@@ -12,6 +12,8 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.json.JSONException;
+
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
@@ -22,8 +24,7 @@ public class CreateGroupActivity extends AppCompatActivity {
     DataService mService;
     boolean mBound;
 
-    public static final String KEY_GROUP_ID = "group_id"; //Not empty unique String out
-    public static final String KEY_GROUP_NAME = "group_name"; //Not empty (unique?) String out
+    public static final String KEY_SIMPLEGROUP = "simple_group";
 
     EditText editTextGroupName;
 
@@ -86,10 +87,10 @@ public class CreateGroupActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.menu_save:
 
-                if (!mBound){
+                if (!mBound) {
                     // not bounded to service
                     // storing impossible
                     Toast.makeText(this, "Could not create Session", Toast.LENGTH_SHORT).show();
@@ -97,20 +98,20 @@ public class CreateGroupActivity extends AppCompatActivity {
                 }
 
                 UUID sessionID = UUID.randomUUID();
-                if (sessionID == null){
+                if (sessionID == null) {
                     Toast.makeText(this, "Session Creation Failed", Toast.LENGTH_SHORT).show();
                     return true;
                 }
 
                 boolean success = mService.createSession(sessionID, mService.getUserID());
 
-                if (!success){
+                if (!success) {
                     Toast.makeText(this, "Session Creation Failed", Toast.LENGTH_SHORT).show();
                     return true;
                 }
 
                 String groupName = editTextGroupName.getText().toString();
-                if (groupName.isEmpty()){
+                if (groupName.isEmpty()) {
                     // invalid group name
                     Toast.makeText(this, "Invalid Group Name", Toast.LENGTH_SHORT).show();
                     return true;
@@ -119,14 +120,22 @@ public class CreateGroupActivity extends AppCompatActivity {
                 // create unique ID for group
                 UUID groupID = UUID.randomUUID();
 
+                SimpleGroup simpleGroup = new SimpleGroup(groupID, groupName, sessionID);
+                String simpleGroupString;
+                try {
+                    simpleGroupString = simpleGroup.toJSON().toString();
+                } catch (JSONException e) {
+                    Toast.makeText(this, "Failed to create Group", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
                 Group group = new Group(sessionID);
 
                 //store newly created group in file
                 fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
                         group.toString());
                 Intent intent = new Intent();
-                intent.putExtra(KEY_GROUP_NAME, groupName);
-                intent.putExtra(KEY_GROUP_ID, groupID.toString());
+                intent.putExtra(KEY_SIMPLEGROUP, simpleGroupString);
                 setResult(RESULT_OK, intent);
                 finish();
                 return true;

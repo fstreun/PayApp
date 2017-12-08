@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -38,7 +39,7 @@ public class TransactionListActivity extends AppCompatActivity {
 
     // also referred to by the adapter
     List<Transaction> transactionList = new ArrayList<>();
-    ListView listView;
+    ListTransactionAdapter adapter;
 
     // Filter Buttons
     Button btnAll, btnPaid, btnInvolved;
@@ -55,29 +56,30 @@ public class TransactionListActivity extends AppCompatActivity {
         btnAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //todo: make this button marked and the others not marked
-                updateListView(getFilteredList(getString(R.string.filter_no_filter)));
+                setButtonColor(getString(R.string.filter_no_filter));
+                setFilteredList(getString(R.string.filter_no_filter));
+                updateListView();
             }
         });
         btnPaid = findViewById(R.id.btn_show_paid_by);
         btnPaid.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //todo: make this button marked and the others not marked
-                updateListView(getFilteredList(getString(R.string.filter_paid_by_name)));
+                setButtonColor(getString(R.string.filter_paid_by_name));
+                setFilteredList(getString(R.string.filter_paid_by_name));
+                updateListView();
             }
         });
         btnInvolved = findViewById(R.id.btn_show_involved);
         btnInvolved.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //todo: make this button marked and the others not marked
-                updateListView(getFilteredList(getString(R.string.filter_name_involved)));
+                setButtonColor(getString(R.string.filter_name_involved));
+                setFilteredList(getString(R.string.filter_name_involved));
+                updateListView();
             }
         });
 
-        //initialize listView
-        listView = findViewById(R.id.listView_transaction);
 
         //get information from intent
         Intent intent = getIntent();
@@ -93,6 +95,12 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //get payer name
         participantName = intent.getStringExtra(KEY_PARTICIPANT);
+
+        //hide buttons if no participant in intent
+        if (participantName == null){
+            LinearLayout linearLayoutButtons = findViewById(R.id.lin_lay_filter_btn);
+            linearLayoutButtons.setVisibility(View.GONE);
+        }
 
         //set button text
         if(participantName != null){
@@ -120,10 +128,46 @@ public class TransactionListActivity extends AppCompatActivity {
         if (group == null) onDestroy();
 
         // call filter function
-        transactionList = getFilteredList(type);
+        setFilteredList(type);
 
         // call updated function
-        updateListView(transactionList);
+        Collections.sort(transactionList);
+        adapter = new ListTransactionAdapter(this, transactionList);
+        ListView listView = findViewById(R.id.listView_transaction);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // open transaction view
+                Intent intent = new Intent(TransactionListActivity.this,
+                        TransactionInfoActivity.class);
+                intent.putExtra(TransactionInfoActivity.KEY_TRANSACTION, transactionList.get(position).toString());
+                startActivity(intent);
+            }
+        });
+        setButtonColor(type);
+        updateListView();
+    }
+
+    private void setButtonColor(String type) {
+        //set colors
+        final int checked = getResources().getColor(R.color.colorAccent);
+        final int unchecked = getResources().getColor(R.color.colorPrimary);
+
+        if(type.equals(getString(R.string.filter_no_filter))) {
+            btnAll.setBackgroundColor(checked);
+            btnPaid.setBackgroundColor(unchecked);
+            btnInvolved.setBackgroundColor(unchecked);
+        } else if (type.equals(getString(R.string.filter_paid_by_name))){
+            btnAll.setBackgroundColor(unchecked);
+            btnPaid.setBackgroundColor(checked);
+            btnInvolved.setBackgroundColor(unchecked);
+        } else if (type.equals(getString(R.string.filter_name_involved))){
+            btnAll.setBackgroundColor(unchecked);
+            btnPaid.setBackgroundColor(unchecked);
+            btnInvolved.setBackgroundColor(checked);
+        }
+
     }
 
     @Override
@@ -139,25 +183,26 @@ public class TransactionListActivity extends AppCompatActivity {
         }
     }
 
-    private List<Transaction> getFilteredList(String type) {
+    private void setFilteredList(String type) {
         //-----------------------------------------------------------------
         //type case distinction
         //-----------------------------------------------------------------
 
-        List<Transaction> result = new ArrayList<>();
+        //empty transactionList
+        transactionList.clear();
 
         Log.d(TAG, "entering type case distinction with type " + type);
         //type: all transactions
         if (type.equals(getString(R.string.filter_no_filter))){
-            result = group.getTransactions();
+            transactionList.addAll(group.getTransactions());
 
             //type: filter paid by
         } else if (type.equals(getString(R.string.filter_paid_by_name))) {
             //iterate over all transactions of this group
             for (Transaction t : group.getTransactions()){
-                if (participantName.equals(t.getPayer())){
+                if (participantName != null && participantName.equals(t.getPayer())){
                     Log.d(TAG, "adding a transaction");
-                    result.add(t);
+                    transactionList.add(t);
                 }
             }
 
@@ -167,31 +212,15 @@ public class TransactionListActivity extends AppCompatActivity {
             for (Transaction t : group.getTransactions()){
                 if (t.getInvolved().contains(participantName) || participantName.equals(t.getPayer())){
                     Log.d(TAG, "adding a transaction");
-                    result.add(t);
+                    transactionList.add(t);
                 }
             }
 
         }
-
-        return result;
-
     }
 
-    private void updateListView(final List<Transaction> transactionList) {
-        Collections.sort(transactionList);
-        ListTransactionAdapter adapter = new ListTransactionAdapter(this, transactionList);
-        listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // TODO: define action on click
-                // open transaction view
-                Intent intent = new Intent(TransactionListActivity.this,
-                        TransactionInfoActivity.class);
-                intent.putExtra(TransactionInfoActivity.KEY_TRANSACTION, transactionList.get(position).toString());
-                startActivity(intent);
-            }
-        });
+    private void updateListView() {
+        adapter.notifyDataSetChanged();
     }
 
 }

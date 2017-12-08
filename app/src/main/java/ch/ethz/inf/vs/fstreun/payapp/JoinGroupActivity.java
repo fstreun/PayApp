@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class JoinGroupActivity extends AppCompatActivity {
@@ -28,8 +27,7 @@ public class JoinGroupActivity extends AppCompatActivity {
     DataService mService;
     boolean mBound;
 
-    public static final String KEY_GROUP_ID = "group_id"; //Not empty unique String out
-    public static final String KEY_GROUP_NAME = "group_name"; //Not empty (unique?) String out
+    public static final String KEY_SIMPLEGROUP = "simple_group";
 
     EditText editTextGroupSecret;
 
@@ -123,14 +121,22 @@ public class JoinGroupActivity extends AppCompatActivity {
     }
 
 
-    private void join(SimpleGroup group){
+    private void join(SimpleGroup group) {
 
         // TODO: check uniqueness of session and group ID !!
+
+        String simpleGroupString;
+        try {
+            simpleGroupString = group.toJSON().toString();
+        } catch (JSONException e) {
+            Toast.makeText(this, "Could not join Group", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
 
         // create session with group sessionID
         boolean success = mService.createSession(group.sessionID, mService.getUserID());
-        if (!success){
+        if (!success) {
             Toast.makeText(this, "Could not join Group", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -145,8 +151,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
         // return informations back to MainActivity
         Intent intent = new Intent();
-        intent.putExtra(KEY_GROUP_NAME, group.groupName);
-        intent.putExtra(KEY_GROUP_ID, group.groupID.toString());
+        intent.putExtra(KEY_SIMPLEGROUP, simpleGroupString);
         setResult(RESULT_OK, intent);
         finish();
     }

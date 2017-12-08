@@ -8,49 +8,53 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telecom.ConnectionService;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
 
-    boolean bound;
-    DataService.SessionClientAccess sessionAccess;
+    String TAG = "###GroupActivity###";
 
+    public static final String KEY_RESULT_CODE = "key_result_type";
+    public static final int CODE_DEFAULT = 0;
+    public static final int CODE_DELETE = 1;
 
-    ListParticipantsAdapter adapter;
+    public static final String KEY_SIMPLE_GROUP = "simple_group";
+    private SimpleGroup mSimpleGroup;
 
-    public static final String KEY_GROUP_ID = "key_group_id";
-    public static final String KEY_GROUP_NAME = "key_group_name";
     private Group group;
-    private String groupName;
+
+    private boolean bound;
+    private final Object lock = new Object();
+    private DataService.SessionClientAccess sessionAccess;
+
+    private ListParticipantsAdapter adapter;
+
 
     //gui stuff
     TextView tvDeviceOwner;
@@ -60,15 +64,11 @@ public class GroupActivity extends AppCompatActivity {
     //file stuff
     FileHelper fileHelper;
 
-    UUID userUuid;
-
-    String TAG = "###GroupActivity###";
-    private UUID groupID;
-
-    //Shared Preferences stuff
+    //Shared Preferences for specific group
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
     String prefName;
+    String payerKey, involvedKey;
 
 
     @Override
@@ -77,45 +77,48 @@ public class GroupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
 
-        // TODO: Add UpButton
+        // add UpButton
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         //create fileHelper
         fileHelper = new FileHelper(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // TODO: store all this in group file
-        //initialize shared Prefs stuff
-        prefName = getString(R.string.pref_name);
-        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
         //getting intent
         Intent intent = getIntent();
-        //TODO: what is this try an catch for?
-        try {
-            String groupIdString = intent.getStringExtra(KEY_GROUP_ID);
-            if(groupIdString != null && !groupIdString.isEmpty()) {
-                Log.d(TAG, "groupID: " + groupIdString);
-                groupID = UUID.fromString(groupIdString);
-                group = loadGroup();
-                Log.d(TAG, "got groupID from intent: " + groupID.toString());
-
-            } else {
-
+        String stringSimpleGroup = intent.getStringExtra(KEY_SIMPLE_GROUP);
+        if(stringSimpleGroup != null && !stringSimpleGroup.isEmpty()) {
+            try {
+                JSONObject object = new JSONObject(stringSimpleGroup);
+                mSimpleGroup = new SimpleGroup(object);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT);
 
+            Log.d(TAG, "group: " + stringSimpleGroup);
+
+            group = loadGroup();
+        } else {
+            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         //set group name as title
-        groupName = intent.getStringExtra(KEY_GROUP_NAME);
-        setTitle(groupName);
+        setTitle(mSimpleGroup.groupName);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        //set shared prefsKeys
+        payerKey = getString(R.string.pref_payer_lru);
+        involvedKey = getString(R.string.pref_involved_lru);
+
+        //initialize shared Prefs for this group
+        prefName = getString(R.string.pref_name) + mSimpleGroup.groupID;
+        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -137,8 +140,8 @@ public class GroupActivity extends AppCompatActivity {
                         getString(R.string.filter_paid_by_name));
                 intent1.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         adapter.getItem(position).name);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, groupName);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, groupID.toString());
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
 
                 GroupActivity.this.startActivity(intent1);
             }
@@ -148,9 +151,6 @@ public class GroupActivity extends AppCompatActivity {
         tvDeviceOwner = findViewById(R.id.textView_device_owner);
         tvOwnToPay = findViewById(R.id.textView_ownToPay);
         linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
-
-        //todo: get user UUID from file (we are now getting a random one)
-        userUuid = UUID.randomUUID();
 
         //update view
         updateViews();
@@ -162,6 +162,7 @@ public class GroupActivity extends AppCompatActivity {
         // Bind DataService
         Intent intent = new Intent(this, DataService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
+        Log.d(TAG, "called bindService");
     }
 
     @Override
@@ -170,6 +171,7 @@ public class GroupActivity extends AppCompatActivity {
         // Unbind from service
         if (bound){
             unbindService(connection);
+            Log.d(TAG, "called unbindService");
             bound = false;
         }
     }
@@ -183,6 +185,8 @@ public class GroupActivity extends AppCompatActivity {
                 sessionAccess = binder.getSessionClientAccess(group.getSessionID());
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
+                // if a open transaction exists, try to store it!
+                storeOpenTransaction();
             }
         }
 
@@ -199,8 +203,8 @@ public class GroupActivity extends AppCompatActivity {
         Group g = null;
         try {
             JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
-                    getString(R.string.path_groups), groupID.toString()));
-            Log.d(TAG, "reading from file: " + groupID.toString());
+                    getString(R.string.path_groups), mSimpleGroup.groupID.toString()));
+            Log.d(TAG, "reading from file: " + mSimpleGroup.groupID.toString());
             g = new Group(groupJson);
         } catch (Exception e) {
             e.printStackTrace();
@@ -223,21 +227,33 @@ public class GroupActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_publishGroup:
-                // create SimpleGroup to be published
-                SimpleGroup simpleGroup = new SimpleGroup(groupID, groupName, group.getSessionID());
                 Intent intent = new Intent(this, PublishGroupActivity.class);
                 try {
-                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, simpleGroup.toJSON().toString());
+                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
                     // failed to create SimpleGroup JSON
                 }
                 startActivity(intent);
                 return true;
 
-            //todo: case view all transactions
+            case R.id.menu_showAllTransactions:
+                //case view all transactions
+                Intent intent1 = new Intent(GroupActivity.this,
+                        TransactionListActivity.class);
+                intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                        getString(R.string.filter_no_filter));
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+
+                GroupActivity.this.startActivity(intent1);
+                return true;
 
             case R.id.menu_setMainParticipant:
                 chooseMainParticipant();
+                return true;
+
+            case R.id.menu_deleteGroup:
+                showDeleteGroupDialog();
                 return true;
             default:
                 // If we got here, the user's action was not recognized.
@@ -266,12 +282,12 @@ public class GroupActivity extends AppCompatActivity {
         }
 
         //get LRU payer from shared prefs (default value is the deviceOwner)
-        String payer = sharedPreferences.getString(getString(R.string.pref_payer_lru),
+        String payer = sharedPreferences.getString(payerKey,
                 group.getDeviceOwner());
 
         //get initially checked participants from shared prefs
         Set<String> checkedPartiSet = sharedPreferences.getStringSet(
-                getString(R.string.pref_involved_lru), null);
+                involvedKey, null);
         String[] checkedParticipants;
         if(checkedPartiSet != null) {
             checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
@@ -295,30 +311,22 @@ public class GroupActivity extends AppCompatActivity {
 
         if (requestCode == CREATE_TRANSACTION_REQUEST){
             if (resultCode == RESULT_OK){
+                Log.d(TAG, "transaction creation received");
 
-                // Transaction was finished with save
-                double amount = data.getDoubleExtra(TransactionCreationActivity.KEY_AMOUNT, 0.0);
-                String comment = data.getStringExtra(TransactionCreationActivity.KEY_COMMENT);
+                // get some infos
                 String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
 
                 //store listData to shared prefs for next transaction creation
-                editor.putString(getString(R.string.pref_payer_lru), payer);
-                editor.putStringSet(getString(R.string.pref_involved_lru), new HashSet<>(involved));
+                editor.putString(payerKey, payer);
+                editor.putStringSet(involvedKey, new HashSet<>(involved));
                 editor.apply();
 
-                //Create transaction from the intent listData
-                Transaction transaction = new Transaction(userUuid, payer, involved, amount,
-                        System.currentTimeMillis(), comment);
-                group.addTransaction(transaction);
-
-                // save transaction to file
-                fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
-                        group.toString());
-                Log.d(TAG, "writing to file: " + groupID.toString());
-
-                Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+                // transaction can only be stored after service was bound.
+                openTransaction = data.getExtras();
+                // try to store transaction (it will fail)
+                storeOpenTransaction();
                 updateViews();
                 return;
             }
@@ -373,8 +381,98 @@ public class GroupActivity extends AppCompatActivity {
         }
         updateViews();
 
-        fileHelper.writeToFile(getString(R.string.path_groups), groupID.toString(),
-                group.toString());
-        Log.d(TAG, "writing to file: " + groupID.toString());
+        writeGroup();
+        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
+    }
+
+    private void writeGroup() {
+        fileHelper.writeToFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString(), group.toString());
+    }
+
+    private void showDeleteGroupDialog(){
+        //todo: fix bug that the shared prefs are deleted after force closing the app
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete group: " + mSimpleGroup.groupName + " ?");
+        builder.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                deleteGroup();
+                return;
+            }
+        });
+        builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });
+        builder.create().show();
+
+        return;
+    }
+
+    /**
+     * delets the current group and al its dependence
+     */
+    private void deleteGroup(){
+        //TODO: sessions
+
+        // remove group file
+        fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
+
+        Intent intent = new Intent();
+        intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);
+        try {
+            intent.putExtra(KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+        } catch (JSONException e) {
+            //TODO: handle exception
+        }
+        setResult(RESULT_OK, intent);
+        finish();
+    }
+
+
+    /**
+     * transaction which was not been saved yet
+     */
+    Bundle openTransaction = null;
+    private synchronized boolean storeOpenTransaction(){
+        if (openTransaction == null){
+            return true;
+        }
+
+        if (!bound){
+            return false;
+        }
+
+        // get Transaction info
+        double amount = openTransaction.getDouble(TransactionCreationActivity.KEY_AMOUNT, 0.0);
+        String comment = openTransaction.getString(TransactionCreationActivity.KEY_COMMENT);
+        String payer = openTransaction.getString(TransactionCreationActivity.KEY_PAYER);
+        String[] involvedString = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+        List<String> involved = Arrays.asList(involvedString);
+
+        //store listData to shared prefs for next transaction creation
+        editor.putString(payerKey, payer);
+        editor.putStringSet(involvedKey, new HashSet<>(involved));
+        editor.apply();
+
+        UUID userUuid = sessionAccess.getUserID();
+        if(userUuid == null){
+            return false;
+        }
+        Transaction transaction = new Transaction(userUuid, payer, involved, amount,
+                System.currentTimeMillis(), comment);
+
+
+        group.addTransaction(transaction);
+
+        // save transaction to file
+        writeGroup();
+        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
+
+        Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+        openTransaction = null;
+        return true;
     }
 }

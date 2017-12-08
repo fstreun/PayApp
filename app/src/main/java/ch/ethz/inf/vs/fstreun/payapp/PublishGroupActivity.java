@@ -7,12 +7,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Random;
-
-import ch.ethz.inf.vs.fstreun.network.SimpleGroup;
 
 public class PublishGroupActivity extends AppCompatActivity {
 
