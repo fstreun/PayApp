@@ -142,12 +142,6 @@ public class GroupActivity extends AppCompatActivity {
                         adapter.getItem(position).name);
                 intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
                 intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
-                try {
-                    intent1.putExtra(TransactionListActivity.KEY_GROUP, group.toJson().toString());
-                } catch (JSONException e) {
-                    Log.e(TAG, "Group to JSON failed");
-                    return;
-                }
                 GroupActivity.this.startActivity(intent1);
             }
         });
@@ -186,7 +180,7 @@ public class GroupActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (name.getClassName().equals(DataService.class.getName())){
                 DataService.LocalBinder binder = (DataService.LocalBinder) service;
-                // TODO check if group is null:
+
                 sessionAccess = binder.getSessionClientAccess(group.getSessionID());
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
@@ -399,7 +393,7 @@ public class GroupActivity extends AppCompatActivity {
     }
 
     private void showDeleteGroupDialog(){
-        //todo: fix bug that the shared prefs are deleted after force closing the app
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete group: " + mSimpleGroup.groupName + " ?");
         builder.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
@@ -424,7 +418,8 @@ public class GroupActivity extends AppCompatActivity {
      * delets the current group and al its dependence
      */
     private void deleteGroup(){
-        //TODO: sessions
+
+        sessionAccess.removeSession();
 
         // remove group file
         fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());

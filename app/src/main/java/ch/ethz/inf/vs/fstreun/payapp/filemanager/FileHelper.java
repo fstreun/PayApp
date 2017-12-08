@@ -85,7 +85,7 @@ public class FileHelper {
         String line;
 
         try {
-            //TODO: read file by lines will cause a end line at the end of file...
+            // read file by lines will cause a end line at the end of file...
             while ((line = bufferedReader.readLine()) != null) {
                 sb.append(line+"\n");
             }
