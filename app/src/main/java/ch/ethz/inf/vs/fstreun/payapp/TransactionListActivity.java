@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ import ch.ethz.inf.vs.fstreun.finance.Transaction;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class TransactionListActivity extends AppCompatActivity {
+
+    public final static String KEY_GROUP = "group";
 
     public final static String KEY_PARTICIPANT = "participant"; // String
     public final static String KEY_GROUP_NAME = "group_name"; // String
@@ -112,6 +115,7 @@ public class TransactionListActivity extends AppCompatActivity {
         if (type == null)
             type = getString(R.string.filter_no_filter);
 
+        /*
         // read Group from file to object
         FileHelper fileHelper = new FileHelper(this);
         try {
@@ -126,6 +130,17 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //make sure Group object is not null
         if (group == null) onDestroy();
+        */
+
+        String stringGroup = intent.getStringExtra(KEY_GROUP);
+        try {
+            JSONObject object = new JSONObject(stringGroup);
+            group = new Group(object);
+        } catch (JSONException e) {
+            Log.e(TAG, "Group creation from JSON failed");
+            return;
+        }
+
 
         // call filter function
         setFilteredList(type);

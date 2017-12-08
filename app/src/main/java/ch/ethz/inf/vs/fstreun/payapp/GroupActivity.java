@@ -25,12 +25,12 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
@@ -142,7 +142,12 @@ public class GroupActivity extends AppCompatActivity {
                         adapter.getItem(position).name);
                 intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
                 intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
-
+                try {
+                    intent1.putExtra(TransactionListActivity.KEY_GROUP, group.toJson().toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, "Group to JSON failed");
+                    return;
+                }
                 GroupActivity.this.startActivity(intent1);
             }
         });
@@ -185,8 +190,13 @@ public class GroupActivity extends AppCompatActivity {
                 sessionAccess = binder.getSessionClientAccess(group.getSessionID());
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
+
+                // load transactions to the group
+                loadTransactions();
                 // if a open transaction exists, try to store it!
                 storeOpenTransaction();
+
+                updateViews();
             }
         }
 
@@ -196,7 +206,6 @@ public class GroupActivity extends AppCompatActivity {
             bound = false;
         }
     };
-
 
 
     private Group loadGroup(){
@@ -432,6 +441,32 @@ public class GroupActivity extends AppCompatActivity {
     }
 
 
+    private synchronized boolean loadTransactions() {
+        if (!bound){
+            return false;
+        }
+
+        List<String> list = sessionAccess.getContent();
+        if (list == null){
+            return true;
+        }
+
+        List<Transaction> transactions = new ArrayList<>(list.size());
+        for (String s : list) {
+            JSONObject object;
+            try {
+                object = new JSONObject(s);
+                Transaction transaction = new Transaction(object);
+                transactions.add(transaction);
+            } catch (JSONException e) {
+                Log.e(TAG, "Transaction creation from JSON failed");
+                return false;
+            }
+        }
+        group.setTransactions(transactions);
+        return true;
+    }
+
     /**
      * transaction which was not been saved yet
      */
@@ -464,6 +499,13 @@ public class GroupActivity extends AppCompatActivity {
         Transaction transaction = new Transaction(userUuid, payer, involved, amount,
                 System.currentTimeMillis(), comment);
 
+        try {
+            sessionAccess.add(transaction.toJson().toString());
+            Log.d(TAG, "Transactions in Session: " + sessionAccess.getContent().toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Transaction to JSON failed");
+            return false;
+        }
 
         group.addTransaction(transaction);
 
