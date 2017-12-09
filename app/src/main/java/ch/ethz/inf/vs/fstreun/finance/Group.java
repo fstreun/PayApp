@@ -64,6 +64,7 @@ public class Group {
             addParticipant(parJson.getString(i));
         }
 
+
         //transactions
         JSONArray transArray = o.getJSONArray(TRANSACTIONS_KEY);
         int numTrans = transArray.length();
@@ -73,6 +74,7 @@ public class Group {
             Transaction tempTrans = new Transaction(tempJson);
             addTransaction(tempTrans);
         }
+
 
         // sessionID
         sessionID = UUID.fromString(o.getString(SESSION_ID_KEY));
@@ -155,6 +157,13 @@ public class Group {
         transactions.add(t);
     }
 
+    public void setTransactions(List<Transaction> t){
+        transactions.clear();
+        for (Transaction transaction : t){
+            addTransaction(transaction);
+        }
+    }
+
     /**
      * this function is actually unnecessary because when a transaction is added, all involved
      * participants are added automatically
@@ -187,6 +196,7 @@ public class Group {
             transJson.put(transaction.toJson());
         }
         o.put(TRANSACTIONS_KEY, transJson);
+
 
         //session ID
         o.put(SESSION_ID_KEY, sessionID.toString());

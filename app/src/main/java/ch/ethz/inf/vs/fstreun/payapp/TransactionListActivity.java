@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -112,6 +113,7 @@ public class TransactionListActivity extends AppCompatActivity {
         if (type == null)
             type = getString(R.string.filter_no_filter);
 
+
         // read Group from file to object
         FileHelper fileHelper = new FileHelper(this);
         try {
@@ -126,6 +128,7 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //make sure Group object is not null
         if (group == null) onDestroy();
+
 
         // call filter function
         setFilteredList(type);
