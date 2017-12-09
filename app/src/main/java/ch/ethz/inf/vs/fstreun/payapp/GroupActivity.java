@@ -7,6 +7,8 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -40,29 +42,33 @@ public class GroupActivity extends AppCompatActivity {
 
     String TAG = "###GroupActivity###";
 
+    // different results
     public static final String KEY_RESULT_CODE = "key_result_type";
     public static final int CODE_DEFAULT = 0;
     public static final int CODE_DELETE = 1;
 
+    // simple group expected to be in the intent
     public static final String KEY_SIMPLE_GROUP = "simple_group";
     private SimpleGroup mSimpleGroup;
 
+    // current group loaded from file (with simple group information)
     private Group group;
 
+    // Session Service communication
     private boolean bound;
-    private final Object lock = new Object();
     private DataService.SessionClientAccess sessionAccess;
-
-    private ListParticipantsAdapter adapter;
-
-
-    //gui stuff
-    TextView tvDeviceOwner;
-    TextView tvOwnToPay;
-    LinearLayout linLayOwn;
 
     //file stuff
     FileHelper fileHelper;
+
+    // main participant views
+    LinearLayout linLayOwn;
+    TextView tvDeviceOwner;
+    TextView tvOwnToPay;
+
+    // list of all participants
+    private ListParticipantsAdapter adapter;
+
 
     //Shared Preferences for specific group
     SharedPreferences sharedPreferences;
@@ -73,14 +79,12 @@ public class GroupActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
 
         // add UpButton
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -95,19 +99,27 @@ public class GroupActivity extends AppCompatActivity {
                 JSONObject object = new JSONObject(stringSimpleGroup);
                 mSimpleGroup = new SimpleGroup(object);
             } catch (JSONException e) {
-                e.printStackTrace();
+                Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "SimpleGroup creation from JSON failed.", e);
+                return;
             }
 
-            Log.d(TAG, "group: " + stringSimpleGroup);
+            Log.d(TAG, "received SimpleGroup: " + stringSimpleGroup);
 
-            group = loadGroup();
         } else {
-            Toast.makeText(this, "not possible to create group", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "no SimpleGroup received");
             return;
         }
 
-        //set group name as title
-        setTitle(mSimpleGroup.groupName);
+        // load group from file
+        group = loadGroup(mSimpleGroup);
+        // check loaded group
+        if (group == null){
+            Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 
         //set shared prefsKeys
         payerKey = getString(R.string.pref_payer_lru);
@@ -118,6 +130,18 @@ public class GroupActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
+
+        // GUI //
+
+        //set group name as title
+        setTitle(mSimpleGroup.groupName);
+
+        //textView device owner
+        tvDeviceOwner = findViewById(R.id.textView_device_owner);
+        tvOwnToPay = findViewById(R.id.textView_ownToPay);
+        linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
+
+        // floating button
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -126,7 +150,7 @@ public class GroupActivity extends AppCompatActivity {
             }
         });
 
-
+        // participant view
         adapter = new ListParticipantsAdapter(this, group);
 
         ListView listView = findViewById(R.id.listView_main);
@@ -134,24 +158,20 @@ public class GroupActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent1 = new Intent(GroupActivity.this,
+                Log.d(TAG, "Participant List Item clicked. position: " + position);
+                Intent intent = new Intent(GroupActivity.this,
                         TransactionListActivity.class);
-                intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                intent.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_paid_by_name));
-                intent1.putExtra(TransactionListActivity.KEY_PARTICIPANT,
+                intent.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         adapter.getItem(position).name);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
-                GroupActivity.this.startActivity(intent1);
+                intent.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+                GroupActivity.this.startActivity(intent);
             }
         });
 
-        //textView device owner
-        tvDeviceOwner = findViewById(R.id.textView_device_owner);
-        tvOwnToPay = findViewById(R.id.textView_ownToPay);
-        linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
-
-        //update view
+        //update all views
         updateViews();
     }
 
@@ -173,8 +193,10 @@ public class GroupActivity extends AppCompatActivity {
             Log.d(TAG, "called unbindService");
             bound = false;
         }
+        writeGroup();
     }
 
+    // service binding handler
     ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -189,7 +211,7 @@ public class GroupActivity extends AppCompatActivity {
                 loadTransactions();
                 // if a open transaction exists, try to store it!
                 storeOpenTransaction();
-
+                // update all views
                 updateViews();
             }
         }
@@ -202,17 +224,24 @@ public class GroupActivity extends AppCompatActivity {
     };
 
 
-    private Group loadGroup(){
+    /**
+     * loads group from file.
+     * @param simpleGroup defines the to be loaded group
+     * @return
+     */
+    @Nullable
+    private Group loadGroup(@NonNull SimpleGroup simpleGroup){
         Group g = null;
         try {
-            JSONObject groupJson = new JSONObject(fileHelper.readFromFile(
-                    getString(R.string.path_groups), mSimpleGroup.groupID.toString()));
-            Log.d(TAG, "reading from file: " + mSimpleGroup.groupID.toString());
+            String file = fileHelper.readFromFile(
+                    getString(R.string.path_groups), simpleGroup.groupID.toString());
+            JSONObject groupJson = new JSONObject(file);
+            Log.d(TAG, "reading from file: " + simpleGroup.groupID.toString());
             g = new Group(groupJson);
         } catch (Exception e) {
-            e.printStackTrace();
             //if fail return null
-            Toast.makeText(this, "no group loaded", Toast.LENGTH_SHORT);
+            Log.e(TAG, "failed to load group from file.", e);
+            return null;
         }
         return g;
     }
@@ -235,6 +264,7 @@ public class GroupActivity extends AppCompatActivity {
                     intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
                     // failed to create SimpleGroup JSON
+                    Log.e(TAG, "Failed to create JSON of SimpleGroup.", e);
                 }
                 startActivity(intent);
                 return true;
@@ -252,7 +282,7 @@ public class GroupActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_setMainParticipant:
-                chooseMainParticipant();
+                showMainParticipantDialog();
                 return true;
 
             case R.id.menu_deleteGroup:
@@ -270,10 +300,10 @@ public class GroupActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TransactionCreationActivity.class);
 
         //----------------------------------------------------------------------------
-        // GETTING INFORMATION from shared prefs
+        // GETTING INFORMATION
         //----------------------------------------------------------------------------
 
-        //getting participants of group into String array
+        //putting participants of group into String array
         String[] participants = new String[0];
         if (group != null){
             int n = group.numParticipants();
@@ -321,25 +351,26 @@ public class GroupActivity extends AppCompatActivity {
                 String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 List<String> involved = Arrays.asList(involvedString);
 
-                //store listData to shared prefs for next transaction creation
+                //store data to shared prefs for next transaction creation
                 editor.putString(payerKey, payer);
                 editor.putStringSet(involvedKey, new HashSet<>(involved));
                 editor.apply();
 
                 // transaction can only be stored after service was bound.
+                // so store it for the service in global field
                 openTransaction = data.getExtras();
-                // try to store transaction (it will fail)
-                storeOpenTransaction();
-                updateViews();
                 return;
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /**
+     * updates all the views according to the information given in the global fields
+     */
     private void updateViews() {
         String defPart = group.getDeviceOwner();
-        if(defPart == null){
+        if(defPart == null || defPart.isEmpty()){
             linLayOwn.setVisibility(View.GONE);
         } else {
             linLayOwn.setVisibility(View.VISIBLE);
@@ -352,12 +383,15 @@ public class GroupActivity extends AppCompatActivity {
 
         }
         adapter.notifyDataSetChanged();
+        Log.d(TAG, "updated all views");
     }
 
-    private void chooseMainParticipant(){
+    private void showMainParticipantDialog(){
         List<String> partList = group.getParticipants();
+        // get index of current default participant
         int current = partList.indexOf(group.getDeviceOwner());
         if (current < 0){
+            // if none set current to the last element
             current = group.numParticipants();
         }
         final String[] participants = group.getParticipants().toArray(new String[group.numParticipants()+1]);
@@ -374,18 +408,18 @@ public class GroupActivity extends AppCompatActivity {
             }
         });
         builder.create().show();
+        Log.d(TAG, "main participant dialog shown");
     }
 
     private void setMainParticipant(String participant){
+        Log.d(TAG, "main participant chosen: " + participant);
         if (participant.equalsIgnoreCase("(None)")){
             group.setDeviceOwner(null);
         }else {
             group.setDeviceOwner(participant);
         }
-        updateViews();
 
-        writeGroup();
-        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
+        updateViews();
     }
 
     private void writeGroup() {
@@ -400,7 +434,6 @@ public class GroupActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 deleteGroup();
-                return;
             }
         });
         builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -411,18 +444,20 @@ public class GroupActivity extends AppCompatActivity {
         });
         builder.create().show();
 
-        return;
+        Log.d(TAG, "delete group dialog shown");
     }
 
     /**
-     * delets the current group and al its dependence
+     * deletes the current group and al its dependence
      */
     private void deleteGroup(){
-
-        sessionAccess.removeSession();
+        boolean succes = false;
+        succes |= sessionAccess.removeSession();
 
         // remove group file
-        fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
+        succes |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
+
+        Log.d(TAG, "delete group. succes: " + succes);
 
         Intent intent = new Intent();
         intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);
@@ -433,9 +468,14 @@ public class GroupActivity extends AppCompatActivity {
         }
         setResult(RESULT_OK, intent);
         finish();
+
     }
 
 
+    /**
+     * loads all transactions from the Session Service into the group
+     * @return success of accessing Session
+     */
     private synchronized boolean loadTransactions() {
         if (!bound){
             return false;
@@ -443,7 +483,7 @@ public class GroupActivity extends AppCompatActivity {
 
         List<String> list = sessionAccess.getContent();
         if (list == null){
-            return true;
+            return false;
         }
 
         List<Transaction> transactions = new ArrayList<>(list.size());
@@ -459,6 +499,7 @@ public class GroupActivity extends AppCompatActivity {
             }
         }
         group.setTransactions(transactions);
+        Log.d(TAG, "loaded transaction from session to group");
         return true;
     }
 
@@ -466,6 +507,12 @@ public class GroupActivity extends AppCompatActivity {
      * transaction which was not been saved yet
      */
     Bundle openTransaction = null;
+
+    /**
+     * stores transaction stored in openTransaction field.
+     * adds to the session and to the group
+     * @return success
+     */
     private synchronized boolean storeOpenTransaction(){
         if (openTransaction == null){
             return true;
@@ -482,11 +529,6 @@ public class GroupActivity extends AppCompatActivity {
         String[] involvedString = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
         List<String> involved = Arrays.asList(involvedString);
 
-        //store listData to shared prefs for next transaction creation
-        editor.putString(payerKey, payer);
-        editor.putStringSet(involvedKey, new HashSet<>(involved));
-        editor.apply();
-
         UUID userUuid = sessionAccess.getUserID();
         if(userUuid == null){
             return false;
@@ -498,7 +540,7 @@ public class GroupActivity extends AppCompatActivity {
             sessionAccess.add(transaction.toJson().toString());
             Log.d(TAG, "Transactions in Session: " + sessionAccess.getContent().toString());
         } catch (JSONException e) {
-            Log.e(TAG, "Transaction to JSON failed");
+            Log.e(TAG, "Transaction to JSON failed", e);
             return false;
         }
 
@@ -506,7 +548,6 @@ public class GroupActivity extends AppCompatActivity {
 
         // save transaction to file
         writeGroup();
-        Log.d(TAG, "writing to file: " + mSimpleGroup.groupID.toString());
 
         Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
         openTransaction = null;
