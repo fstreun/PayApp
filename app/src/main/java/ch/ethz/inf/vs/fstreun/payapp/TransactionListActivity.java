@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,7 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -148,6 +149,15 @@ public class TransactionListActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        registerForContextMenu(listView);
+        listView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                Log.d(TAG, "onCreateContextMenu started");
+                MenuInflater inflater = getMenuInflater();
+                inflater.inflate(R.menu.context_menu_transaction, menu);
+            }
+        });
         setButtonColor(type);
         updateListView();
     }
@@ -183,6 +193,21 @@ public class TransactionListActivity extends AppCompatActivity {
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.menu_deleteTransaction:
+                int position = info.position;
+                Transaction transactionToDelete = adapter.getItem(position);
+                Transaction reverseTransaction = transactionToDelete.reverse(System.currentTimeMillis());
+                //todo: open transaction creation activity or dialog to set the comment for reverse transaction
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
