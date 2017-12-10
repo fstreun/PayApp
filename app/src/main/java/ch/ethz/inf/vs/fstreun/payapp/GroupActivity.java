@@ -52,7 +52,7 @@ public class GroupActivity extends AppCompatActivity {
     private SimpleGroup mSimpleGroup;
 
     // current group loaded from file (with simple group information)
-    private Group group;
+    private Group group = null;
 
     // Session Service communication
     private boolean bound;
@@ -81,6 +81,8 @@ public class GroupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group);
+
+        Log.d(TAG, "creation started");
 
         // add UpButton
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -113,7 +115,9 @@ public class GroupActivity extends AppCompatActivity {
         }
 
         // load group from file
-        group = loadGroup(mSimpleGroup);
+        if (group == null) {
+            group = loadGroup(mSimpleGroup);
+        }
         // check loaded group
         if (group == null){
             Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
@@ -150,8 +154,12 @@ public class GroupActivity extends AppCompatActivity {
                         getString(R.string.filter_paid_by_name));
                 intent.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         group.getDeviceOwner());
-                intent.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
-                intent.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+                try {
+                    intent.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, "Failed to create SimpleGroup JSON.", e);
+                    return;
+                }
                 GroupActivity.this.startActivity(intent);
             }
         });
@@ -180,34 +188,42 @@ public class GroupActivity extends AppCompatActivity {
                         getString(R.string.filter_paid_by_name));
                 intent.putExtra(TransactionListActivity.KEY_PARTICIPANT,
                         adapter.getItem(position).name);
-                intent.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
-                intent.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+                try {
+                    intent.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, "Failed to create SimpleGroup JSON.", e);
+                    return;
+                }
                 GroupActivity.this.startActivity(intent);
             }
         });
 
         //update all views
         updateViews();
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         // Bind DataService
-        Intent intent = new Intent(this, DataService.class);
-        bindService(intent, connection, BIND_AUTO_CREATE);
+        Intent intentService = new Intent(this, DataService.class);
+        bindService(intentService, connection, BIND_AUTO_CREATE);
         Log.d(TAG, "called bindService");
+
+        Log.d(TAG, "creation finished");
     }
 
+
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         // Unbind from service
         if (bound){
             unbindService(connection);
             Log.d(TAG, "called unbindService");
             bound = false;
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
         writeGroup();
     }
 
@@ -218,7 +234,7 @@ public class GroupActivity extends AppCompatActivity {
             if (name.getClassName().equals(DataService.class.getName())){
                 DataService.LocalBinder binder = (DataService.LocalBinder) service;
 
-                sessionAccess = binder.getSessionClientAccess(group.getSessionID());
+                sessionAccess = binder.getSessionClientAccess(mSimpleGroup.sessionID);
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
 
@@ -290,8 +306,12 @@ public class GroupActivity extends AppCompatActivity {
                         TransactionListActivity.class);
                 intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_no_filter));
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
-                intent1.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+                try {
+                    intent1.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, "Failed to create SimpleGroup JSON.", e);
+                    return true;
+                }
 
                 GroupActivity.this.startActivity(intent1);
                 return true;
@@ -374,6 +394,7 @@ public class GroupActivity extends AppCompatActivity {
                 // transaction can only be stored after service was bound.
                 // so store it for the service in global field
                 openTransaction = data.getExtras();
+                storeOpenTransaction();
                 return;
             }
         }

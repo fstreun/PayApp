@@ -1,7 +1,10 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -14,10 +17,13 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,11 +34,18 @@ import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 public class TransactionListActivity extends AppCompatActivity {
 
     public final static String KEY_PARTICIPANT = "participant"; // String
-    public final static String KEY_GROUP_NAME = "group_name"; // String
     public final static String KEY_FILTER_TYPE = "filter_type"; // String
+    private String filterType;
         // NO_FILTER (all transactions); PAID_BY_NAME; NAME_INVOLVED
         // see R.string.filter_* for definitions
-    public final static String KEY_GROUP_ID = "group_id"; // String
+
+    // simple group expected to be in the intent
+    public static final String KEY_SIMPLE_GROUP = "simple_group";
+    private SimpleGroup mSimpleGroup;
+
+    // Session Service communication
+    private boolean bound;
+    private DataService.SessionClientAccess sessionAccess;
 
     private String participantName;
     private String groupName;
@@ -85,10 +98,30 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //get information from intent
         Intent intent = getIntent();
-        groupName = intent.getStringExtra(KEY_GROUP_NAME);
-        groupID = UUID.fromString(intent.getStringExtra(KEY_GROUP_ID));
-        String type = intent.getStringExtra(KEY_FILTER_TYPE);
-        Log.d(TAG, "type = " + type);
+        // get SimpleGroup
+        String stringSimpleGroup = intent.getStringExtra(KEY_SIMPLE_GROUP);
+        if(stringSimpleGroup != null && !stringSimpleGroup.isEmpty()) {
+            try {
+                JSONObject object = new JSONObject(stringSimpleGroup);
+                mSimpleGroup = new SimpleGroup(object);
+            } catch (JSONException e) {
+                Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "SimpleGroup creation from JSON failed.", e);
+                return;
+            }
+
+            Log.d(TAG, "received SimpleGroup: " + stringSimpleGroup);
+
+        } else {
+            Toast.makeText(this, "failed to load group", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "no SimpleGroup received");
+            return;
+        }
+
+        groupName = mSimpleGroup.groupName;
+        groupID = mSimpleGroup.groupID;
+        filterType = intent.getStringExtra(KEY_FILTER_TYPE);
+        Log.d(TAG, "type = " + filterType);
         Log.d(TAG, "groupName = " + groupName);
         Log.d(TAG, "groupID = " + groupID.toString());
 
@@ -111,8 +144,8 @@ public class TransactionListActivity extends AppCompatActivity {
         }
 
         // if no type defined, show all transactions
-        if (type == null)
-            type = getString(R.string.filter_no_filter);
+        if (filterType == null)
+            filterType = getString(R.string.filter_no_filter);
 
 
         // read Group from file to object
@@ -130,12 +163,7 @@ public class TransactionListActivity extends AppCompatActivity {
         //make sure Group object is not null
         if (group == null) onDestroy();
 
-
-        // call filter function
-        setFilteredList(type);
-
         // call updated function
-        Collections.sort(transactionList);
         adapter = new ListTransactionAdapter(this, transactionList);
         ListView listView = findViewById(R.id.listView_transaction);
         listView.setAdapter(adapter);
@@ -158,8 +186,13 @@ public class TransactionListActivity extends AppCompatActivity {
                 inflater.inflate(R.menu.context_menu_transaction, menu);
             }
         });
-        setButtonColor(type);
+        setButtonColor(filterType);
         updateListView();
+
+        // Bind DataService
+        Intent intentService = new Intent(this, DataService.class);
+        bindService(intentService, connection, BIND_AUTO_CREATE);
+        Log.d(TAG, "called bindService");
     }
 
     private void setButtonColor(String type) {
@@ -182,6 +215,44 @@ public class TransactionListActivity extends AppCompatActivity {
         }
 
     }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            Log.d(TAG, "called unbindService");
+            bound = false;
+        }
+    }
+
+    // service binding handler
+    ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (name.getClassName().equals(DataService.class.getName())){
+                DataService.LocalBinder binder = (DataService.LocalBinder) service;
+
+                sessionAccess = binder.getSessionClientAccess(group.getSessionID());
+                bound = true;
+                Log.d(TAG, "onServiceConnected: " + name.getClassName());
+
+                // if a open transaction exists, try to store it!
+                storeOpenTransaction();
+                // update all views
+                updateViews();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -253,9 +324,21 @@ public class TransactionListActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK){
                 Log.d(TAG, "transaction creation received");
 
+                // get some infos
+                String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
+                String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+                List<String> involved = Arrays.asList(involvedString);
+
+                //store data to shared prefs for next transaction creation
+                //editor.putString(payerKey, payer);
+                //editor.putStringSet(involvedKey, new HashSet<>(involved));
+                //editor.apply();
+
                 // transaction can only be stored after service was bound.
                 // so store it for the service in global field
-                //openTransaction = data.getExtras();
+                openTransaction = data.getExtras();
+                storeOpenTransaction();
+                updateViews();
                 return;
             }
         }
@@ -267,18 +350,39 @@ public class TransactionListActivity extends AppCompatActivity {
         //type case distinction
         //-----------------------------------------------------------------
 
+        if (!bound){
+            return;
+        }
+
         //empty transactionList
         transactionList.clear();
+
+        List<String> stringsTransactions = sessionAccess.getContent();
+        if (stringsTransactions == null){
+            return;
+        }
+        List<Transaction> tempTransactions = new ArrayList<>(stringsTransactions.size());
+
+        for (String s : stringsTransactions){
+            try {
+                JSONObject object = new JSONObject(s);
+                tempTransactions.add(new Transaction(object));
+            } catch (JSONException e) {
+                tempTransactions.clear();
+                Log.e(TAG, "Failed to create Transactions from JSON.", e);
+                return;
+            }
+        }
 
         Log.d(TAG, "entering type case distinction with type " + type);
         //type: all transactions
         if (type.equals(getString(R.string.filter_no_filter))){
-            transactionList.addAll(group.getTransactions());
-
+            transactionList.addAll(tempTransactions);
             //type: filter paid by
         } else if (type.equals(getString(R.string.filter_paid_by_name))) {
             //iterate over all transactions of this group
-            for (Transaction t : group.getTransactions()){
+            for (Transaction t : tempTransactions){
+
                 if (participantName != null && participantName.equals(t.getPayer())){
                     Log.d(TAG, "adding a transaction");
                     transactionList.add(t);
@@ -288,7 +392,7 @@ public class TransactionListActivity extends AppCompatActivity {
             //type: all involved (and paid)
         } else if (type.equals(getString(R.string.filter_name_involved))){
             //iterate over all transactions of this group
-            for (Transaction t : group.getTransactions()){
+            for (Transaction t : tempTransactions){
                 if (t.getInvolved().contains(participantName) || participantName.equals(t.getPayer())){
                     Log.d(TAG, "adding a transaction");
                     transactionList.add(t);
@@ -300,6 +404,63 @@ public class TransactionListActivity extends AppCompatActivity {
 
     private void updateListView() {
         adapter.notifyDataSetChanged();
+    }
+
+
+    /**
+     *
+     */
+    private void updateViews() {
+        setFilteredList(filterType);
+        updateListView();
+    }
+
+
+    /**
+     * transaction which was not been saved yet
+     */
+    Bundle openTransaction = null;
+
+    /**
+     * stores transaction stored in openTransaction field.
+     * adds to the session and to the group
+     * @return success
+     */
+    private synchronized boolean storeOpenTransaction(){
+        if (openTransaction == null){
+            return true;
+        }
+
+        if (!bound){
+            return false;
+        }
+
+        // get Transaction info
+        double amount = openTransaction.getDouble(TransactionCreationActivity.KEY_AMOUNT, 0.0);
+        String comment = openTransaction.getString(TransactionCreationActivity.KEY_COMMENT);
+        String payer = openTransaction.getString(TransactionCreationActivity.KEY_PAYER);
+        String[] involvedString = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+        List<String> involved = Arrays.asList(involvedString);
+
+        UUID userUuid = sessionAccess.getUserID();
+        if(userUuid == null){
+            return false;
+        }
+        Transaction transaction = new Transaction(userUuid, payer, involved, amount,
+                System.currentTimeMillis(), comment);
+
+        try {
+            sessionAccess.add(transaction.toJson().toString());
+            Log.d(TAG, "Transactions in Session: " + sessionAccess.getContent().toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Transaction to JSON failed", e);
+            return false;
+        }
+
+
+        Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
+        openTransaction = null;
+        return true;
     }
 
 }
