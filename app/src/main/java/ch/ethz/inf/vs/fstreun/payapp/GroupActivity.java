@@ -141,6 +141,21 @@ public class GroupActivity extends AppCompatActivity {
         tvOwnToPay = findViewById(R.id.textView_ownToPay);
         linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
 
+        linLayOwn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GroupActivity.this,
+                        TransactionListActivity.class);
+                intent.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                        getString(R.string.filter_paid_by_name));
+                intent.putExtra(TransactionListActivity.KEY_PARTICIPANT,
+                        group.getDeviceOwner());
+                intent.putExtra(TransactionListActivity.KEY_GROUP_NAME, mSimpleGroup.groupName);
+                intent.putExtra(TransactionListActivity.KEY_GROUP_ID, mSimpleGroup.groupID.toString());
+                GroupActivity.this.startActivity(intent);
+            }
+        });
+
         // floating button
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
