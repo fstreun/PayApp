@@ -1,8 +1,10 @@
 package ch.ethz.inf.vs.fstreun.network;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
@@ -17,6 +19,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+
+import ch.ethz.inf.vs.fstreun.payapp.DataService;
 
 /**
  * Created by Kaan on 30.11.17.
@@ -34,8 +38,47 @@ public class DataSyncPublishService extends Service {
     private int mLocalPort;
     private NsdManager.RegistrationListener mRegistrationListener;
 
-    public DataSyncPublishService() {
+    DataService.LocalBinder dataServiceBinder;
+    boolean bound = false;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // Bind DataService
+        Intent intent = new Intent(this, DataService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            bound = false;
+        }
+    }
+
+    ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (name.getClassName().equals(DataService.class.getName())){
+                dataServiceBinder = (DataService.LocalBinder) service;
+                bound = true;
+                Log.d(TAG, "onServiceConnected: " + name.getClassName());
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
+
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -70,6 +113,7 @@ public class DataSyncPublishService extends Service {
         // Initialize a server socket on the next available port.
         try {
             mServerSocket = new ServerSocket(0);
+            // start master network thread
             new Thread(new ServerMasterThread()).start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -116,6 +160,7 @@ public class DataSyncPublishService extends Service {
                 try {
                     Log.i(TAG, "run() - open RequestThread");
                     Socket socket = mServerSocket.accept();
+                    // start slave thread
                     ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
                     slaveThread.run();
 
@@ -142,7 +187,14 @@ public class DataSyncPublishService extends Service {
 
         @Override
         public void run() {
+
             try {
+
+                if (!bound){
+                    // session access service not available
+                    mSocket.close();
+                    return;
+                }
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
 

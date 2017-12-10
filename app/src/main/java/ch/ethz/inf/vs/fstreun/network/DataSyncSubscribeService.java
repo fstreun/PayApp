@@ -1,8 +1,10 @@
 package ch.ethz.inf.vs.fstreun.network;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
@@ -15,6 +17,14 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+
+import ch.ethz.inf.vs.fstreun.payapp.DataService;
 
 /**
  * Created by Kaan on 30.11.17.
@@ -26,15 +36,62 @@ public class DataSyncSubscribeService extends Service {
     String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "DataSyncSubscriber";
     private NsdManager mNsdManager;
-    private NsdServiceInfo mService;
+
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager.ResolveListener mResolveListener;
-    private InetAddress mHost;
-    private int mPort;
 
-    public DataSyncSubscribeService() {
+    private Set<NsdServiceInfo> mServiceInfos = new HashSet<>();
 
+
+    DataService.LocalBinder dataServiceBinder;
+    boolean bound = false;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // start listener
+        initializeResolveListener();
+        initializeDiscoveryListener();
+        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
+        mNsdManager.discoverServices(
+                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+
+
+        // Bind DataService
+        Intent intent = new Intent(this, DataService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //TODO: tear down listener
+
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            bound = false;
+        }
+    }
+
+    ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (name.getClassName().equals(DataService.class.getName())){
+                dataServiceBinder = (DataService.LocalBinder) service;
+                bound = true;
+                Log.d(TAG, "onServiceConnected: " + name.getClassName());
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -42,15 +99,7 @@ public class DataSyncSubscribeService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        initializeResolveListener();
-        initializeDiscoveryListener();
-        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-        mNsdManager.discoverServices(
-                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
-        return super.onStartCommand(intent, flags, startId);
-    }
+
 
     public void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
@@ -122,33 +171,72 @@ public class DataSyncSubscribeService extends Service {
                     Log.i(TAG, "Same IP.");
                     return;
                 }
-                mService = serviceInfo;
-                mPort = mService.getPort();
-                mHost = mService.getHost();
 
-                new Thread(new ClientThread()).start();
+                // TODO: hope this is no capture (and only added once. I guess it should)
+                boolean success = mServiceInfos.add(serviceInfo);
+                Log.d(TAG, "onServiceResolved added new service info: " + success);
+
             }
         };
     }
 
+    public synchronized void synchronizeSession(UUID sessionID){
+        // check if data service is already bounded
+        if (!bound){
+            return;
+        }
+
+        DataService.SessionNetworkAccess sessionNetworkAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
+        if (sessionNetworkAccess == null){
+            // not available
+            return;
+        }
+
+        ClientThread clientThread = new ClientThread(sessionNetworkAccess);
+        new Thread(clientThread).run();
+
+    }
+
+
     class ClientThread implements Runnable {
 
-        private Socket mSocket;
+        private final  DataService.SessionNetworkAccess mSessionAccess;
+
+        ClientThread(DataService.SessionNetworkAccess sessionAccess) {
+            this.mSessionAccess = sessionAccess;
+        }
+
 
         public void run() {
             Log.i("ClientThread", "run()");
-            try {
-                mSocket = new Socket(mHost, mPort);
-                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/dataSync");
+            for (NsdServiceInfo serviceInfo : mServiceInfos){
+                // iterate through all the discovered services
 
-                OutputStream mOutputStream = mSocket.getOutputStream();
+                InetAddress address = serviceInfo.getHost();
+                int port = serviceInfo.getPort();
+                Socket socket = null;
+                try {
+                    socket = new Socket(address, port);
+                    socket.setSoTimeout(100);
+                    handleSocket(socket);
+                } catch (IOException e) {
+                    Log.e(TAG, "new Socket Creation exception.", e);
+                }
+            }
+        }
+
+        public void handleSocket(Socket socket){
+            try {
+                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync");
+
+                OutputStream mOutputStream = socket.getOutputStream();
 
                 PrintWriter wtr = new PrintWriter(mOutputStream);
                 wtr.print(get_message);
                 //mOutputStream.write(get_message.getBytes());
                 wtr.flush();
 
-                BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 // parse all header fields
                 String result = "";
                 String line;
@@ -161,7 +249,9 @@ public class DataSyncSubscribeService extends Service {
                     }
                 }
                 Log.i(TAG, "Result: " + result);
-                mSocket.close();
+
+
+                socket.close();
                 return;
             } catch (IOException e) {
                 e.printStackTrace();

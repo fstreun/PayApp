@@ -50,19 +50,32 @@ public class SessionSubscribeService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        mContext = this;
-        secret = intent.getStringExtra("SECRET");
-
-        activity = JoinGroupActivity.instance;
-
+    public void onCreate() {
+        super.onCreate();
+        // start listener
         initializeResolveListener();
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //TODO tear down listener
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        mContext = this;
+        secret = intent.getStringExtra("SECRET");
+
+        activity = JoinGroupActivity.instance;
         return super.onStartCommand(intent, flags, startId);
     }
+
 
     public void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
@@ -140,6 +153,7 @@ public class SessionSubscribeService extends Service {
                     socket = new Socket(mService.getHost(), mService.getPort());
                 } catch (IOException e) {
                     e.printStackTrace();
+                    return;
                 }
 
                 new Thread(new ClientThread(socket)).start();
@@ -158,8 +172,8 @@ public class SessionSubscribeService extends Service {
         public void run() {
             Log.i("ClientThread", "run()");
             try {
-                mSocket = ;
-                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
+                //String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
+                String get_message = generateRequest(mSocket.getInetAddress().toString(), mSocket.getPort(), "/joinGroup", secret);
 
                 OutputStream mOutputStream = mSocket.getOutputStream();
 

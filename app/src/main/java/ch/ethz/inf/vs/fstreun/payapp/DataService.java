@@ -97,7 +97,7 @@ public class DataService extends Service {
          *
          * @return instance of service
          */
-        DataService getService() {
+        public DataService getService() {
             return DataService.this;
         }
 
@@ -107,7 +107,7 @@ public class DataService extends Service {
          * @param sessionID of the session to be manipulated
          * @return access interface to session if exists, else null
          */
-        SessionNetworkAccess getSessionNetworkAccess(UUID sessionID) {
+        public SessionNetworkAccess getSessionNetworkAccess(UUID sessionID) {
             if (sessionIDs.contains(sessionID)) {
                 return new SessionNetworkAccess(sessionID);
             } else {
@@ -121,7 +121,7 @@ public class DataService extends Service {
          * @param sessionID of the session
          * @return access interface to session if exists, else null
          */
-        SessionClientAccess getSessionClientAccess(UUID sessionID) {
+        public SessionClientAccess getSessionClientAccess(UUID sessionID) {
             if (sessionIDs.contains(sessionID)) {
                 return new SessionClientAccess(sessionID);
             } else {
