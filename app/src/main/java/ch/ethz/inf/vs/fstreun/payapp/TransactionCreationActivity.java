@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +18,12 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+
+import ch.ethz.inf.vs.fstreun.finance.Transaction;
 
 public class TransactionCreationActivity extends AppCompatActivity {
 
@@ -88,6 +94,16 @@ public class TransactionCreationActivity extends AppCompatActivity {
         spinnerPayer = findViewById(R.id.spinner);
         spinnerPayer.setAdapter(spinnerAdapterPayer);
         spinnerPayer.setSelection(spinnerData.indexOf(payer));
+
+        //put comment and amount (only for reverse transaction)
+        double amount = intent.getDoubleExtra(KEY_AMOUNT, 0.0);
+        String amountString = Transaction.doubleToString(amount);
+        String initialComment = intent.getStringExtra(KEY_COMMENT);
+        if (amount != 0) {
+            editTextAmount.setText(amountString);
+        }
+        editTextComment.setText(initialComment);
+
     }
 
 
@@ -97,11 +113,10 @@ public class TransactionCreationActivity extends AppCompatActivity {
             try {
 
                 //case: everything ok
-                double result = Double.parseDouble(amountString);
-                return result;
-            }catch (NumberFormatException e) {
+                return DecimalFormat.getInstance().parse(amountString).doubleValue();
 
-                // case: get amount did not work
+            } catch (ParseException e) {
+                Log.e(TAG, "wrong amount string format");
                 return null;
             }
         }
