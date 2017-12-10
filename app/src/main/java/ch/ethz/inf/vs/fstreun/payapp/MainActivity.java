@@ -109,9 +109,6 @@ public class MainActivity extends AppCompatActivity {
     private final static int RESULT_CREATE = 1;
     public void buttonCreateClicked(View view){
         Log.d("MainActivity", "buttonCreateClicked()");
-        //Intent intent = new Intent(this, SessionPublishService.class);
-        //startService(intent);
-
         Intent intent = new Intent(this, CreateGroupActivity.class);
         startActivityForResult(intent, RESULT_CREATE);
     }
