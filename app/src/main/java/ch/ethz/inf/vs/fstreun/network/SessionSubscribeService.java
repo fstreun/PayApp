@@ -6,7 +6,11 @@ import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,22 +24,24 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 
+import ch.ethz.inf.vs.fstreun.payapp.JoinGroupActivity;
+
 public class SessionSubscribeService extends Service {
 
     String TAG = "SessionSubscribeService";
     String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "SessionSubscriber";
+    private Context mContext;
     private NsdManager mNsdManager;
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager.ResolveListener mResolveListener;
     private InetAddress mHost;
     private int mPort;
-    private int sessionKey;
+    private String secret;
+    private JoinGroupActivity activity;
 
-    public SessionSubscribeService(int key) {
-        sessionKey = key;
-    }
+    public SessionSubscribeService(){}
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -45,6 +51,11 @@ public class SessionSubscribeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        mContext = this;
+        secret = intent.getStringExtra("SECRET");
+
+        activity = JoinGroupActivity.instance;
+
         initializeResolveListener();
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
@@ -140,52 +151,101 @@ public class SessionSubscribeService extends Service {
             Log.i("ClientThread", "run()");
             try {
                 mSocket = new Socket(mHost, mPort);
-                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup");
+                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
 
                 OutputStream mOutputStream = mSocket.getOutputStream();
 
                 PrintWriter wtr = new PrintWriter(mOutputStream);
                 wtr.print(get_message);
-                //mOutputStream.write(get_message.getBytes());
                 wtr.flush();
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
-                // parse all header fields
+
+                String result = parseResponseForBody(input);
+
+                JSONObject response = new JSONObject(result);
+                boolean success = response.getBoolean("result");
+                if (success) {
+                    Log.w(TAG, "Success response: " + result);
+                    if (activity != null) {
+                        // we are calling here activity's method
+                        JSONObject group = new JSONObject(response.getString("group"));
+                        activity.addGroupToList(group);
+                    }
+                } else {
+                    // do nothing
+                    Log.w(TAG, "Failure response: " + result);
+                    return;
+                }
+                mSocket.close();
+                return;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public String parseResponseForBody(BufferedReader input) {
+            // parse all header fields
+
+            try {
+                String statusLine = input.readLine();;
+
+                if (statusLine == null || statusLine.isEmpty()) {
+                    return "";
+                }
+
+                String lengthLine = input.readLine();
+                if (lengthLine == null || lengthLine.isEmpty()) {
+                    return "";
+                }
+
+                String typeLine = input.readLine();
+                if (typeLine == null || typeLine.isEmpty()) {
+                    return "";
+                }
+
+                String connectionLine = input.readLine();
+                if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
                 String result = "";
                 String line;
+
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.i(TAG, result);
+                        Log.w(TAG, result);
                         break;
                     }else {
                         result = result + line + "\r\n";
                     }
                 }
-                /*InputStream mInputStream = mSocket.getInputStream();
-
-                String result = "";
-                int c;
-                while ((c = mInputStream.read()) != -1) {
-                    result = result + (char) c;
-                }
-                */
-                Log.i(TAG, "Result: " + result);
-                mSocket.close();
-                return;
+                return result;
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return "";
         }
 
-        public String generateRequest(String host, int port, String path) {
-            String accept = "text/plain";
+        public String generateRequest(String host, int port, String path, String secret) {
+            String accept = "application/json";
             String connect = "Closed";
+
+            JSONObject requestBody = new JSONObject();
+            try {
+                requestBody.put("secret", secret);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
 
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
                     + "Connection: " + connect + "\r\n"
+                    + requestBody.toString() + "\r\n"
                     + "\r\n";
 
             return request;
