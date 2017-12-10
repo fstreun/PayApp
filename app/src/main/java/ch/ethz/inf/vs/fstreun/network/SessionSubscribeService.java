@@ -135,10 +135,14 @@ public class SessionSubscribeService extends Service {
                     return;
                 }
                 mService = serviceInfo;
-                mPort = mService.getPort();
-                mHost = mService.getHost();
+                Socket socket = null;
+                try {
+                    socket = new Socket(mService.getHost(), mService.getPort());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-                new Thread(new ClientThread()).start();
+                new Thread(new ClientThread(socket)).start();
             }
         };
     }
@@ -147,10 +151,14 @@ public class SessionSubscribeService extends Service {
 
         private Socket mSocket;
 
+        public ClientThread(Socket socket) {
+            mSocket = socket;
+        }
+
         public void run() {
             Log.i("ClientThread", "run()");
             try {
-                mSocket = new Socket(mHost, mPort);
+                mSocket = ;
                 String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
 
                 OutputStream mOutputStream = mSocket.getOutputStream();
