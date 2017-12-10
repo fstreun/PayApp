@@ -70,7 +70,7 @@ public class DataSyncPublishService extends Service {
         // Initialize a server socket on the next available port.
         try {
             mServerSocket = new ServerSocket(0);
-            new Thread(new ServerThread()).start();
+            new Thread(new ServerMasterThread()).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -105,45 +105,69 @@ public class DataSyncPublishService extends Service {
         };
     }
 
-    class ServerThread implements Runnable {
+    class ServerMasterThread implements Runnable {
 
-        Thread mThread;
+        private final static String TAG = "ServerMasterThread";
 
         public void run() {
-            Log.i("ServerThread", "run()");
+            Log.i("ServerMasterThread", "run()");
             while (mServerSocket != null) {
+
                 try {
-                    Log.i("ServerThread", "run() - open RequestThread");
-                    Socket mSocket = mServerSocket.accept();
+                    Log.i(TAG, "run() - open RequestThread");
+                    Socket socket = mServerSocket.accept();
+                    ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
+                    slaveThread.run();
 
-                    BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
-
-                    // parse all header fields
-                    String result = "";
-                    String line;
-                    while ((line = input.readLine()) != null){
-                        if (line.isEmpty()){
-                            Log.i(TAG, result);
-                            break;
-                        }else {
-                            result = result + line + "\r\n";
-                        }
-                    }
-
-                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
-
-                    PrintWriter wtr = new PrintWriter(output);
-
-                    // Create Here Response String (favourably JSON)
-                    wtr.print(generateResponse("Success"));
-                    wtr.flush();
-                    wtr.close();
 
                 } catch (SocketException e) {
-                    e.printStackTrace();
+                    // socket closed
+                    Log.e(TAG, "socket exception, probably closed.", e);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "io excepted.", e);
                 }
+            }
+        }
+    }
+
+    class ServerSlaveThread implements Runnable{
+
+        private final static String TAG = "ServerSlaveThread";
+
+        private final Socket mSocket;
+
+        ServerSlaveThread(Socket socket) {
+            this.mSocket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+
+                BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+
+                // parse all header fields
+                String result = "";
+                String line;
+                while ((line = input.readLine()) != null) {
+                    if (line.isEmpty()) {
+                        Log.i(TAG, result);
+                        break;
+                    } else {
+                        result = result + line + "\r\n";
+                    }
+                }
+
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+
+                PrintWriter wtr = new PrintWriter(output);
+
+                // Create Here Response String (favourably JSON)
+                wtr.print(generateResponse("Success"));
+                wtr.flush();
+                wtr.close();
+            }catch (IOException e){
+
             }
         }
 
@@ -151,8 +175,9 @@ public class DataSyncPublishService extends Service {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
                     "Content-Type: text/plain\r\n" +
-                    "Connection: Closed\r\n" + body;
+                    "Connection: Closed\r\n\r\n" + body;
             return response;
         }
+
     }
 }

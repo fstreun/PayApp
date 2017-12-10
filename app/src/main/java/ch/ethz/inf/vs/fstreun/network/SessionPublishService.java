@@ -114,10 +114,10 @@ public class SessionPublishService extends Service {
         Thread mThread;
 
         public void run() {
-            Log.i("ServerThread", "run()");
+            Log.i("ServerMasterThread", "run()");
             while (mServerSocket != null) {
                 try {
-                    Log.i("ServerThread", "run() - open RequestThread");
+                    Log.i("ServerMasterThread", "run() - open RequestThread");
                     Socket mSocket = mServerSocket.accept();
 
                     BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
