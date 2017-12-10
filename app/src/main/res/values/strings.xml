@@ -26,6 +26,6 @@
     <string name="show_all_transactions">Show all Transactions</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
-    <string name="delete_transaction">Delete Transaction</string>
+    <string name="delete_transaction">Create reverse Transaction</string>
 
 </resources>

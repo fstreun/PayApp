@@ -19,6 +19,8 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import ch.ethz.inf.vs.fstreun.finance.Transaction;
+
 public class TransactionCreationActivity extends AppCompatActivity {
 
     public final static String KEY_PAYER = "payer"; // String in and out
@@ -88,6 +90,16 @@ public class TransactionCreationActivity extends AppCompatActivity {
         spinnerPayer = findViewById(R.id.spinner);
         spinnerPayer.setAdapter(spinnerAdapterPayer);
         spinnerPayer.setSelection(spinnerData.indexOf(payer));
+
+        //put comment and amount (only for reverse transaction)
+        double amount = intent.getDoubleExtra(KEY_AMOUNT, 0.0);
+        String amountString = Transaction.doubleToString(amount);
+        String initialComment = intent.getStringExtra(KEY_COMMENT);
+        if (amount != 0) {
+            editTextAmount.setText(amountString);
+        }
+        editTextComment.setText(initialComment);
+
     }
 
 

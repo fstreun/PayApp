@@ -205,10 +205,61 @@ public class TransactionListActivity extends AppCompatActivity {
                 Transaction transactionToDelete = adapter.getItem(position);
                 Transaction reverseTransaction = transactionToDelete.reverse(System.currentTimeMillis());
                 //todo: open transaction creation activity or dialog to set the comment for reverse transaction
+                Intent intent = new Intent(TransactionListActivity.this,
+                        TransactionCreationActivity.class);
+                //----------------------------------------------------------------------------
+                // GETTING INFORMATION
+                //----------------------------------------------------------------------------
+
+                //putting participants of group into String array
+                String[] participants = new String[0];
+                if (group != null){
+                    int n = group.numParticipants();
+                    participants = new String[n];
+                    List<String> participantsList = group.getParticipants();
+                    for (int i=0; i<n; i++){
+                        participants[i] = participantsList.get(i);
+                    }
+                }
+
+                //putting involved participants into string array
+                int n = reverseTransaction.getNumInvolved();
+                String[] checkedParticipants = new String[n];
+                for(int i=0; i<n; i++) checkedParticipants[i] = reverseTransaction.getInvolved().get(i);
+
+                //putting comment
+                String comment = reverseTransaction.getComment();
+
+                //----------------------------------------------------------------------------
+                // PUTTING INFORMATION to intent
+                //----------------------------------------------------------------------------
+
+                //put intents
+                intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS, participants);
+                intent.putExtra(TransactionCreationActivity.KEY_PAYER, reverseTransaction.getPayer());
+                intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS_CHECKED, checkedParticipants);
+                intent.putExtra(TransactionCreationActivity.KEY_AMOUNT, reverseTransaction.amount);
+                intent.putExtra(TransactionCreationActivity.KEY_COMMENT, comment);
+                startActivityForResult(intent, GroupActivity.CREATE_TRANSACTION_REQUEST);
                 return true;
             default:
                 return super.onContextItemSelected(item);
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == GroupActivity.CREATE_TRANSACTION_REQUEST){
+            if (resultCode == RESULT_OK){
+                Log.d(TAG, "transaction creation received");
+
+                // transaction can only be stored after service was bound.
+                // so store it for the service in global field
+                //openTransaction = data.getExtras();
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void setFilteredList(String type) {
