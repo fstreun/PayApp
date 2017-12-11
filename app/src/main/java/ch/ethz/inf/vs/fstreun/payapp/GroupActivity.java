@@ -290,6 +290,25 @@ public class GroupActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if(!loadTransactions()){
+            //load data from group file if not possible from session
+            List<Transaction> transactionList = new ArrayList<>();
+            if (sessionAccess == null) return;
+            for (String s : sessionAccess.getContent()){
+                try {
+                    transactionList.add(new Transaction(new JSONObject(s)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            group.setTransactions(transactionList);
+        }
+        updateViews();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
@@ -501,7 +520,7 @@ public class GroupActivity extends AppCompatActivity {
         // remove group file
         success |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
 
-        Log.d(TAG, "delete group. succes: " + success);
+        Log.d(TAG, "delete group. success: " + success);
 
         Intent intent = new Intent();
         intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);

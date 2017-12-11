@@ -296,23 +296,6 @@ public class TransactionListActivity extends AppCompatActivity {
         if(btnInvolved.isChecked()) btnInvolved.setBackgroundColor(checked);
         else btnInvolved.setBackgroundColor(unchecked);
 
-        //the old implementation
-        /*
-        if(filterType.equals(getString(R.string.filter_no_filter))) {
-            btnAll.setBackgroundColor(checked);
-            btnPaid.setBackgroundColor(unchecked);
-            btnInvolved.setBackgroundColor(unchecked);
-        } else if (filterType.equals(getString(R.string.filter_paid_by_name))){
-            btnAll.setBackgroundColor(unchecked);
-            btnPaid.setBackgroundColor(checked);
-            btnInvolved.setBackgroundColor(unchecked);
-        } else if (filterType.equals(getString(R.string.filter_name_involved))){
-            btnAll.setBackgroundColor(unchecked);
-            btnPaid.setBackgroundColor(unchecked);
-            btnInvolved.setBackgroundColor(checked);
-        }
-        */
-
     }
 
 
@@ -424,16 +407,6 @@ public class TransactionListActivity extends AppCompatActivity {
         if (requestCode == GroupActivity.CREATE_TRANSACTION_REQUEST){
             if (resultCode == RESULT_OK){
                 Log.d(TAG, "transaction creation received");
-
-                // get some infos
-                String payer = data.getStringExtra(TransactionCreationActivity.KEY_PAYER);
-                String[] involvedString = data.getStringArrayExtra(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
-                List<String> involved = Arrays.asList(involvedString);
-
-                //store data to shared prefs for next transaction creation
-                //editor.putString(payerKey, payer);
-                //editor.putStringSet(involvedKey, new HashSet<>(involved));
-                //editor.apply();
 
                 // transaction can only be stored after service was bound.
                 // so store it for the service in global field

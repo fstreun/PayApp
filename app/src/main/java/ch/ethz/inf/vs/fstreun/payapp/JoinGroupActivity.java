@@ -100,7 +100,7 @@ public class JoinGroupActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        stopService(intentSessionSubscribeService);
+        if(intentSessionSubscribeService != null) stopService(intentSessionSubscribeService);
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
