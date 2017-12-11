@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import ch.ethz.inf.vs.fstreun.network.DataSyncPublishService;
+import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
+
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "###MainActivity";
 
@@ -66,19 +69,27 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Log.d(TAG, "onCreate number of groups = " + groups.size());
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+
+        // start services which run always
+
         // Bind DataService
-        Intent intent = new Intent(this, DataService.class);
-        bindService(intent, connection, BIND_AUTO_CREATE);
+        Intent intentDataService = new Intent(this, DataService.class);
+        startService(intentDataService);
+        bindService(intentDataService, connection, BIND_AUTO_CREATE);
+
+        Intent intentSyncPubService = new Intent(this, DataSyncPublishService.class);
+        startService(intentSyncPubService);
+
+        Intent intentSyncSubService = new Intent(this, DataSyncSubscribeService.class);
+        startService(intentSyncSubService);
+
     }
 
+
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         // Unbind from service
         if (bound){
             unbindService(connection);
@@ -109,9 +120,6 @@ public class MainActivity extends AppCompatActivity {
     private final static int RESULT_CREATE = 1;
     public void buttonCreateClicked(View view){
         Log.d("MainActivity", "buttonCreateClicked()");
-        //Intent intent = new Intent(this, SessionPublishService.class);
-        //startService(intent);
-
         Intent intent = new Intent(this, CreateGroupActivity.class);
         startActivityForResult(intent, RESULT_CREATE);
     }

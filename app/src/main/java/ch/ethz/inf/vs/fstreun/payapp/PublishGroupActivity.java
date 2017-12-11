@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,9 +12,13 @@ import org.json.JSONObject;
 
 import java.util.Random;
 
+import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
+
 public class PublishGroupActivity extends AppCompatActivity {
 
+    private String TAG = "PublishGroupActivity";
     public final static String KEY_SIMPLEGROUP = "key_group";
+    private Intent intentSessionPublishService;
     private SimpleGroup group;
     String jsonString;
 
@@ -45,10 +50,27 @@ public class PublishGroupActivity extends AppCompatActivity {
         startPublish();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopPublish();
+    }
+
     public final void startPublish(){
+        Log.i(TAG, "startPublish()");
+
         String secret = textViewGroupSecret.getText().toString();
         String group = jsonString;
+
         // TODO: publish secret with group
+        intentSessionPublishService = new Intent(this, SessionPublishService.class);
+        intentSessionPublishService.putExtra("SECRET", secret);
+        intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
+        startService(intentSessionPublishService);
+    }
+
+    public final void stopPublish(){
+        stopService(intentSessionPublishService);
     }
 
     /**
@@ -69,6 +91,7 @@ public class PublishGroupActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
+                stopService(intentSessionPublishService);
                 finish();
                 return true;
             default:

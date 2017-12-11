@@ -5,8 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.AsyncTask;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,20 +25,25 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 
+import ch.ethz.inf.vs.fstreun.payapp.JoinGroupActivity;
+import ch.ethz.inf.vs.fstreun.payapp.SimpleGroup;
+
 public class SessionSubscribeService extends Service {
 
     String TAG = "SessionSubscribeService";
     String SERVICE_TYPE = "_http._tcp.";
-    String SERVICE_NAME = "PayAppSubscriber";
+    String SERVICE_NAME = "SessionSubscriber";
+    private Context mContext;
     private NsdManager mNsdManager;
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager.ResolveListener mResolveListener;
+
     private InetAddress mHost;
     private int mPort;
+    private String secret;
+    private JoinGroupActivity activity;
 
-    public SessionSubscribeService() {
-    }
+    public SessionSubscribeService(){}
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -42,14 +52,32 @@ public class SessionSubscribeService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        initializeResolveListener();
+    public void onCreate() {
+        super.onCreate();
+        // start listener
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        mContext = this;
+        secret = intent.getStringExtra("SECRET");
+
+        activity = JoinGroupActivity.instance;
         return super.onStartCommand(intent, flags, startId);
     }
+
 
     public void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
@@ -80,10 +108,6 @@ public class SessionSubscribeService extends Service {
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 // A service was found!  Do something with it.
-                Log.d(TAG, "Service discovery success" + service);
-                Log.d(TAG, "My Service Type: " + SERVICE_TYPE);
-                Log.d(TAG, "His Service Type: " + service.getServiceType());
-                Log.d(TAG, "His Service Name: " + service.getServiceName());
 
                 if (!service.getServiceType().equals(SERVICE_TYPE)) {
                     // Service type is the string containing the protocol and
@@ -93,9 +117,9 @@ public class SessionSubscribeService extends Service {
                     // The name of the service tells the user what they'd be
                     // connecting to. It could be "Bob's Chat App".
                     Log.d(TAG, "Same machine: " + SERVICE_NAME);
-                } else if (service.getServiceName().contains("PayApp")){
+                } else if (service.getServiceName().contains("SessionPublisher")){
                     Log.d(TAG, "Resolve service: ");
-                    mNsdManager.resolveService(service, mResolveListener);
+                    mNsdManager.resolveService(service, new MyResolveListener());
                 }
             }
 
@@ -108,90 +132,162 @@ public class SessionSubscribeService extends Service {
         };
     }
 
-    public void initializeResolveListener() {
-        mResolveListener = new NsdManager.ResolveListener() {
+    class MyResolveListener implements NsdManager.ResolveListener {
 
-            @Override
-            public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
-                // Called when the resolve fails.  Use the error code to debug.
-                Log.w(TAG, "Resolve failed" + errorCode);
+
+        @Override
+        public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
+            // Called when the resolve fails.  Use the error code to debug.
+            Log.w(TAG, "Resolve failed" + errorCode);
+        }
+
+        @Override
+        public void onServiceResolved(NsdServiceInfo serviceInfo) {
+            Log.w(TAG, "Resolve Succeeded. " + serviceInfo);
+
+            if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
+                Log.i(TAG, "Same IP.");
+                return;
+            }
+            mService = serviceInfo;
+            Socket socket = null;
+            try {
+                socket = new Socket(mService.getHost(), mService.getPort());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
             }
 
-            @Override
-            public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                Log.w(TAG, "Resolve Succeeded. " + serviceInfo);
-
-                if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
-                    Log.i(TAG, "Same IP.");
-                    return;
-                }
-                mService = serviceInfo;
-                mPort = mService.getPort();
-                mHost = mService.getHost();
-
-                new Thread(new ClientThread()).start();
-            }
-        };
+            NetworkTask networkTask = new NetworkTask();
+            networkTask.execute(socket);
+        }
     }
 
-    class ClientThread implements Runnable {
+    /**
+     * Have to use AsyncTask since UI Thread is needed to access the group list!
+     */
+    class NetworkTask extends AsyncTask<Socket, Void, JSONObject>{
 
         private Socket mSocket;
 
-        public void run() {
+
+        @Override
+        protected JSONObject doInBackground(Socket... sockets) {
+            mSocket = sockets[0];
+            if (mSocket == null){
+                return null;
+            }
             Log.i("ClientThread", "run()");
             try {
-                mSocket = new Socket(mHost, mPort);
-                String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup");
+                //String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
+                String get_message = generateRequest(mSocket.getInetAddress().toString(), mSocket.getPort(), "/joinGroup", secret);
 
                 OutputStream mOutputStream = mSocket.getOutputStream();
 
                 PrintWriter wtr = new PrintWriter(mOutputStream);
                 wtr.print(get_message);
-                //mOutputStream.write(get_message.getBytes());
                 wtr.flush();
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
-                // parse all header fields
+
+                String result = parseResponseForBody(input);
+
+                JSONObject response = new JSONObject(result);
+                boolean success = response.getBoolean("result");
+                if (success) {
+                    Log.w(TAG, "Success response: " + result);
+                    if (activity != null) {
+                        // we are calling here activity's method
+                        JSONObject group = new JSONObject(response.getString("group"));
+                        return group;
+                    }
+                } else {
+                    // do nothing
+                    Log.w(TAG, "Failure response: " + result);
+                    return null;
+                }
+                mSocket.close();
+                return null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject simpleGroup) {
+            if (simpleGroup != null) {
+                activity.addGroupToList(simpleGroup);
+            }
+            super.onPostExecute(simpleGroup);
+        }
+
+        public String parseResponseForBody(BufferedReader input) {
+            // parse all header fields
+
+            try {
+                String statusLine = input.readLine();;
+
+                if (statusLine == null || statusLine.isEmpty()) {
+                    return "";
+                }
+
+                String lengthLine = input.readLine();
+                if (lengthLine == null || lengthLine.isEmpty()) {
+                    return "";
+                }
+
+                String typeLine = input.readLine();
+                if (typeLine == null || typeLine.isEmpty()) {
+                    return "";
+                }
+
+                String connectionLine = input.readLine();
+                if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
                 String result = "";
                 String line;
+
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.i(TAG, result);
+                        Log.w(TAG, result);
                         break;
                     }else {
                         result = result + line + "\r\n";
                     }
                 }
-                /*InputStream mInputStream = mSocket.getInputStream();
-
-                String result = "";
-                int c;
-                while ((c = mInputStream.read()) != -1) {
-                    result = result + (char) c;
-                }
-                */
-                Log.i(TAG, "Result: " + result);
-                mSocket.close();
-                return;
+                return result;
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return "";
         }
 
-        public String generateRequest(String host, int port, String path) {
-            String accept = "text/plain";
+        public String generateRequest(String host, int port, String path, String secret) {
+            String accept = "application/json";
             String connect = "Closed";
+
+            JSONObject requestBody = new JSONObject();
+            try {
+                requestBody.put("secret", secret);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
 
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
                     + "Connection: " + connect + "\r\n"
+                    + requestBody.toString() + "\r\n"
                     + "\r\n";
 
             return request;
         }
-
     }
+
 }

@@ -1,11 +1,14 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -20,13 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class JoinGroupActivity extends AppCompatActivity {
 
-    DataService mService;
-    boolean mBound;
+    public static JoinGroupActivity instance;
 
+    DataService mService;
+    private String TAG = "JoinGroupActivity";
+    boolean mBound;
+    private Intent intentSessionSubscribeService;
     public static final String KEY_SIMPLEGROUP = "simple_group";
 
     EditText editTextGroupSecret;
@@ -59,7 +66,19 @@ public class JoinGroupActivity extends AppCompatActivity {
                 buttonJoinClicked();
             }
         });
+
+        // for reference in service
+        instance = this;
     }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Extract data included in the Intent
+            String message = intent.getStringExtra("message");
+            Log.w(TAG, "Got message: " + message);
+        }
+    };
 
 
     @Override
@@ -77,6 +96,12 @@ public class JoinGroupActivity extends AppCompatActivity {
         mBound = false;
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        stopService(intentSessionSubscribeService);
+    }
 
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -106,6 +131,9 @@ public class JoinGroupActivity extends AppCompatActivity {
         String groupHint = editTextGroupSecret.getText().toString();
 
         //TODO: search groups
+        intentSessionSubscribeService = new Intent(this, SessionSubscribeService.class);
+        intentSessionSubscribeService.putExtra("SECRET", groupHint);
+        startService(intentSessionSubscribeService);
     }
 
 
@@ -113,8 +141,10 @@ public class JoinGroupActivity extends AppCompatActivity {
         SimpleGroup group = null;
         try {
             group = new SimpleGroup(groupJSON);
+            Log.d(TAG, "SimpleGroup added: " + group.toJSON().toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to create SimpleGroup from JSON.", e);
+            return;
         }
         groupList.add(group);
         adapter.notifyDataSetChanged();
