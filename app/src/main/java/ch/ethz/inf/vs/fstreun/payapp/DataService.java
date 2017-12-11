@@ -173,18 +173,20 @@ public class DataService extends Service {
     // all sessions loaded from the file (cached)
     private Map<UUID, SessionClient> loadedSessions = new HashMap<>();
 
-    public final UUID getUserID(){
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String stringID = sharedPref.getString(getString(R.string.key_deviceID), null);
-        UUID userID;
-        if (stringID == null){
-            userID = UUID.randomUUID();
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(getString(R.string.key_deviceID), userID.toString());
-            editor.apply();
-        }else {
+    public final UUID getUserID() {
+
+        String stringID;
+        UUID userID = null;
+        try {
+            stringID = fileHelper.readFromFile(null, "deviceID");
+            // remove all whitespaces
+            stringID = stringID.replaceAll("\\s+", "");
             userID = UUID.fromString(stringID);
+        } catch (FileNotFoundException e) {
+            userID = UUID.randomUUID();
+            fileHelper.writeToFile(null, "deviceID", userID.toString());
         }
+
         return userID;
     }
 
