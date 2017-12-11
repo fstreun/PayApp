@@ -230,7 +230,7 @@ public class DataSyncPublishService extends Service {
         public String generateResponse(String body) {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
-                    "Content-Type: text/plain\r\n" +
+                    "Content-Type: application/json\r\n" +
                     "Connection: Closed\r\n\r\n" + body;
             return response;
         }

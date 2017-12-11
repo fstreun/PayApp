@@ -12,6 +12,10 @@ import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -143,11 +147,6 @@ public class DataSyncSubscribeService extends Service {
         }
     }
 
-
-
-
-
-
     private void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
@@ -257,7 +256,10 @@ public class DataSyncSubscribeService extends Service {
 
         private void handleSocket(Socket socket){
             try {
-                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync");
+
+                JSONObject requestBody = generateRequestBody();
+
+                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync", requestBody.toString());
 
                 OutputStream mOutputStream = socket.getOutputStream();
 
@@ -288,7 +290,39 @@ public class DataSyncSubscribeService extends Service {
             }
         }
 
-        public String generateRequest(String host, int port, String path) {
+        private JSONObject generateRequestBody() {
+
+            JSONObject mJsonRequest = null;
+
+            try {
+                // get data for request (sessionId, Map<UUID, Int) -> start
+                UUID sessionId = mSessionAccess.getSessionID();
+                Map<UUID, Integer> mData = mSessionAccess.getLength();
+
+                // create json request
+                mJsonRequest = new JSONObject();
+                mJsonRequest.put("sessionId", sessionId.toString());
+                mJsonRequest.put("command", "start");
+                JSONArray mJsonMap = new JSONArray();
+
+                for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
+                    UUID deviceId = item.getKey();
+                    Integer length = item.getValue();
+
+                    JSONObject mJsonItem = new JSONObject();
+                    mJsonItem.put("deviceId", deviceId.toString());
+                    mJsonItem.put("length", length.toString());
+                    mJsonMap.put(mJsonItem);
+                }
+                mJsonRequest.put("map", mJsonMap);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return mJsonRequest;
+        }
+
+        public String generateRequest(String host, int port, String path, String body) {
             String accept = "text/plain";
             String connect = "Closed";
 
@@ -297,6 +331,7 @@ public class DataSyncSubscribeService extends Service {
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
                     + "Connection: " + connect + "\r\n"
+                    + body + "\r\n"
                     + "\r\n";
 
             return request;
