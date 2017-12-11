@@ -38,7 +38,6 @@ public class DataSyncSubscribeService extends Service {
     private NsdManager mNsdManager;
 
     private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager.ResolveListener mResolveListener;
 
     private Set<NsdServiceInfo> mServiceInfos = new HashSet<>();
 
@@ -50,7 +49,6 @@ public class DataSyncSubscribeService extends Service {
     public void onCreate() {
         super.onCreate();
         // start listener
-        initializeResolveListener();
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices(
@@ -141,7 +139,7 @@ public class DataSyncSubscribeService extends Service {
                     Log.d(TAG, "Same machine: " + SERVICE_NAME);
                 } else if (service.getServiceName().contains("DataSyncPublisher")){
                     Log.d(TAG, "Resolve service: ");
-                    mNsdManager.resolveService(service, mResolveListener);
+                    mNsdManager.resolveService(service, new MyResolveListener());
                 }
             }
 
@@ -154,8 +152,7 @@ public class DataSyncSubscribeService extends Service {
         };
     }
 
-    public void initializeResolveListener() {
-        mResolveListener = new NsdManager.ResolveListener() {
+    class MyResolveListener implements NsdManager.ResolveListener {
 
             @Override
             public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
@@ -177,7 +174,6 @@ public class DataSyncSubscribeService extends Service {
                 Log.d(TAG, "onServiceResolved added new service info: " + success);
 
             }
-        };
     }
 
     public synchronized void synchronizeSession(UUID sessionID){

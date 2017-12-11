@@ -235,6 +235,10 @@ public class GroupActivity extends AppCompatActivity {
                 DataService.LocalBinder binder = (DataService.LocalBinder) service;
 
                 sessionAccess = binder.getSessionClientAccess(mSimpleGroup.sessionID);
+                if (sessionAccess == null){
+                    Log.e(TAG, "Failed to get Session access: " + mSimpleGroup.sessionID);
+                    return;
+                }
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
 
@@ -459,7 +463,9 @@ public class GroupActivity extends AppCompatActivity {
     }
 
     private void writeGroup() {
-        fileHelper.writeToFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString(), group.toString());
+        if (group != null) {
+            fileHelper.writeToFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString(), group.toString());
+        }
     }
 
     private void showDeleteGroupDialog(){
@@ -488,7 +494,9 @@ public class GroupActivity extends AppCompatActivity {
      */
     private void deleteGroup(){
         boolean succes = false;
-        succes |= sessionAccess.removeSession();
+        if (sessionAccess != null) {
+            succes |= sessionAccess.removeSession();
+        }
 
         // remove group file
         succes |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());

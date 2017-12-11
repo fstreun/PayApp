@@ -4,10 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,7 +33,7 @@ public class JoinGroupActivity extends AppCompatActivity {
     DataService mService;
     private String TAG = "JoinGroupActivity";
     boolean mBound;
-    private Intent mIntent;
+    private Intent intentSessionSubscribeService;
     public static final String KEY_SIMPLEGROUP = "simple_group";
 
     EditText editTextGroupSecret;
@@ -98,6 +96,12 @@ public class JoinGroupActivity extends AppCompatActivity {
         mBound = false;
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        stopService(intentSessionSubscribeService);
+    }
 
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -127,9 +131,9 @@ public class JoinGroupActivity extends AppCompatActivity {
         String groupHint = editTextGroupSecret.getText().toString();
 
         //TODO: search groups
-        mIntent = new Intent(this, SessionSubscribeService.class);
-        mIntent.putExtra("SECRET", groupHint);
-        startService(mIntent);
+        intentSessionSubscribeService = new Intent(this, SessionSubscribeService.class);
+        intentSessionSubscribeService.putExtra("SECRET", groupHint);
+        startService(intentSessionSubscribeService);
     }
 
 
@@ -137,8 +141,10 @@ public class JoinGroupActivity extends AppCompatActivity {
         SimpleGroup group = null;
         try {
             group = new SimpleGroup(groupJSON);
+            Log.d(TAG, "SimpleGroup added: " + group.toJSON().toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to create SimpleGroup from JSON.", e);
+            return;
         }
         groupList.add(group);
         adapter.notifyDataSetChanged();

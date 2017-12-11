@@ -7,6 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,6 +37,7 @@ import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class DataService extends Service {
 
+    private static final String TAG = "DataService";
     // all sessions on the device
     Set<UUID> sessionIDs = new HashSet<>();
 
@@ -45,7 +47,13 @@ public class DataService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "onCreate called");
 
+        sessionIDs.addAll(loadSessionIDs());
+    }
+
+    private Set<UUID> loadSessionIDs(){
+        Set<UUID> sessionIDs = new HashSet<>();
         // load all session ID on this device
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         Set<String> ids = sharedPref.getStringSet(getString(R.string.key_list_sessionID), null);
@@ -54,13 +62,20 @@ public class DataService extends Service {
                 sessionIDs.add(UUID.fromString(id));
             }
         }
+        return sessionIDs;
     }
 
     /**
      * called when service is ending
+     * not really called anytime!
      */
     @Override
     public void onDestroy() {
+        Log.d(TAG, "onDestroy called");
+        super.onDestroy();
+    }
+
+    private void storeSessionIDs(Set<UUID> sessionIDs){
         // store all session ID on this device
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -70,13 +85,6 @@ public class DataService extends Service {
         }
         editor.putStringSet(getString(R.string.key_list_sessionID), set);
         editor.apply();
-
-
-        // write all cached sessions to files
-        for (SessionClient session : loadedSessions.values()){
-            storeSession(session);
-        }
-        super.onDestroy();
     }
 
     /*
@@ -166,6 +174,7 @@ public class DataService extends Service {
     public final boolean createSession(UUID sessionID, UUID userID) {
         boolean add = sessionIDs.add(sessionID);
         if (add){
+            storeSessionIDs(sessionIDs);
             // not yet in the list
             SessionClient session = new SessionClient(sessionID, userID);
             loadedSessions.put(sessionID, session);
@@ -283,16 +292,18 @@ public class DataService extends Service {
          * @return null if not exists
          */
         @Nullable
-        private SessionClientInterface getSession() {
+        private SessionClient getSession() {
             return DataService.this.getSession(sessionID);
         }
 
         public boolean add(String content) {
-            SessionClientInterface s = getSession();
+            SessionClient s = getSession();
             if (s == null) {
                 return false;
             } else {
-                return s.add(content);
+                boolean success = s.add(content);
+                storeSession(s);
+                return success;
             }
         }
 
@@ -382,9 +393,16 @@ public class DataService extends Service {
 
         @Nullable
         public Map<UUID, Integer> putData(JSONObject mapData, Map<UUID, Integer> expected){
-            try {
-                return getSession().appendJSON(mapData, expected);
-            } catch (JSONException e) {
+            SessionClient s = getSession();
+            if (s != null) {
+                try {
+                    Map<UUID, Integer> result = s.appendJSON(mapData, expected);
+                    storeSession(s);
+                    return result;
+                } catch (JSONException e) {
+                    return null;
+                }
+            }else {
                 return null;
             }
         }

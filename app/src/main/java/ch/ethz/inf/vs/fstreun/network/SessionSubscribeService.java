@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -25,6 +26,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import ch.ethz.inf.vs.fstreun.payapp.JoinGroupActivity;
+import ch.ethz.inf.vs.fstreun.payapp.SimpleGroup;
 
 public class SessionSubscribeService extends Service {
 
@@ -35,7 +37,7 @@ public class SessionSubscribeService extends Service {
     private NsdManager mNsdManager;
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager.ResolveListener mResolveListener;
+
     private InetAddress mHost;
     private int mPort;
     private String secret;
@@ -53,7 +55,6 @@ public class SessionSubscribeService extends Service {
     public void onCreate() {
         super.onCreate();
         // start listener
-        initializeResolveListener();
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices(
@@ -63,7 +64,8 @@ public class SessionSubscribeService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //TODO tear down listener
+
+        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
 
     }
 
@@ -117,7 +119,7 @@ public class SessionSubscribeService extends Service {
                     Log.d(TAG, "Same machine: " + SERVICE_NAME);
                 } else if (service.getServiceName().contains("SessionPublisher")){
                     Log.d(TAG, "Resolve service: ");
-                    mNsdManager.resolveService(service, mResolveListener);
+                    mNsdManager.resolveService(service, new MyResolveListener());
                 }
             }
 
@@ -130,46 +132,51 @@ public class SessionSubscribeService extends Service {
         };
     }
 
-    public void initializeResolveListener() {
-        mResolveListener = new NsdManager.ResolveListener() {
+    class MyResolveListener implements NsdManager.ResolveListener {
 
-            @Override
-            public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
-                // Called when the resolve fails.  Use the error code to debug.
-                Log.w(TAG, "Resolve failed" + errorCode);
+
+        @Override
+        public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
+            // Called when the resolve fails.  Use the error code to debug.
+            Log.w(TAG, "Resolve failed" + errorCode);
+        }
+
+        @Override
+        public void onServiceResolved(NsdServiceInfo serviceInfo) {
+            Log.w(TAG, "Resolve Succeeded. " + serviceInfo);
+
+            if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
+                Log.i(TAG, "Same IP.");
+                return;
+            }
+            mService = serviceInfo;
+            Socket socket = null;
+            try {
+                socket = new Socket(mService.getHost(), mService.getPort());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
             }
 
-            @Override
-            public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                Log.w(TAG, "Resolve Succeeded. " + serviceInfo);
-
-                if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
-                    Log.i(TAG, "Same IP.");
-                    return;
-                }
-                mService = serviceInfo;
-                Socket socket = null;
-                try {
-                    socket = new Socket(mService.getHost(), mService.getPort());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
-                }
-
-                new Thread(new ClientThread(socket)).start();
-            }
-        };
+            NetworkTask networkTask = new NetworkTask();
+            networkTask.execute(socket);
+        }
     }
 
-    class ClientThread implements Runnable {
+    /**
+     * Have to use AsyncTask since UI Thread is needed to access the group list!
+     */
+    class NetworkTask extends AsyncTask<Socket, Void, JSONObject>{
 
         private Socket mSocket;
 
-        public ClientThread(Socket socket) {
-            mSocket = socket;
-        }
 
-        public void run() {
+        @Override
+        protected JSONObject doInBackground(Socket... sockets) {
+            mSocket = sockets[0];
+            if (mSocket == null){
+                return null;
+            }
             Log.i("ClientThread", "run()");
             try {
                 //String get_message = generateRequest(mHost.getHostAddress(), mPort, "/joinGroup", secret);
@@ -192,20 +199,29 @@ public class SessionSubscribeService extends Service {
                     if (activity != null) {
                         // we are calling here activity's method
                         JSONObject group = new JSONObject(response.getString("group"));
-                        activity.addGroupToList(group);
+                        return group;
                     }
                 } else {
                     // do nothing
                     Log.w(TAG, "Failure response: " + result);
-                    return;
+                    return null;
                 }
                 mSocket.close();
-                return;
+                return null;
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject simpleGroup) {
+            if (simpleGroup != null) {
+                activity.addGroupToList(simpleGroup);
+            }
+            super.onPostExecute(simpleGroup);
         }
 
         public String parseResponseForBody(BufferedReader input) {
@@ -273,4 +289,5 @@ public class SessionSubscribeService extends Service {
             return request;
         }
     }
+
 }

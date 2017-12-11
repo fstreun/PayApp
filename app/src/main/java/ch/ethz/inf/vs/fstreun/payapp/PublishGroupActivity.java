@@ -18,7 +18,7 @@ public class PublishGroupActivity extends AppCompatActivity {
 
     private String TAG = "PublishGroupActivity";
     public final static String KEY_SIMPLEGROUP = "key_group";
-    private Intent mIntent;
+    private Intent intentSessionPublishService;
     private SimpleGroup group;
     String jsonString;
 
@@ -50,6 +50,12 @@ public class PublishGroupActivity extends AppCompatActivity {
         startPublish();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopPublish();
+    }
+
     public final void startPublish(){
         Log.i(TAG, "startPublish()");
 
@@ -57,10 +63,14 @@ public class PublishGroupActivity extends AppCompatActivity {
         String group = jsonString;
 
         // TODO: publish secret with group
-        mIntent = new Intent(this, SessionPublishService.class);
-        mIntent.putExtra("SECRET", secret);
-        mIntent.putExtra("SIMPLEGROUP", jsonString);
-        startService(mIntent);
+        intentSessionPublishService = new Intent(this, SessionPublishService.class);
+        intentSessionPublishService.putExtra("SECRET", secret);
+        intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
+        startService(intentSessionPublishService);
+    }
+
+    public final void stopPublish(){
+        stopService(intentSessionPublishService);
     }
 
     /**
@@ -81,7 +91,7 @@ public class PublishGroupActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                stopService(mIntent);
+                stopService(intentSessionPublishService);
                 finish();
                 return true;
             default:

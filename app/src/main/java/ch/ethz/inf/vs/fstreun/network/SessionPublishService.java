@@ -55,6 +55,12 @@ public class SessionPublishService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mNsdManager.unregisterService(mRegistrationListener);
+    }
+
     public void registerService(int port) {
         // Create the NsdServiceInfo object, and populate it.
         mServiceInfo  = new NsdServiceInfo();
@@ -104,7 +110,7 @@ public class SessionPublishService extends Service {
 
             @Override
             public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
-                mNsdManager.unregisterService(mRegistrationListener);
+                Log.d(TAG, "onServiceUnregistered");
             }
         };
     }
