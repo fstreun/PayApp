@@ -40,6 +40,9 @@ public class DataService extends Service {
     private static final String TAG = "DataService";
     // all sessions on the device
     Set<UUID> sessionIDs = new HashSet<>();
+    private static final String IDSplitter = "##";
+
+    FileHelper fileHelper;
 
     /**
      * called when service is not yet running
@@ -49,17 +52,32 @@ public class DataService extends Service {
         super.onCreate();
         Log.d(TAG, "onCreate called");
 
+        fileHelper = new FileHelper(this);
+
         sessionIDs.addAll(loadSessionIDs());
     }
 
     private Set<UUID> loadSessionIDs(){
         Set<UUID> sessionIDs = new HashSet<>();
         // load all session ID on this device
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> ids = sharedPref.getStringSet(getString(R.string.key_list_sessionID), null);
-        if (ids != null) {
-            for (String id : ids) {
-                sessionIDs.add(UUID.fromString(id));
+        String fileString;
+        try {
+            fileString = fileHelper.readFromFile(getString(R.string.sessions_directory), getString(R.string.sessionIDs_file));
+        } catch (FileNotFoundException e) {
+            return sessionIDs;
+        }
+
+
+        Log.d(TAG, fileString);
+
+        String[] idStrings = fileString.split(IDSplitter);
+        for (String s : idStrings){
+            // remove all white spaces
+            s = s.replaceAll("\\s+","");
+            Log.d(TAG, s);
+            if (s != null && !s.isEmpty()){
+                UUID id = UUID.fromString(s);
+                sessionIDs.add(id);
             }
         }
         return sessionIDs;
@@ -77,14 +95,13 @@ public class DataService extends Service {
 
     private void storeSessionIDs(Set<UUID> sessionIDs){
         // store all session ID on this device
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        Set<String> set = new HashSet<>();
+
+        StringBuilder file = new StringBuilder();
         for (UUID id : sessionIDs){
-            set.add(id.toString());
+            file.append(IDSplitter).append(id.toString()).append(IDSplitter);
         }
-        editor.putStringSet(getString(R.string.key_list_sessionID), set);
-        editor.apply();
+
+        fileHelper.writeToFile(getString(R.string.sessions_directory), getString(R.string.sessionIDs_file), file.toString() );
     }
 
     /*
@@ -156,18 +173,20 @@ public class DataService extends Service {
     // all sessions loaded from the file (cached)
     private Map<UUID, SessionClient> loadedSessions = new HashMap<>();
 
-    public final UUID getUserID(){
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String stringID = sharedPref.getString(getString(R.string.key_deviceID), null);
-        UUID userID;
-        if (stringID == null){
-            userID = UUID.randomUUID();
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(getString(R.string.key_deviceID), userID.toString());
-            editor.apply();
-        }else {
+    public final UUID getUserID() {
+
+        String stringID;
+        UUID userID = null;
+        try {
+            stringID = fileHelper.readFromFile(null, "deviceID");
+            // remove all whitespaces
+            stringID = stringID.replaceAll("\\s+", "");
             userID = UUID.fromString(stringID);
+        } catch (FileNotFoundException e) {
+            userID = UUID.randomUUID();
+            fileHelper.writeToFile(null, "deviceID", userID.toString());
         }
+
         return userID;
     }
 
@@ -225,7 +244,6 @@ public class DataService extends Service {
     private SessionClient loadSession(UUID sessionID) {
         String path = getString(R.string.path_sessions);
         String fileName = sessionID.toString();
-        FileHelper fileHelper = new FileHelper(this);
         String content;
         try {
             content = fileHelper.readFromFile(path, fileName);
@@ -262,12 +280,10 @@ public class DataService extends Service {
             return false;
         }
 
-        FileHelper fileHelper = new FileHelper(this);
         return fileHelper.writeToFile(getString(R.string.path_sessions), session.getSessionID().toString(), content);
     }
 
     private boolean removeSessionFile(UUID sessionID){
-        FileHelper fileHelper = new FileHelper(this);
         return fileHelper.removeFile(getString(R.string.path_sessions), sessionID.toString());
     }
 

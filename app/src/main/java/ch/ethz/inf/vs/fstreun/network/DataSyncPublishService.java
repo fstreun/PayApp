@@ -94,6 +94,8 @@ public class DataSyncPublishService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
+
     public void registerService(int port) {
         // Create the NsdServiceInfo object, and populate it.
         mServiceInfo  = new NsdServiceInfo();
@@ -111,16 +113,18 @@ public class DataSyncPublishService extends Service {
 
     public void initializeServerSocket() {
         // Initialize a server socket on the next available port.
-        try {
-            mServerSocket = new ServerSocket(0);
-            // start master network thread
-            new Thread(new ServerMasterThread()).start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (mServerSocket != null) {
+            try {
+                mServerSocket = new ServerSocket(0);
+                // start master network thread
+                new Thread(new ServerMasterThread()).start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-        // Store the chosen port.
-        mLocalPort =  mServerSocket.getLocalPort();
+            // Store the chosen port.
+            mLocalPort = mServerSocket.getLocalPort();
+        }
     }
 
     public void initializeRegistrationListener() {

@@ -38,7 +38,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
     EditText editTextGroupSecret;
 
-    List<SimpleGroup> groupList = new ArrayList<SimpleGroup>(3);
+    List<SimpleGroup> groupList = new ArrayList<SimpleGroup>();
     ListSimpleGroupAdapter adapter;
 
     @Override
@@ -69,6 +69,11 @@ public class JoinGroupActivity extends AppCompatActivity {
 
         // for reference in service
         instance = this;
+
+
+        // Bind to LocalService
+        Intent intent = new Intent(this, DataService.class);
+        bindService(intent, mConnection, BIND_AUTO_CREATE);
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -84,23 +89,27 @@ public class JoinGroupActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Bind to LocalService
-        Intent intent = new Intent(this, DataService.class);
-        bindService(intent, mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(mConnection);
-        mBound = false;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+      
+        if (mBound){
+            unbindService(mConnection);
+            mBound = false;
+        }
 
-        if(intentSessionSubscribeService != null) stopService(intentSessionSubscribeService);
+        try {
+            stopService(intentSessionSubscribeService);
+        }catch (Exception e){
+
+        }
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
@@ -138,6 +147,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
 
     public void addGroupToList(JSONObject groupJSON){
+        Log.d(TAG, "SimpleGroup addGroupToList: " + groupJSON);
         SimpleGroup group = null;
         try {
             group = new SimpleGroup(groupJSON);
@@ -146,8 +156,10 @@ public class JoinGroupActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to create SimpleGroup from JSON.", e);
             return;
         }
-        groupList.add(group);
-        adapter.notifyDataSetChanged();
+        if (group != null) {
+            groupList.add(group);
+            adapter.notifyDataSetChanged();
+        }
     }
 
 
@@ -167,9 +179,9 @@ public class JoinGroupActivity extends AppCompatActivity {
         // create session with group sessionID
         boolean success = mService.createSession(group.sessionID, mService.getUserID());
         if (!success) {
-            Toast.makeText(this, "Could not join Group", Toast.LENGTH_SHORT).show();
-            return;
+            Toast.makeText(this, "Session already in the list", Toast.LENGTH_SHORT).show();
         }
+
 
         // create joined Group
         Group newGroup = new Group(group.sessionID);
@@ -177,7 +189,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
         //store newly created group in file
         fileHelper.writeToFile(getString(R.string.path_groups), group.groupID.toString(),
-                group.toString());
+                newGroup.toString());
 
         // return informations back to MainActivity
         Intent intent = new Intent();

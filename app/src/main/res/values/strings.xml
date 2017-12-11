@@ -28,5 +28,7 @@
     <string name="cancel">Cancel</string>
     <string name="delete_transaction">Create reverse Transaction</string>
     <string name="filter_involved_or_paid">filter_involved_or_paid</string>
+    <string name="sessions_directory">sessions</string>
+    <string name="sessionIDs_file">sessionIDs</string>
 
 </resources>
