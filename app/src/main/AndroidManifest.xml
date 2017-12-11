@@ -26,6 +26,7 @@
 
         <activity
             android:name=".JoinGroupActivity"
+            android:configChanges="orientation|screenSize"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".GroupActivity"
