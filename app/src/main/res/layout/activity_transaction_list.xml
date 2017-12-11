@@ -13,30 +13,33 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button
+        <ToggleButton
             android:id="@+id/btn_show_all_transaction"
             android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="All" />
+            android:textOn="All"
+            android:textOff="All" />
 
-        <Button
+        <ToggleButton
             android:id="@+id/btn_show_paid_by"
             android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Paid by" />
+            android:textOn="Paid by"
+            android:textOff="Paid by" />
 
-        <Button
+        <ToggleButton
             android:id="@+id/btn_show_involved"
             android:textColor="@color/colorWhite"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:singleLine="false"
-            android:text="Involved" />
+            android:textOn="Involved"
+            android:textOff="Involved" />
 
     </LinearLayout>
 

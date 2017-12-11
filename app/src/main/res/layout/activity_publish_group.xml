@@ -15,7 +15,8 @@
         android:id="@+id/textView_groupSecret"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="8855"/>
+        android:textSize="36sp"
+        tools:text="8855" />
 
     <TextView
         android:layout_width="match_parent"

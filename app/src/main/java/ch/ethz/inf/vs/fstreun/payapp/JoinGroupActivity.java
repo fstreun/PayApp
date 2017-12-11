@@ -99,7 +99,7 @@ public class JoinGroupActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+      
         if (mBound){
             unbindService(mConnection);
             mBound = false;
