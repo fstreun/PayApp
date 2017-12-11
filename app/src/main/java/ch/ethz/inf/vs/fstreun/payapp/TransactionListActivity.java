@@ -12,10 +12,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,7 +23,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,7 +56,7 @@ public class TransactionListActivity extends AppCompatActivity {
     ListTransactionAdapter adapter;
 
     // Filter Buttons
-    Button btnAll, btnPaid, btnInvolved;
+    ToggleButton btnAll, btnPaid, btnInvolved;
 
     String TAG = "###TransactionListActivity";
 
@@ -71,8 +70,19 @@ public class TransactionListActivity extends AppCompatActivity {
         btnAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setButtonColor(getString(R.string.filter_no_filter));
-                setFilteredList(getString(R.string.filter_no_filter));
+                Log.d(TAG, "btnAll pressed");
+
+                // update buttons
+                btnAll.setChecked(true);
+                btnPaid.setChecked(false);
+                btnInvolved.setChecked(false);
+
+                // update filter type and button color according to button state
+                setFilterType();
+                setButtonColor();
+
+                // update list according to filterType
+                setFilteredList();
                 updateListView();
             }
         });
@@ -80,8 +90,25 @@ public class TransactionListActivity extends AppCompatActivity {
         btnPaid.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setButtonColor(getString(R.string.filter_paid_by_name));
-                setFilteredList(getString(R.string.filter_paid_by_name));
+                Log.d(TAG, "btnPaid pressed");
+
+                // update buttons
+                if(btnPaid.isChecked()) { // this means that the button was pressed and is now checked
+                    btnAll.setChecked(false);
+                    btnPaid.setChecked(true);
+                } else if (btnInvolved.isChecked()){
+                    btnPaid.setChecked(false);
+                } else {
+                    btnAll.setChecked(true);
+                    btnPaid.setChecked(false);
+                }
+
+                // update filter type and button color according to button state
+                setFilterType();
+                setButtonColor();
+
+                // update list according to filterType
+                setFilteredList();
                 updateListView();
             }
         });
@@ -89,8 +116,26 @@ public class TransactionListActivity extends AppCompatActivity {
         btnInvolved.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setButtonColor(getString(R.string.filter_name_involved));
-                setFilteredList(getString(R.string.filter_name_involved));
+                Log.d(TAG, "btnInvolved pressed");
+
+                // update buttons
+                if(btnInvolved.isChecked()) {// this means that the button was pressed and is now checked
+                    btnAll.setChecked(false);
+                    btnInvolved.setChecked(true);
+                } else if (btnPaid.isChecked()) {
+                    btnInvolved.setChecked(false);
+                }
+                else{
+                    btnAll.setChecked(true);
+                    btnInvolved.setChecked(false);
+                }
+
+                // update filter type and button color according to button state
+                setFilterType();
+                setButtonColor();
+
+                // update list according to filterType
+                setFilteredList();
                 updateListView();
             }
         });
@@ -139,8 +184,10 @@ public class TransactionListActivity extends AppCompatActivity {
 
         //set button text
         if(participantName != null){
-            btnPaid.setText("Paid by " + participantName);
-            btnInvolved.setText("" + participantName + " involved");
+            btnPaid.setTextOn("Paid by " + participantName);
+            btnPaid.setTextOff("Paid by " + participantName);
+            btnInvolved.setTextOn("" + participantName + " involved");
+            btnInvolved.setTextOff("" + participantName + " involved");
         }
 
         // if no type defined, show all transactions
@@ -186,7 +233,8 @@ public class TransactionListActivity extends AppCompatActivity {
                 inflater.inflate(R.menu.context_menu_transaction, menu);
             }
         });
-        setButtonColor(filterType);
+        setButtonsAccordingToFilterType();
+        setButtonColor();
         updateListView();
 
         // Bind DataService
@@ -195,24 +243,75 @@ public class TransactionListActivity extends AppCompatActivity {
         Log.d(TAG, "called bindService");
     }
 
-    private void setButtonColor(String type) {
-        //set colors
+    /**
+     * set Button states according to filterType
+     * (this should be used only when creating this activity)
+     */
+    private void setButtonsAccordingToFilterType() {
+        if (filterType == null) {
+            btnAll.callOnClick();
+            Log.d(TAG, "setButtonsAccordingToFilterType failed. filterType == null");
+        }
+        else if (filterType.equals(getString(R.string.filter_no_filter))) btnAll.callOnClick();
+        else if (filterType.equals(getString(R.string.filter_paid_by_name))) {
+            btnInvolved.setChecked(false);
+            btnPaid.callOnClick();
+        } else if (filterType.equals(getString(R.string.filter_name_involved))) {
+            btnPaid.setChecked(false);
+            btnInvolved.callOnClick();
+        } else if (filterType.equals(getString(R.string.filter_involved_or_paid))){
+            btnPaid.setChecked(true);
+            btnInvolved.callOnClick();
+        } else {
+            btnAll.callOnClick();
+            Log.d(TAG, "setButtonsAccordingToFilterType failed to read a right filter type");
+        }
+    }
+
+    /**
+     * set filterType according to buttons (the usual way)
+     */
+    private void setFilterType() {
+        if(btnAll.isChecked()) filterType = getString(R.string.filter_no_filter);
+        else if (btnInvolved.isChecked()){
+            if (btnPaid.isChecked()) filterType = getString(R.string.filter_involved_or_paid);
+            else filterType = getString(R.string.filter_name_involved);
+        } else if (btnPaid.isChecked()) filterType = getString(R.string.filter_paid_by_name);
+        else{
+            // no button is checked
+            Log.d(TAG, "somehow now button is checked");
+        }
+    }
+
+    private void setButtonColor() {
+        // set colors
         final int checked = getResources().getColor(R.color.colorAccent);
         final int unchecked = getResources().getColor(R.color.colorPrimary);
 
-        if(type.equals(getString(R.string.filter_no_filter))) {
+        // set each button color according to isChecked()
+        if(btnAll.isChecked()) btnAll.setBackgroundColor(checked);
+        else btnAll.setBackgroundColor(unchecked);
+        if(btnPaid.isChecked()) btnPaid.setBackgroundColor(checked);
+        else btnPaid.setBackgroundColor(unchecked);
+        if(btnInvolved.isChecked()) btnInvolved.setBackgroundColor(checked);
+        else btnInvolved.setBackgroundColor(unchecked);
+
+        //the old implementation
+        /*
+        if(filterType.equals(getString(R.string.filter_no_filter))) {
             btnAll.setBackgroundColor(checked);
             btnPaid.setBackgroundColor(unchecked);
             btnInvolved.setBackgroundColor(unchecked);
-        } else if (type.equals(getString(R.string.filter_paid_by_name))){
+        } else if (filterType.equals(getString(R.string.filter_paid_by_name))){
             btnAll.setBackgroundColor(unchecked);
             btnPaid.setBackgroundColor(checked);
             btnInvolved.setBackgroundColor(unchecked);
-        } else if (type.equals(getString(R.string.filter_name_involved))){
+        } else if (filterType.equals(getString(R.string.filter_name_involved))){
             btnAll.setBackgroundColor(unchecked);
             btnPaid.setBackgroundColor(unchecked);
             btnInvolved.setBackgroundColor(checked);
         }
+        */
 
     }
 
@@ -236,7 +335,9 @@ public class TransactionListActivity extends AppCompatActivity {
                 DataService.LocalBinder binder = (DataService.LocalBinder) service;
 
                 sessionAccess = binder.getSessionClientAccess(group.getSessionID());
-                bound = true;
+                if(sessionAccess != null) {
+                    bound = true;
+                } else Log.d(TAG, "sessionAccess is null");
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
 
                 // if a open transaction exists, try to store it!
@@ -345,12 +446,10 @@ public class TransactionListActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void setFilteredList(String type) {
-        //-----------------------------------------------------------------
-        //type case distinction
-        //-----------------------------------------------------------------
-
+    private void setFilteredList() {
         if (!bound){
+            Log.d(TAG, "not possible to setFilteredList()");
+            Toast.makeText(this, "sorry, not bound to service", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -374,12 +473,16 @@ public class TransactionListActivity extends AppCompatActivity {
             }
         }
 
-        Log.d(TAG, "entering type case distinction with type " + type);
+        //-----------------------------------------------------------------
+        //type case distinction
+        //-----------------------------------------------------------------
+
+        Log.d(TAG, "entering type case distinction with type " + filterType);
         //type: all transactions
-        if (type.equals(getString(R.string.filter_no_filter))){
+        if (filterType.equals(getString(R.string.filter_no_filter))){
             transactionList.addAll(tempTransactions);
             //type: filter paid by
-        } else if (type.equals(getString(R.string.filter_paid_by_name))) {
+        } else if (filterType.equals(getString(R.string.filter_paid_by_name))) {
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
 
@@ -389,8 +492,18 @@ public class TransactionListActivity extends AppCompatActivity {
                 }
             }
 
-            //type: all involved (and paid)
-        } else if (type.equals(getString(R.string.filter_name_involved))){
+            //type: all involved
+        } else if (filterType.equals(getString(R.string.filter_name_involved))){
+            //iterate over all transactions of this group
+            for (Transaction t : tempTransactions){
+                if (t.getInvolved().contains(participantName)){
+                    Log.d(TAG, "adding a transaction");
+                    transactionList.add(t);
+                }
+            }
+
+            //type: both involved and paid are selected
+        } else if (filterType.equals(getString(R.string.filter_involved_or_paid))){
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
                 if (t.getInvolved().contains(participantName) || participantName.equals(t.getPayer())){
@@ -400,6 +513,9 @@ public class TransactionListActivity extends AppCompatActivity {
             }
 
         }
+
+        Collections.sort(transactionList);
+        Collections.reverse(transactionList);
     }
 
     private void updateListView() {
@@ -411,7 +527,7 @@ public class TransactionListActivity extends AppCompatActivity {
      *
      */
     private void updateViews() {
-        setFilteredList(filterType);
+        setFilteredList();
         updateListView();
     }
 

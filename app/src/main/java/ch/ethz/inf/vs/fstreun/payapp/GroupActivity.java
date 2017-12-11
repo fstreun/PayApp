@@ -493,15 +493,15 @@ public class GroupActivity extends AppCompatActivity {
      * deletes the current group and al its dependence
      */
     private void deleteGroup(){
-        boolean succes = false;
+        boolean success = false;
         if (sessionAccess != null) {
-            succes |= sessionAccess.removeSession();
+            success |= sessionAccess.removeSession();
         }
 
         // remove group file
-        succes |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
+        success |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
 
-        Log.d(TAG, "delete group. succes: " + succes);
+        Log.d(TAG, "delete group. succes: " + success);
 
         Intent intent = new Intent();
         intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);

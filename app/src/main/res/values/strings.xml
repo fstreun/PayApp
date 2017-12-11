@@ -27,5 +27,6 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="delete_transaction">Create reverse Transaction</string>
+    <string name="filter_involved_or_paid">filter_involved_or_paid</string>
 
 </resources>
