@@ -8,6 +8,11 @@
         android:icon="@drawable/ic_history_white_24dp"
         app:showAsAction="ifRoom"/>
     <item
+        android:id="@+id/menu_syncData"
+        android:title="Sync Data"
+        app:showAsAction="never"
+        />
+    <item
         android:id="@+id/menu_publishGroup"
         android:title="Publish Group"
         app:showAsAction="never" />
