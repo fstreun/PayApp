@@ -34,7 +34,7 @@ public class DataSyncPublishService extends Service {
     private NsdManager mNsdManager;
     private NsdServiceInfo mServiceInfo;
     private String mServiceName;
-    private ServerSocket mServerSocket;
+    private ServerSocket mServerSocket = null;
     private int mLocalPort;
     private NsdManager.RegistrationListener mRegistrationListener;
 
@@ -113,7 +113,7 @@ public class DataSyncPublishService extends Service {
 
     public void initializeServerSocket() {
         // Initialize a server socket on the next available port.
-        if (mServerSocket != null) {
+        if (mServerSocket == null) {
             try {
                 mServerSocket = new ServerSocket(0);
                 // start master network thread
