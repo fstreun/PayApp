@@ -330,7 +330,7 @@ public class DataSyncSubscribeService extends Service {
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
-                    + "Connection: " + connect + "\r\n"
+                    + "Connection: " + connect + "\r\n\r\n"
                     + body + "\r\n"
                     + "\r\n";
 
