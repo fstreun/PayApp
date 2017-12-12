@@ -102,10 +102,18 @@ public class Group {
 
     /**
      * getter function for participants
-     * @return participants as List<String>
+     * @return participants as List<String> (copy)
      */
-    public List<String> getParticipants() {
-        return participants;
+    public List<String> getParticipantNames() {
+        return new ArrayList<>(participants);
+    }
+
+    public List<Participant> getParticipants(){
+        List<Participant> participantList = new ArrayList<>(participants.size());
+        for (String name : participants){
+            participantList.add(new Participant(name, this));
+        }
+        return participantList;
     }
 
     /**
@@ -120,7 +128,7 @@ public class Group {
      * getter function for default participant
      * @return defaultparticipant as String, null if not defined
      */
-    public String getDeviceOwner() {
+    public String getDefaultParticipantName() {
         return deviceOwner;
     }
 

@@ -115,7 +115,7 @@ public class FinanceUnitTest {
         // iterating over participants and printing emerson's toPay value to console
         List<Double> members = new ArrayList<Double>();
         int i = 0;
-        for(String p : awesomeWG.getParticipants()){
+        for(String p : awesomeWG.getParticipantNames()){
             members.add(i, awesomeWG.toPay(p));
             System.out.println(p + " has to pay " + members.get(i));
             i++;

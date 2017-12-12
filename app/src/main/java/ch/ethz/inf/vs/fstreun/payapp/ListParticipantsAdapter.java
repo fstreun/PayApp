@@ -9,7 +9,11 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.List;
+
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.Participant;
+import ch.ethz.inf.vs.fstreun.finance.Transaction;
 
 /**
  * Created by fabio on 11/24/17.
@@ -18,32 +22,24 @@ import ch.ethz.inf.vs.fstreun.finance.Group;
 public class ListParticipantsAdapter extends BaseAdapter{
 
     private final Context context;
-    private final Group group;
-
-    public static class Participant {
-        public String name;
-        public String toPay;
-    }
+    private final List<Participant> participants;
 
 
-    public ListParticipantsAdapter(Context context, Group group){
+    public ListParticipantsAdapter(Context context, List<Participant> participants){
         super();
 
-        this.group = group;
+        this.participants = participants;
         this.context = context;
     }
 
     @Override
     public int getCount() {
-        return group.numParticipants();
+        return participants.size();
     }
 
     @Override
     public Participant getItem(int position) {
-        Participant result = new Participant();
-        result.name = group.getParticipants().get(position);
-        result.toPay = String.format("%1$.2f", group.toPay(result.name));
-        return result;
+        return participants.get(position);
     }
 
     @Override
@@ -65,10 +61,25 @@ public class ListParticipantsAdapter extends BaseAdapter{
         TextView tvToPay = convertView.findViewById(R.id.textView_toPay);
         // Populate the data into the template view using the data object
         tvName.setText(participant.name);
-        tvToPay.setText(participant.toPay);
+
+
+        // TODO: choose the correct colors
+        tvToPay.setText(Transaction.doubleToString(participant.getToPay()));
+        Double toPay = participant.getToPay();
+        int compare = toPay.compareTo(0.0);
+        if (compare < 0){
+            // toPay is a negativ number
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorAccent));
+        }else if (compare > 0){
+            // toPay is a positiv number
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+        }else {
+            // toPay is equals to 0.0
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorGrey));
+        }
+
         // Return the completed view to render on screen
         return convertView;
     }
-
 
 }
