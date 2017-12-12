@@ -269,23 +269,34 @@ public class DataSyncSubscribeService extends Service {
                 wtr.flush();
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                // parse all header fields
-                String result = "";
-                String line;
-                while ((line = input.readLine()) != null){
-                    if (line.isEmpty()){
-                        Log.i(TAG, result);
-                        break;
-                    }else {
-                        result = result + line + "\r\n";
-                    }
-                }
-                Log.i(TAG, "Result: " + result);
 
+                String result = parseResponseForBody(input);
+
+                JSONObject response = new JSONObject(result);
+
+                String sessionId = response.getString("sessionID");
+                JSONObject data = response.getJSONObject("data");
+
+                // Todo: Was not sure if wee need to parse the length of the map array or the new data array
+
+                Map<UUID, Integer> expected = new HashMap<UUID, Integer>();
+                JSONArray jsonMap = response.getJSONArray("map");
+
+                for(int i = 0; i < jsonMap.length(); i++) {
+                    JSONObject item = (JSONObject) jsonMap.get(i);
+                    UUID mUUid =  UUID.fromString((String) item.getString("deviceId"));
+                    Integer mLength = Integer.valueOf(item.getString("length"));
+                    expected.put(mUUid, mLength);
+                }
+
+                // save data
+                mSessionAccess.putData(data, expected);
 
                 socket.close();
                 return;
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -335,6 +346,49 @@ public class DataSyncSubscribeService extends Service {
                     + "\r\n";
 
             return request;
+        }
+
+        public String parseResponseForBody(BufferedReader input) {
+            // parse all header fields
+
+            try {
+                String statusLine = input.readLine();;
+
+                if (statusLine == null || statusLine.isEmpty()) {
+                    return "";
+                }
+
+                String lengthLine = input.readLine();
+                if (lengthLine == null || lengthLine.isEmpty()) {
+                    return "";
+                }
+
+                String typeLine = input.readLine();
+                if (typeLine == null || typeLine.isEmpty()) {
+                    return "";
+                }
+
+                String connectionLine = input.readLine();
+                if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String result = "";
+                String line;
+
+                while ((line = input.readLine()) != null){
+                    if (line.isEmpty()){
+                        Log.w(TAG, result);
+                        break;
+                    }else {
+                        result = result + line + "\r\n";
+                    }
+                }
+                return result;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return "";
         }
     }
 }
