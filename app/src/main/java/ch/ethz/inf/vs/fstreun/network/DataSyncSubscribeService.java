@@ -12,6 +12,10 @@ import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -143,11 +147,6 @@ public class DataSyncSubscribeService extends Service {
         }
     }
 
-
-
-
-
-
     private void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
@@ -229,6 +228,8 @@ public class DataSyncSubscribeService extends Service {
 
     private class ClientThread implements Runnable {
 
+        final static String TAG = "ClientThread";
+
         private final  DataService.SessionNetworkAccess mSessionAccess;
 
         ClientThread(DataService.SessionNetworkAccess sessionAccess) {
@@ -237,7 +238,7 @@ public class DataSyncSubscribeService extends Service {
 
 
         public void run() {
-            Log.i("ClientThread", "run()");
+            Log.i(TAG, "run()");
             for (NsdServiceInfo serviceInfo : mServiceInfos){
                 // iterate through all the discovered services
 
@@ -253,11 +254,17 @@ public class DataSyncSubscribeService extends Service {
                     // TODO: remove serviceInfo from mServiceInfos if not successful
                 }
             }
+            Log.i(TAG, "run finished");
         }
 
         private void handleSocket(Socket socket){
             try {
-                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync");
+
+                JSONObject requestBody = generateRequestBody();
+
+                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync", requestBody.toString());
+
+                Log.d(TAG, "request: " + get_message);
 
                 OutputStream mOutputStream = socket.getOutputStream();
 
@@ -267,28 +274,83 @@ public class DataSyncSubscribeService extends Service {
                 wtr.flush();
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                // parse all header fields
-                String result = "";
-                String line;
-                while ((line = input.readLine()) != null){
-                    if (line.isEmpty()){
-                        Log.i(TAG, result);
-                        break;
-                    }else {
-                        result = result + line + "\r\n";
-                    }
-                }
-                Log.i(TAG, "Result: " + result);
 
+                String result = parseResponseForBody(input);
+
+                Log.d(TAG, "response: " + result);
+
+                JSONObject responseBody = new JSONObject(result);
+
+                handleResponse(responseBody);
 
                 socket.close();
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
 
-        public String generateRequest(String host, int port, String path) {
+        private void handleResponse(JSONObject body){
+            try {
+                UUID sessionId = UUID.fromString(body.getString(NetworkKeys.SESSIONID));
+                if (!sessionId.equals(mSessionAccess.getSessionID())){
+                    // data not supposed to be for this session
+                    return;
+                }
+                JSONObject data = body.getJSONObject(NetworkKeys.DATA);
+
+                Map<UUID, Integer> expected = new HashMap<UUID, Integer>();
+                JSONArray jsonMap = body.getJSONArray(NetworkKeys.LENGTHMAP);
+
+                for (int i = 0; i < jsonMap.length(); i++) {
+                    JSONObject item = (JSONObject) jsonMap.get(i);
+                    UUID mUUid = UUID.fromString((String) item.getString(NetworkKeys.DEVICEID));
+                    Integer mLength = Integer.valueOf(item.getString(NetworkKeys.LENGHT));
+                    expected.put(mUUid, mLength);
+                }
+
+                // save data
+                mSessionAccess.putData(data, expected);
+            }catch (JSONException e){
+                Log.e(TAG, "JSONException in handleResponse.", e);
+            }
+        }
+
+        private JSONObject generateRequestBody() {
+
+            JSONObject mJsonRequest = null;
+
+            try {
+                // get data for request (sessionId, Map<UUID, Int) -> start
+                UUID sessionId = mSessionAccess.getSessionID();
+                Map<UUID, Integer> mData = mSessionAccess.getLength();
+
+                // create json request
+                mJsonRequest = new JSONObject();
+                mJsonRequest.put(NetworkKeys.SESSIONID, sessionId.toString());
+                mJsonRequest.put(NetworkKeys.COMMAND, "start");
+                JSONArray mJsonMap = new JSONArray();
+
+                for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
+                    UUID deviceId = item.getKey();
+                    Integer length = item.getValue();
+
+                    JSONObject mJsonItem = new JSONObject();
+                    mJsonItem.put(NetworkKeys.DEVICEID, deviceId.toString());
+                    mJsonItem.put(NetworkKeys.LENGHT, length.toString());
+                    mJsonMap.put(mJsonItem);
+                }
+                mJsonRequest.put(NetworkKeys.LENGTHMAP, mJsonMap);
+            } catch (JSONException e) {
+                Log.e(TAG, "JSONException in generateRequestBody.", e);
+            }
+
+            return mJsonRequest;
+        }
+
+        public String generateRequest(String host, int port, String path, String body) {
             String accept = "text/plain";
             String connect = "Closed";
 
@@ -297,9 +359,52 @@ public class DataSyncSubscribeService extends Service {
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
                     + "Connection: " + connect + "\r\n"
+                    + body + "\r\n"
                     + "\r\n";
 
             return request;
+        }
+
+        public String parseResponseForBody(BufferedReader input) {
+            // parse all header fields
+
+            try {
+                String statusLine = input.readLine();;
+
+                if (statusLine == null || statusLine.isEmpty()) {
+                    return "";
+                }
+
+                String lengthLine = input.readLine();
+                if (lengthLine == null || lengthLine.isEmpty()) {
+                    return "";
+                }
+
+                String typeLine = input.readLine();
+                if (typeLine == null || typeLine.isEmpty()) {
+                    return "";
+                }
+
+                String connectionLine = input.readLine();
+                if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String result = "";
+                String line;
+
+                while ((line = input.readLine()) != null){
+                    if (line.isEmpty()){
+                        break;
+                    }else {
+                        result = result + line + "\r\n";
+                    }
+                }
+                return result;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return "";
         }
     }
 }

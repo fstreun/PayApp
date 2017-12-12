@@ -10,6 +10,10 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -19,6 +23,9 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.payapp.DataService;
 
@@ -193,7 +200,7 @@ public class DataSyncPublishService extends Service {
         public void run() {
 
             try {
-
+                Log.d(TAG, "run");
                 if (!bound){
                     // session access service not available
                     mSocket.close();
@@ -202,38 +209,122 @@ public class DataSyncPublishService extends Service {
 
                 BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
 
-                // parse all header fields
-                String result = "";
-                String line;
-                while ((line = input.readLine()) != null) {
-                    if (line.isEmpty()) {
-                        Log.i(TAG, result);
-                        break;
-                    } else {
-                        result = result + line + "\r\n";
-                    }
-                }
+                String jsonBodyString = parseRequestForBody(input);
+
+                Log.d(TAG, "request: " + jsonBodyString);
+
+                JSONObject jsonBody = new JSONObject(jsonBodyString);
+
 
                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
 
                 PrintWriter wtr = new PrintWriter(output);
 
                 // Create Here Response String (favourably JSON)
-                wtr.print(generateResponse("Success"));
+                String responseBody = generateResponseBody(jsonBody).toString();
+                Log.d(TAG, "response: " + responseBody);
+
+                wtr.print(generateResponse(responseBody));
                 wtr.flush();
                 wtr.close();
-            }catch (IOException e){
 
+                Log.d(TAG, "run finished without exception");
+            }catch (IOException e){
+                e.printStackTrace();
+            }catch (JSONException e){
+                e.printStackTrace();
             }
         }
 
         public String generateResponse(String body) {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
-                    "Content-Type: text/plain\r\n" +
-                    "Connection: Closed\r\n\r\n" + body;
+                    "Content-Type: application/json\r\n" +
+                    "Connection: Closed\r\n" + body+ "\r\n\r\n";
             return response;
         }
+
+        public JSONObject generateResponseBody(JSONObject requestBody){
+            JSONObject jsonResponse = null;
+            try {
+                UUID sessionID = UUID.fromString(requestBody.getString(NetworkKeys.SESSIONID));
+
+                DataService.SessionNetworkAccess sessionAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
+                if (sessionAccess == null){
+                    // no such session available
+                    return null;
+                }
+
+                String command = requestBody.getString(NetworkKeys.COMMAND);
+
+
+                JSONArray jsonMap = requestBody.getJSONArray(NetworkKeys.LENGTHMAP);
+
+                Map<UUID, Integer> start = new HashMap<>(jsonMap.length());
+
+                for (int i = 0; i < jsonMap.length(); i++){
+                    JSONObject jsonItem = jsonMap.getJSONObject(i);
+                    UUID deviceID = UUID.fromString(jsonItem.getString(NetworkKeys.DEVICEID));
+                    Integer length = Integer.valueOf(jsonItem.getString(NetworkKeys.LENGHT));
+                    start.put(deviceID, length);
+                }
+
+                JSONObject data = sessionAccess.getData(start);
+
+                jsonResponse = new JSONObject();
+                jsonResponse.put(NetworkKeys.SESSIONID, sessionID.toString());
+                jsonResponse.put(NetworkKeys.LENGTHMAP, jsonMap);
+                jsonResponse.put(NetworkKeys.DATA, data);
+
+            }catch (JSONException e){
+                Log.e(TAG, "JSONException in generateResponseBody.", e);
+            }
+            return jsonResponse;
+        }
+
+        public String parseRequestForBody(BufferedReader input) {
+            // parse all header fields
+
+            try {
+                String requestLine = input.readLine();;
+
+                if (requestLine == null || requestLine.isEmpty()) {
+                    return "";
+                }
+
+                String hostLine = input.readLine();
+                if (hostLine == null || hostLine.isEmpty()) {
+                    return "";
+                }
+
+                String acceptLine = input.readLine();
+                if (acceptLine == null || acceptLine.isEmpty()) {
+                    return "";
+                }
+
+                String connectionLine = input.readLine();
+                if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String result = "";
+                String line;
+
+                while ((line = input.readLine()) != null){
+                    if (line.isEmpty()){
+                        Log.d(TAG, result);
+                        break;
+                    }else {
+                        result = result + line + "\r\n";
+                    }
+                }
+                return result;
+            } catch (IOException e) {
+                Log.e(TAG, "IOException in parseRequestForBody");
+            }
+            return "";
+        }
+
 
     }
 }
