@@ -371,7 +371,7 @@ public class TransactionListActivity extends AppCompatActivity {
                 if (group != null){
                     int n = group.numParticipants();
                     participants = new String[n];
-                    List<String> participantsList = group.getParticipants();
+                    List<String> participantsList = group.getParticipantNames();
                     for (int i=0; i<n; i++){
                         participants[i] = participantsList.get(i);
                     }

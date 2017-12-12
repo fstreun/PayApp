@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.Participant;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
 import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
@@ -72,6 +73,7 @@ public class GroupActivity extends AppCompatActivity {
 
     // list of all participants
     private ListParticipantsAdapter adapter;
+    private List<Participant> participantList = new ArrayList<>();
 
 
     //Shared Preferences for specific group
@@ -157,7 +159,7 @@ public class GroupActivity extends AppCompatActivity {
                 intent.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_paid_by_name));
                 intent.putExtra(TransactionListActivity.KEY_PARTICIPANT,
-                        group.getDeviceOwner());
+                        group.getDefaultParticipantName());
                 try {
                     intent.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
@@ -178,7 +180,7 @@ public class GroupActivity extends AppCompatActivity {
         });
 
         // participant view
-        adapter = new ListParticipantsAdapter(this, group);
+        adapter = new ListParticipantsAdapter(this, participantList);
 
         ListView listView = findViewById(R.id.listView_main);
         listView.setAdapter(adapter);
@@ -390,7 +392,7 @@ public class GroupActivity extends AppCompatActivity {
         if (group != null){
             int n = group.numParticipants();
             participants = new String[n];
-            List<String> participantsList = group.getParticipants();
+            List<String> participantsList = group.getParticipantNames();
             for (int i=0; i<n; i++){
                 participants[i] = participantsList.get(i);
             }
@@ -398,7 +400,7 @@ public class GroupActivity extends AppCompatActivity {
 
         //get LRU payer from shared prefs (default value is the deviceOwner)
         String payer = sharedPreferences.getString(payerKey,
-                group.getDeviceOwner());
+                group.getDefaultParticipantName());
 
         //get initially checked participants from shared prefs
         Set<String> checkedPartiSet = sharedPreferences.getStringSet(
@@ -452,7 +454,11 @@ public class GroupActivity extends AppCompatActivity {
      * updates all the views according to the information given in the global fields
      */
     private void updateViews() {
-        String defPart = group.getDeviceOwner();
+        participantList.clear();
+        participantList.addAll(group.getParticipants());
+
+
+        String defPart = group.getDefaultParticipantName();
         if(defPart == null || defPart.isEmpty()){
             linLayOwn.setVisibility(View.GONE);
         } else {
@@ -464,20 +470,26 @@ public class GroupActivity extends AppCompatActivity {
             String toPayString = Transaction.doubleToString(toPay);
             tvOwnToPay.setText(toPayString);
 
+            // remove default participant from list
+            for (int i = 0; i < participantList.size(); i++){
+                if (participantList.get(i).name.equalsIgnoreCase(defPart)){
+                    participantList.remove(i);
+                }
+            }
         }
         adapter.notifyDataSetChanged();
         Log.d(TAG, "updated all views");
     }
 
     private void showMainParticipantDialog(){
-        List<String> partList = group.getParticipants();
+        List<String> partList = group.getParticipantNames();
         // get index of current default participant
-        int current = partList.indexOf(group.getDeviceOwner());
+        int current = partList.indexOf(group.getDefaultParticipantName());
         if (current < 0){
             // if none set current to the last element
             current = group.numParticipants();
         }
-        final String[] participants = group.getParticipants().toArray(new String[group.numParticipants()+1]);
+        final String[] participants = group.getParticipantNames().toArray(new String[group.numParticipants()+1]);
         participants[group.numParticipants()] = "(None)";
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
