@@ -22,7 +22,10 @@ public class ListParticipantsAdapter extends BaseAdapter{
 
     public static class Participant {
         public String name;
-        public String toPay;
+        public double toPay;
+        public String getToPay(){
+            return String.format("%1$.2f", toPay);
+        }
     }
 
 
@@ -42,7 +45,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
     public Participant getItem(int position) {
         Participant result = new Participant();
         result.name = group.getParticipants().get(position);
-        result.toPay = String.format("%1$.2f", group.toPay(result.name));
+        result.toPay = group.toPay(result.name);
         return result;
     }
 
@@ -65,7 +68,23 @@ public class ListParticipantsAdapter extends BaseAdapter{
         TextView tvToPay = convertView.findViewById(R.id.textView_toPay);
         // Populate the data into the template view using the data object
         tvName.setText(participant.name);
-        tvToPay.setText(participant.toPay);
+
+
+        // TODO: choose the correct colors
+        tvToPay.setText(participant.getToPay());
+        Double toPay = participant.toPay;
+        int compare = toPay.compareTo(0.0);
+        if (compare < 0){
+            // toPay is a negativ number
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorAccent));
+        }else if (compare > 0){
+            // toPay is a positiv number
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+        }else {
+            // toPay is equals to 0.0
+            tvToPay.setTextColor(context.getResources().getColor(R.color.colorGrey));
+        }
+
         // Return the completed view to render on screen
         return convertView;
     }
