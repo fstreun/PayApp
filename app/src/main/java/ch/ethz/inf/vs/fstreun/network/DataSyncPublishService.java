@@ -200,7 +200,7 @@ public class DataSyncPublishService extends Service {
         public void run() {
 
             try {
-
+                Log.d(TAG, "run");
                 if (!bound){
                     // session access service not available
                     mSocket.close();
@@ -211,6 +211,7 @@ public class DataSyncPublishService extends Service {
 
                 String jsonBodyString = parseRequestForBody(input);
 
+                Log.d(TAG, "request: " + jsonBodyString);
 
                 JSONObject jsonBody = new JSONObject(jsonBodyString);
 
@@ -220,9 +221,14 @@ public class DataSyncPublishService extends Service {
                 PrintWriter wtr = new PrintWriter(output);
 
                 // Create Here Response String (favourably JSON)
-                wtr.print(generateResponse(generateResponseBody(jsonBody).toString()));
+                String responseBody = generateResponseBody(jsonBody).toString();
+                Log.d(TAG, "response: " + responseBody);
+
+                wtr.print(generateResponse(responseBody));
                 wtr.flush();
                 wtr.close();
+
+                Log.d(TAG, "run finished without exception");
             }catch (IOException e){
                 e.printStackTrace();
             }catch (JSONException e){
@@ -234,14 +240,14 @@ public class DataSyncPublishService extends Service {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
                     "Content-Type: application/json\r\n" +
-                    "Connection: Closed\r\n\r\n" + body+ "\r\n\r\n";
+                    "Connection: Closed\r\n" + body+ "\r\n\r\n";
             return response;
         }
 
         public JSONObject generateResponseBody(JSONObject requestBody){
             JSONObject jsonResponse = null;
             try {
-                UUID sessionID = UUID.fromString(requestBody.getString("sessionID"));
+                UUID sessionID = UUID.fromString(requestBody.getString(NetworkKeys.SESSIONID));
 
                 DataService.SessionNetworkAccess sessionAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
                 if (sessionAccess == null){
@@ -249,29 +255,29 @@ public class DataSyncPublishService extends Service {
                     return null;
                 }
 
-                String command = requestBody.getString("command");
+                String command = requestBody.getString(NetworkKeys.COMMAND);
 
 
-                JSONArray jsonMap = requestBody.getJSONArray("map");
+                JSONArray jsonMap = requestBody.getJSONArray(NetworkKeys.LENGTHMAP);
 
                 Map<UUID, Integer> start = new HashMap<>(jsonMap.length());
 
                 for (int i = 0; i < jsonMap.length(); i++){
                     JSONObject jsonItem = jsonMap.getJSONObject(i);
-                    UUID deviceID = UUID.fromString(jsonItem.getString("deviceId"));
-                    Integer length = Integer.valueOf(jsonItem.getString("length"));
+                    UUID deviceID = UUID.fromString(jsonItem.getString(NetworkKeys.DEVICEID));
+                    Integer length = Integer.valueOf(jsonItem.getString(NetworkKeys.LENGHT));
                     start.put(deviceID, length);
                 }
 
                 JSONObject data = sessionAccess.getData(start);
 
                 jsonResponse = new JSONObject();
-                jsonResponse.put("sessionID", sessionID.toString());
-                jsonResponse.put("map", jsonMap);
-                jsonResponse.put("data", data);
+                jsonResponse.put(NetworkKeys.SESSIONID, sessionID.toString());
+                jsonResponse.put(NetworkKeys.LENGTHMAP, jsonMap);
+                jsonResponse.put(NetworkKeys.DATA, data);
 
             }catch (JSONException e){
-                e.printStackTrace();
+                Log.e(TAG, "JSONException in generateResponseBody.", e);
             }
             return jsonResponse;
         }
@@ -306,7 +312,7 @@ public class DataSyncPublishService extends Service {
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.w(TAG, result);
+                        Log.d(TAG, result);
                         break;
                     }else {
                         result = result + line + "\r\n";
@@ -314,7 +320,7 @@ public class DataSyncPublishService extends Service {
                 }
                 return result;
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "IOException in parseRequestForBody");
             }
             return "";
         }

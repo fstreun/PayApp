@@ -228,6 +228,8 @@ public class DataSyncSubscribeService extends Service {
 
     private class ClientThread implements Runnable {
 
+        final static String TAG = "ClientThread";
+
         private final  DataService.SessionNetworkAccess mSessionAccess;
 
         ClientThread(DataService.SessionNetworkAccess sessionAccess) {
@@ -236,7 +238,7 @@ public class DataSyncSubscribeService extends Service {
 
 
         public void run() {
-            Log.i("ClientThread", "run()");
+            Log.i(TAG, "run()");
             for (NsdServiceInfo serviceInfo : mServiceInfos){
                 // iterate through all the discovered services
 
@@ -252,6 +254,7 @@ public class DataSyncSubscribeService extends Service {
                     // TODO: remove serviceInfo from mServiceInfos if not successful
                 }
             }
+            Log.i(TAG, "run finished");
         }
 
         private void handleSocket(Socket socket){
@@ -260,6 +263,8 @@ public class DataSyncSubscribeService extends Service {
                 JSONObject requestBody = generateRequestBody();
 
                 String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync", requestBody.toString());
+
+                Log.d(TAG, "request: " + get_message);
 
                 OutputStream mOutputStream = socket.getOutputStream();
 
@@ -272,25 +277,11 @@ public class DataSyncSubscribeService extends Service {
 
                 String result = parseResponseForBody(input);
 
-                JSONObject response = new JSONObject(result);
+                Log.d(TAG, "response: " + result);
 
-                String sessionId = response.getString("sessionID");
-                JSONObject data = response.getJSONObject("data");
+                JSONObject responseBody = new JSONObject(result);
 
-                // Todo: Was not sure if wee need to parse the length of the map array or the new data array
-
-                Map<UUID, Integer> expected = new HashMap<UUID, Integer>();
-                JSONArray jsonMap = response.getJSONArray("map");
-
-                for(int i = 0; i < jsonMap.length(); i++) {
-                    JSONObject item = (JSONObject) jsonMap.get(i);
-                    UUID mUUid =  UUID.fromString((String) item.getString("deviceId"));
-                    Integer mLength = Integer.valueOf(item.getString("length"));
-                    expected.put(mUUid, mLength);
-                }
-
-                // save data
-                mSessionAccess.putData(data, expected);
+                handleResponse(responseBody);
 
                 socket.close();
                 return;
@@ -298,6 +289,32 @@ public class DataSyncSubscribeService extends Service {
                 e.printStackTrace();
             } catch (JSONException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private void handleResponse(JSONObject body){
+            try {
+                UUID sessionId = UUID.fromString(body.getString(NetworkKeys.SESSIONID));
+                if (!sessionId.equals(mSessionAccess.getSessionID())){
+                    // data not supposed to be for this session
+                    return;
+                }
+                JSONObject data = body.getJSONObject(NetworkKeys.DATA);
+
+                Map<UUID, Integer> expected = new HashMap<UUID, Integer>();
+                JSONArray jsonMap = body.getJSONArray(NetworkKeys.LENGTHMAP);
+
+                for (int i = 0; i < jsonMap.length(); i++) {
+                    JSONObject item = (JSONObject) jsonMap.get(i);
+                    UUID mUUid = UUID.fromString((String) item.getString(NetworkKeys.DEVICEID));
+                    Integer mLength = Integer.valueOf(item.getString(NetworkKeys.LENGHT));
+                    expected.put(mUUid, mLength);
+                }
+
+                // save data
+                mSessionAccess.putData(data, expected);
+            }catch (JSONException e){
+                Log.e(TAG, "JSONException in handleResponse.", e);
             }
         }
 
@@ -312,8 +329,8 @@ public class DataSyncSubscribeService extends Service {
 
                 // create json request
                 mJsonRequest = new JSONObject();
-                mJsonRequest.put("sessionId", sessionId.toString());
-                mJsonRequest.put("command", "start");
+                mJsonRequest.put(NetworkKeys.SESSIONID, sessionId.toString());
+                mJsonRequest.put(NetworkKeys.COMMAND, "start");
                 JSONArray mJsonMap = new JSONArray();
 
                 for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
@@ -321,13 +338,13 @@ public class DataSyncSubscribeService extends Service {
                     Integer length = item.getValue();
 
                     JSONObject mJsonItem = new JSONObject();
-                    mJsonItem.put("deviceId", deviceId.toString());
-                    mJsonItem.put("length", length.toString());
+                    mJsonItem.put(NetworkKeys.DEVICEID, deviceId.toString());
+                    mJsonItem.put(NetworkKeys.LENGHT, length.toString());
                     mJsonMap.put(mJsonItem);
                 }
-                mJsonRequest.put("map", mJsonMap);
+                mJsonRequest.put(NetworkKeys.LENGTHMAP, mJsonMap);
             } catch (JSONException e) {
-                e.printStackTrace();
+                Log.e(TAG, "JSONException in generateRequestBody.", e);
             }
 
             return mJsonRequest;
@@ -341,7 +358,7 @@ public class DataSyncSubscribeService extends Service {
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
-                    + "Connection: " + connect + "\r\n\r\n"
+                    + "Connection: " + connect + "\r\n"
                     + body + "\r\n"
                     + "\r\n";
 
@@ -378,7 +395,6 @@ public class DataSyncSubscribeService extends Service {
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.w(TAG, result);
                         break;
                     }else {
                         result = result + line + "\r\n";
