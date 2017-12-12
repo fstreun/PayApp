@@ -19,7 +19,7 @@ public class TransactionInfoActivity extends AppCompatActivity {
 
     public static final String KEY_TRANSACTION = "transaction";
 
-    TextView tvComment, tvAmount, tvPayer, tvTimestamp;
+    TextView tvComment, tvAmount, tvPayer, tvDatestamp, tvTimestamp;
     ListSimpleNameAdapter adapter;
 
     Transaction transaction;
@@ -44,6 +44,7 @@ public class TransactionInfoActivity extends AppCompatActivity {
         tvComment = findViewById(R.id.textView_info_comment);
         tvAmount = findViewById(R.id.textView_info_amount);
         tvPayer = findViewById(R.id.textView_info_payer);
+        tvDatestamp = findViewById(R.id.textView_info_datestamp);
         tvTimestamp = findViewById(R.id.textView_info_timestamp);
 
         ListView tvInvolved = findViewById(R.id.listView_info_involved);
@@ -54,9 +55,12 @@ public class TransactionInfoActivity extends AppCompatActivity {
         tvComment.setText(transaction.comment);
         tvAmount.setText(Transaction.doubleToString(transaction.amount));
         tvPayer.setText(transaction.payer);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd. MMM. yyyy HH:mm");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd. MMM. yyyy");
+        SimpleDateFormat simpleTimeFormat = new SimpleDateFormat("HH:mm");
         Date date = new Date(transaction.timestamp);
-        String timeAsString = simpleDateFormat.format(date);
+        String dateAsString = simpleDateFormat.format(date);
+        tvDatestamp.setText(dateAsString);
+        String timeAsString = simpleTimeFormat.format(date);
         tvTimestamp.setText(timeAsString);
     }
 

@@ -285,7 +285,7 @@ public class TransactionListActivity extends AppCompatActivity {
 
     private void setButtonColor() {
         // set colors
-        final int checked = getResources().getColor(R.color.colorAccent);
+        final int checked = getResources().getColor(R.color.colorGreyDark);
         final int unchecked = getResources().getColor(R.color.colorPrimary);
 
         // set each button color according to isChecked()
