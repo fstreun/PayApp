@@ -7,8 +7,14 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Binder;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -93,13 +99,55 @@ public class DataSyncSubscribeService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return mBinder;
     }
 
 
 
-    public void initializeDiscoveryListener() {
+    /*
+    Binding of the service:
+     */
+
+    // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+        public DataSync getDataSync(){
+            return mDataSync;
+        }
+    }
+
+
+    DataSync mDataSync = new DataSync();
+
+    public class DataSync{
+        private DataSync(){
+        };
+
+        public synchronized void synchronizeSession(UUID sessionID){
+            Log.d(TAG, "DataSync synchronizeSession called");
+            // check if data service is already bounded
+            if (!bound){
+                return;
+            }
+
+            DataService.SessionNetworkAccess sessionNetworkAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
+            if (sessionNetworkAccess == null){
+                // not available
+                return;
+            }
+
+            ClientThread clientThread = new ClientThread(sessionNetworkAccess);
+            new Thread(clientThread).start();
+
+        }
+    }
+
+    private void initializeDiscoveryListener() {
         // Instantiate a new DiscoveryListener
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
 
@@ -152,7 +200,7 @@ public class DataSyncSubscribeService extends Service {
         };
     }
 
-    class MyResolveListener implements NsdManager.ResolveListener {
+    private class MyResolveListener implements NsdManager.ResolveListener {
 
             @Override
             public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int errorCode) {
@@ -164,37 +212,21 @@ public class DataSyncSubscribeService extends Service {
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.w(TAG, "Resolve Succeeded. " + serviceInfo);
 
+                //TODO: Same IP not detected!
                 if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
                     Log.i(TAG, "Same IP.");
                     return;
                 }
 
-                // TODO: hope this is no capture (and only added once. I guess it should)
+                // TODO: only add once
                 boolean success = mServiceInfos.add(serviceInfo);
                 Log.d(TAG, "onServiceResolved added new service info: " + success);
 
             }
     }
 
-    public synchronized void synchronizeSession(UUID sessionID){
-        // check if data service is already bounded
-        if (!bound){
-            return;
-        }
 
-        DataService.SessionNetworkAccess sessionNetworkAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
-        if (sessionNetworkAccess == null){
-            // not available
-            return;
-        }
-
-        ClientThread clientThread = new ClientThread(sessionNetworkAccess);
-        new Thread(clientThread).run();
-
-    }
-
-
-    class ClientThread implements Runnable {
+    private class ClientThread implements Runnable {
 
         private final  DataService.SessionNetworkAccess mSessionAccess;
 
@@ -217,13 +249,17 @@ public class DataSyncSubscribeService extends Service {
                     handleSocket(socket);
                 } catch (IOException e) {
                     Log.e(TAG, "new Socket Creation exception.", e);
+                    // TODO: remove serviceInfo from mServiceInfos if not successful
                 }
             }
         }
 
-        public void handleSocket(Socket socket){
+        private void handleSocket(Socket socket){
             try {
-                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync");
+
+                JSONObject requestBody = generateRequestBody();
+
+                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync", requestBody.toString());
 
                 OutputStream mOutputStream = socket.getOutputStream();
 
@@ -254,7 +290,39 @@ public class DataSyncSubscribeService extends Service {
             }
         }
 
-        public String generateRequest(String host, int port, String path) {
+        private JSONObject generateRequestBody() {
+
+            JSONObject mJsonRequest = null;
+
+            try {
+                // get data for request (sessionId, Map<UUID, Int) -> start
+                UUID sessionId = mSessionAccess.getSessionID();
+                Map<UUID, Integer> mData = mSessionAccess.getLength();
+
+                // create json request
+                mJsonRequest = new JSONObject();
+                mJsonRequest.put("sessionId", sessionId.toString());
+                mJsonRequest.put("command", "start");
+                JSONArray mJsonMap = new JSONArray();
+
+                for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
+                    UUID deviceId = item.getKey();
+                    Integer length = item.getValue();
+
+                    JSONObject mJsonItem = new JSONObject();
+                    mJsonItem.put("deviceId", deviceId.toString());
+                    mJsonItem.put("length", length.toString());
+                    mJsonMap.put(mJsonItem);
+                }
+                mJsonRequest.put("map", mJsonMap);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return mJsonRequest;
+        }
+
+        public String generateRequest(String host, int port, String path, String body) {
             String accept = "text/plain";
             String connect = "Closed";
 
@@ -263,6 +331,7 @@ public class DataSyncSubscribeService extends Service {
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
                     + "Connection: " + connect + "\r\n"
+                    + body + "\r\n"
                     + "\r\n";
 
             return request;

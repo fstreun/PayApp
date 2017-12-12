@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class GroupActivity extends AppCompatActivity {
@@ -55,8 +56,11 @@ public class GroupActivity extends AppCompatActivity {
     private Group group = null;
 
     // Session Service communication
-    private boolean bound;
+    private boolean boundDataService;
     private DataService.SessionClientAccess sessionAccess;
+
+    private boolean boundDataSync;
+    private DataSyncSubscribeService.DataSync dataSync;
 
     //file stuff
     FileHelper fileHelper;
@@ -206,6 +210,10 @@ public class GroupActivity extends AppCompatActivity {
         bindService(intentService, connection, BIND_AUTO_CREATE);
         Log.d(TAG, "called bindService");
 
+        // Bind DataSync
+        Intent intentDataSync = new Intent(this, DataSyncSubscribeService.class);
+        bindService(intentDataSync, connection, BIND_AUTO_CREATE);
+
         Log.d(TAG, "creation finished");
     }
 
@@ -214,10 +222,10 @@ public class GroupActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         // Unbind from service
-        if (bound){
+        if (boundDataService){
             unbindService(connection);
             Log.d(TAG, "called unbindService");
-            bound = false;
+            boundDataService = false;
         }
     }
 
@@ -239,7 +247,7 @@ public class GroupActivity extends AppCompatActivity {
                     Log.e(TAG, "Failed to get Session access: " + mSimpleGroup.sessionID);
                     return;
                 }
-                bound = true;
+                boundDataService = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
 
                 // load transactions to the group
@@ -248,13 +256,21 @@ public class GroupActivity extends AppCompatActivity {
                 storeOpenTransaction();
                 // update all views
                 updateViews();
+            }else if (name.getClassName().equalsIgnoreCase(DataSyncSubscribeService.class.getName())){
+                DataSyncSubscribeService.LocalBinder binder = (DataSyncSubscribeService.LocalBinder) service;
+                dataSync = binder.getDataSync();
+                if (dataSync == null){
+                    Log.e(TAG, "Failed to get DataSync Service access");
+                    return;
+                }
+                boundDataSync = true;
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.e(TAG, "onServiceDisconnected");
-            bound = false;
+            boundDataService = false;
         }
     };
 
@@ -293,17 +309,6 @@ public class GroupActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-            case R.id.menu_publishGroup:
-                Intent intent = new Intent(this, PublishGroupActivity.class);
-                try {
-                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
-                } catch (JSONException e) {
-                    // failed to create SimpleGroup JSON
-                    Log.e(TAG, "Failed to create JSON of SimpleGroup.", e);
-                }
-                startActivity(intent);
-                return true;
-
             case R.id.menu_showAllTransactions:
                 //case view all transactions
                 Intent intent1 = new Intent(GroupActivity.this,
@@ -318,6 +323,25 @@ public class GroupActivity extends AppCompatActivity {
                 }
 
                 GroupActivity.this.startActivity(intent1);
+                return true;
+
+            case R.id.menu_syncData:
+                if (boundDataSync){
+                    dataSync.synchronizeSession(mSimpleGroup.sessionID);
+                }
+
+                // TODO: update data with dataAccess after some time
+
+                return true;
+            case R.id.menu_publishGroup:
+                Intent intent = new Intent(this, PublishGroupActivity.class);
+                try {
+                    intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    // failed to create SimpleGroup JSON
+                    Log.e(TAG, "Failed to create JSON of SimpleGroup.", e);
+                }
+                startActivity(intent);
                 return true;
 
             case R.id.menu_setMainParticipant:
@@ -395,7 +419,7 @@ public class GroupActivity extends AppCompatActivity {
                 editor.putStringSet(involvedKey, new HashSet<>(involved));
                 editor.apply();
 
-                // transaction can only be stored after service was bound.
+                // transaction can only be stored after service was boundDataService.
                 // so store it for the service in global field
                 openTransaction = data.getExtras();
                 storeOpenTransaction();
@@ -521,7 +545,7 @@ public class GroupActivity extends AppCompatActivity {
      * @return success of accessing Session
      */
     private synchronized boolean loadTransactions() {
-        if (!bound){
+        if (!boundDataService){
             return false;
         }
 
@@ -562,7 +586,7 @@ public class GroupActivity extends AppCompatActivity {
             return true;
         }
 
-        if (!bound){
+        if (!boundDataService){
             return false;
         }
 
