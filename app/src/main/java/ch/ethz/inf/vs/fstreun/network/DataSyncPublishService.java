@@ -253,6 +253,7 @@ public class DataSyncPublishService extends Service {
 
 
                 JSONArray jsonMap = requestBody.getJSONArray("map");
+
                 Map<UUID, Integer> start = new HashMap<>(jsonMap.length());
 
                 for (int i = 0; i < jsonMap.length(); i++){
@@ -261,7 +262,6 @@ public class DataSyncPublishService extends Service {
                     Integer length = Integer.valueOf(jsonItem.getString("length"));
                     start.put(deviceID, length);
                 }
-
 
                 JSONObject data = sessionAccess.getData(start);
 
