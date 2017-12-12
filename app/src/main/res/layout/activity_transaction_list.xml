@@ -52,6 +52,7 @@
 
         <TextView
             android:layout_width="0dp"
+            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Paid by"
@@ -59,6 +60,7 @@
 
         <TextView
             android:layout_width="0dp"
+            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
@@ -67,6 +69,7 @@
 
         <TextView
             android:layout_width="0dp"
+            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="right"
