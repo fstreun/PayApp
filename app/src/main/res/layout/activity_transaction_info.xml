@@ -15,10 +15,11 @@
         android:paddingVertical="5sp">
 
         <TextView
+            android:textStyle="bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Title"
+            android:text="Title:"
             android:textSize="9pt" />
 
         <TextView
@@ -37,11 +38,12 @@
         android:orientation="horizontal">
 
         <TextView
+            android:textStyle="bold"
             android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Amount" />
+            android:text="Amount:" />
 
         <TextView
             android:textSize="9pt"
@@ -59,6 +61,7 @@
         android:orientation="horizontal">
 
         <TextView
+            android:textStyle="bold"
             android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -80,11 +83,34 @@
         android:orientation="horizontal">
 
         <TextView
+            android:textStyle="bold"
             android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Creation time" />
+            android:text="Creation date:" />
+
+        <TextView
+            android:textSize="9pt"
+            android:id="@+id/textView_info_datestamp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:paddingVertical="5sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:textStyle="bold"
+            android:textSize="9pt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Creation time:" />
 
         <TextView
             android:textSize="9pt"
@@ -95,11 +121,12 @@
     </LinearLayout>
 
     <TextView
+        android:textStyle="bold"
         android:textSize="9pt"
         android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Involved" />
+        android:text="Involved:" />
 
     <ListView
         android:id="@+id/listView_info_involved"

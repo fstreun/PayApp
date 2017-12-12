@@ -7,6 +7,7 @@
 
     <TextView
         android:id="@+id/textView_main"
+        android:textSize="9pt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
@@ -15,7 +16,6 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="@color/colorPrimaryDark"/>
+        android:layout_height="2dp"/>
 
 </LinearLayout>
