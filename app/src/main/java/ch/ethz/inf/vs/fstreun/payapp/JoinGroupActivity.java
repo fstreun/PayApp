@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
@@ -40,11 +42,16 @@ public class JoinGroupActivity extends AppCompatActivity {
 
     List<SimpleGroup> groupList = new ArrayList<SimpleGroup>();
     ListSimpleGroupAdapter adapter;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join_group);
+
+        //initialize sharedPrefs
+        String prefName = getString(R.string.pref_name);
+        sharedPref = getSharedPreferences(prefName, Context.MODE_PRIVATE);
 
         editTextGroupSecret = findViewById(R.id.edittext_group_secret);
 
@@ -165,7 +172,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
     private void join(SimpleGroup group) {
 
-        // TODO: check uniqueness of session and group ID !!
+        FileHelper fileHelper = new FileHelper(this);
 
         String simpleGroupString;
         try {
@@ -175,6 +182,14 @@ public class JoinGroupActivity extends AppCompatActivity {
             return;
         }
 
+        List<SimpleGroup> groups = loadGroups();
+        for (SimpleGroup sp : groups){
+            if (sp.groupID.equals(group.groupID)){
+                // group already in the list
+                Toast.makeText(this, "Group already on the device: " + sp.groupName, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
         // create session with group sessionID
         boolean success = mService.createSession(group.sessionID, mService.getUserID());
@@ -182,12 +197,10 @@ public class JoinGroupActivity extends AppCompatActivity {
             Toast.makeText(this, "Session already in the list", Toast.LENGTH_SHORT).show();
         }
 
-
         // create joined Group
         Group newGroup = new Group(group.sessionID);
-        FileHelper fileHelper = new FileHelper(this);
 
-        //store newly created group in file
+        // create new group file
         fileHelper.writeToFile(getString(R.string.path_groups), group.groupID.toString(),
                 newGroup.toString());
 
@@ -196,5 +209,24 @@ public class JoinGroupActivity extends AppCompatActivity {
         intent.putExtra(KEY_SIMPLEGROUP, simpleGroupString);
         setResult(RESULT_OK, intent);
         finish();
+    }
+
+    /**
+     * loads group objects from the shared preferences with the key defined in key_groups
+     * @return List of all groups stored in shared preferences
+     */
+    private List<SimpleGroup> loadGroups(){
+        List<SimpleGroup> groups = new ArrayList<>();
+        Set<String> objects = sharedPref.getStringSet(getString(R.string.key_groups), null);
+        if (objects != null) {
+            for (String o : objects) {
+                try {
+                    groups.add(new SimpleGroup(new JSONObject(o)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return groups;
     }
 }
