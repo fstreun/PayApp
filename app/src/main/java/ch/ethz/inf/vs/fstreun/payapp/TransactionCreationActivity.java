@@ -109,9 +109,11 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
     private Double getAmount(){
         String amountString = String.valueOf(editTextAmount.getText());
-        if (amountString != null) {
-            try {
 
+        amountString = amountString.replace(',', '.');
+
+        if (isValidDoubleRepresentation(amountString)) {
+            try {
                 //case: everything ok
                 return DecimalFormat.getInstance().parse(amountString).doubleValue();
 
@@ -123,6 +125,35 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
         // case: get amount did not work
         return null;
+    }
+
+    boolean isValidDoubleRepresentation(String s){
+        if(s == null){
+            return false;
+        }
+        String sAbs;
+        if(s.charAt(0) == '-'){
+            sAbs = s.substring(1);
+        } else {
+            sAbs = s;
+        }
+        boolean dot = false;
+        int afterDot = 0;
+        for(int i = 0; i < sAbs.length(); ++i) {
+            char c = sAbs.charAt(i);
+            if(dot){
+                ++afterDot;
+            }
+            if(!Character.isDigit(c) || afterDot > 2){
+                if((c == '.')&& !dot){
+                    dot = true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+
     }
 
     private String getPayer(){
