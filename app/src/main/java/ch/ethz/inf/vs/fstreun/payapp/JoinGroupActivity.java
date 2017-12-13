@@ -3,14 +3,18 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -169,6 +173,49 @@ public class JoinGroupActivity extends AppCompatActivity {
         }
     }
 
+    private void showJoinDialog(final SimpleGroup group){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add Name");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(group.groupName);
+        builder.setView(input);
+
+
+        // Set up the buttons
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultJoinDialog(group, input.getText().toString());
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultJoinDialog(group, null);
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // show keyboard
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
+    }
+
+    private void resultJoinDialog(final SimpleGroup group, String name){
+        if (name == null || name.isEmpty()){
+            // no name given
+            return;
+        }
+
+        SimpleGroup newGroup = new SimpleGroup(group.groupID, name, group.sessionID);
+        join(newGroup);
+    }
 
     private void join(SimpleGroup group) {
 
