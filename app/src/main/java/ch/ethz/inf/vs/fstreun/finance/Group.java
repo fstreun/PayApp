@@ -179,7 +179,21 @@ public class Group {
      */
     public void addParticipant(String p){
         // if p not already in participants add him to participants
-        if (!participants.contains(p)) participants.add(p);
+        if (!participants.contains(p)) {
+
+            // handle the case where the name already exists with different capitalization
+            for(String pOld : participants) {
+                int compare = String.CASE_INSENSITIVE_ORDER.compare(pOld, p);
+                if (compare == 0){
+                    if(pOld.compareTo(p) < 0){
+                        participants.remove(pOld);
+                        participants.add(p);
+                    }
+                    return;
+                }
+            }
+            participants.add(p);
+        }
     }
 
 
@@ -271,7 +285,7 @@ public class Group {
         double result = 0;
         if(participants.contains(p)){
             for(Transaction t: transactions){
-                if(t.involved.contains(p)) result += t.amount;
+                if(t.involved.contains(p)) result += t.amount / t.getNumInvolved();
             }
         }
         return result;

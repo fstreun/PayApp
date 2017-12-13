@@ -352,6 +352,7 @@ public class GroupActivity extends AppCompatActivity {
             case R.id.menu_syncData:
                 if (boundDataSync){
                     dataSync.synchronizeSession(mSimpleGroup.sessionID);
+                    updateViews();
                 }
 
                 // TODO: update data with dataAccess after some time
