@@ -171,6 +171,7 @@ public class DataSyncPublishService extends Service {
                 try {
                     Log.i(TAG, "run() - open RequestThread");
                     Socket socket = mServerSocket.accept();
+                    socket.setSoTimeout(1000);
                     // start slave thread
                     ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
                     slaveThread.run();

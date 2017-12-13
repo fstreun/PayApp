@@ -247,7 +247,7 @@ public class DataSyncSubscribeService extends Service {
                 Socket socket = null;
                 try {
                     socket = new Socket(address, port);
-                    socket.setSoTimeout(100);
+                    socket.setSoTimeout(1000);
                     handleSocket(socket);
                 } catch (IOException e) {
                     Log.e(TAG, "new Socket Creation exception.", e);
