@@ -66,7 +66,7 @@ public class JoinGroupActivity extends AppCompatActivity {
         listViewFoundGroup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                join(groupList.get(position));
+                tryJoin(groupList.get(position));
             }
         });
 
@@ -175,7 +175,7 @@ public class JoinGroupActivity extends AppCompatActivity {
 
     private void showJoinDialog(final SimpleGroup group){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Add Name");
+        builder.setTitle("Choose Name");
 
         // Set up the input
         final EditText input = new EditText(this);
@@ -217,17 +217,7 @@ public class JoinGroupActivity extends AppCompatActivity {
         join(newGroup);
     }
 
-    private void join(SimpleGroup group) {
-
-        FileHelper fileHelper = new FileHelper(this);
-
-        String simpleGroupString;
-        try {
-            simpleGroupString = group.toJSON().toString();
-        } catch (JSONException e) {
-            Toast.makeText(this, "Could not join Group", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void tryJoin(SimpleGroup group){
 
         List<SimpleGroup> groups = loadGroups();
         for (SimpleGroup sp : groups){
@@ -238,6 +228,20 @@ public class JoinGroupActivity extends AppCompatActivity {
             }
         }
 
+        showJoinDialog(group);
+    }
+
+    private void join(SimpleGroup group) {
+
+        String simpleGroupString;
+        try {
+            simpleGroupString = group.toJSON().toString();
+        } catch (JSONException e) {
+            Toast.makeText(this, "Could not join Group", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
         // create session with group sessionID
         boolean success = mService.createSession(group.sessionID, mService.getUserID());
         if (!success) {
@@ -247,6 +251,8 @@ public class JoinGroupActivity extends AppCompatActivity {
         // create joined Group
         Group newGroup = new Group(group.sessionID);
 
+
+        FileHelper fileHelper = new FileHelper(this);
         // create new group file
         fileHelper.writeToFile(getString(R.string.path_groups), group.groupID.toString(),
                 newGroup.toString());

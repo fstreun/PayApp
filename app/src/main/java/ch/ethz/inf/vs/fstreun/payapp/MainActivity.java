@@ -2,17 +2,26 @@ package ch.ethz.inf.vs.fstreun.payapp;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,6 +74,16 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 startActivityForResult(intent, RESULT_GROUP);
+            }
+        });
+
+        registerForContextMenu(listViewGroup);
+        listViewGroup.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                Log.d(TAG, "onCreateContextMenu started");
+                MenuInflater inflater = getMenuInflater();
+                inflater.inflate(R.menu.context_menu_groups, menu);
             }
         });
 
@@ -193,6 +212,78 @@ public class MainActivity extends AppCompatActivity {
                 super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()){
+            case R.id.contextMenu_changeName:
+                int position = info.position;
+                SimpleGroup simpleGroup = adapter.getItem(position);
+                showChangeNameDialog(simpleGroup);
+        }
+        return super.onContextItemSelected(item);
+    }
+
+    /**
+     *
+     * @param simpleGroup reference to SimpleGroup object in the groups list
+     */
+    private void showChangeNameDialog(final SimpleGroup simpleGroup){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Change Name");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(simpleGroup.groupName);
+        builder.setView(input);
+
+
+        // Set up the buttons
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultChangeName(simpleGroup, input.getText().toString());
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultChangeName(simpleGroup, null);
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // show keyboard
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
+    }
+
+    /**
+     *
+     * @param simpleGroup reference to SimpleGroup object in the groups list
+     * @param newName
+     */
+    private void resultChangeName(SimpleGroup simpleGroup, String newName){
+        if (newName == null || newName.isEmpty() || newName.equals(simpleGroup.groupName)){
+            // nothing changed
+            return;
+        }
+
+        SimpleGroup newGroup = new SimpleGroup(simpleGroup.groupID, newName, simpleGroup.sessionID);
+        groups.remove(simpleGroup);
+        groups.add(newGroup);
+        storeGroups(groups);
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, "Name changed", Toast.LENGTH_SHORT);
+    }
+
+
 
     /**
      * loads group objects from the shared preferences with the key defined in key_groups
