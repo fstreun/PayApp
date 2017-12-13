@@ -45,7 +45,7 @@ public class SessionPublishService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        Log.d(TAG, "onStartCommand");
         secret = intent.getStringExtra("SECRET");
         groupJsonString = intent.getStringExtra("SIMPLEGROUP");
 
@@ -80,7 +80,7 @@ public class SessionPublishService extends Service {
         // Initialize a server socket on the next available port.
         try {
             mServerSocket = new ServerSocket(0);
-            new Thread(new ServerThread()).start();
+            new Thread(new ServerMainThread()).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -105,7 +105,7 @@ public class SessionPublishService extends Service {
             @Override
             public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
                 mServiceName = mServiceInfo.getServiceName();
-                Log.d(TAG, "onServiceRegistered: " + mServiceName);
+                Log.d(TAG, "onServiceRegistered: " + nsdServiceInfo);
             }
 
             @Override
@@ -115,18 +115,40 @@ public class SessionPublishService extends Service {
         };
     }
 
-    class ServerThread implements Runnable {
+    class ServerMainThread implements Runnable {
 
-        Thread mThread;
-
+        @Override
         public void run() {
             Log.i("ServerMasterThread", "run()");
-            while (mServerSocket != null) {
+            while (mServerSocket != null && !mServerSocket.isClosed()) {
                 try {
-                    Log.i("ServerMasterThread", "run() - open RequestThread");
-                    Socket mSocket = mServerSocket.accept();
+                    Socket socket = mServerSocket.accept();
+                    Log.i("ServerMasterThread", "accepted socket");
+                    socket.setSoTimeout(1000);
 
-                    BufferedReader input = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                    ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
+                    new Thread(slaveThread).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    class ServerSlaveThread implements Runnable {
+
+        private final Socket socket;
+
+        ServerSlaveThread(Socket socket){
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+
+                try {
+
+                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                     String jsonBodyString = parseRequestForBody(input);
 
@@ -143,7 +165,7 @@ public class SessionPublishService extends Service {
                         response.put("result", false);
                     }
 
-                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream()));
+                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
                     PrintWriter wtr = new PrintWriter(output);
                     wtr.print(generateResponse(response.toString()));
@@ -157,7 +179,6 @@ public class SessionPublishService extends Service {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            }
         }
 
         public String generateResponse(String body) {

@@ -7,7 +7,6 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.AsyncTask;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -108,6 +107,8 @@ public class SessionSubscribeService extends Service {
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 // A service was found!  Do something with it.
+
+                Log.d(TAG, "onServiceFound: " + service);
 
                 if (!service.getServiceType().equals(SERVICE_TYPE)) {
                     // Service type is the string containing the protocol and

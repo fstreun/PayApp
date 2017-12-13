@@ -3,13 +3,18 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,6 +26,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
@@ -40,11 +46,16 @@ public class JoinGroupActivity extends AppCompatActivity {
 
     List<SimpleGroup> groupList = new ArrayList<SimpleGroup>();
     ListSimpleGroupAdapter adapter;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join_group);
+
+        //initialize sharedPrefs
+        String prefName = getString(R.string.pref_name);
+        sharedPref = getSharedPreferences(prefName, Context.MODE_PRIVATE);
 
         editTextGroupSecret = findViewById(R.id.edittext_group_secret);
 
@@ -55,7 +66,7 @@ public class JoinGroupActivity extends AppCompatActivity {
         listViewFoundGroup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                join(groupList.get(position));
+                tryJoin(groupList.get(position));
             }
         });
 
@@ -134,12 +145,18 @@ public class JoinGroupActivity extends AppCompatActivity {
 
 
     private void buttonJoinClicked(){
+        // end running
+        try {
+            stopService(intentSessionSubscribeService);
+        }catch (Exception e){
+
+        }
+
         groupList.clear();
         adapter.notifyDataSetChanged();
 
         String groupHint = editTextGroupSecret.getText().toString();
 
-        //TODO: search groups
         intentSessionSubscribeService = new Intent(this, SessionSubscribeService.class);
         intentSessionSubscribeService.putExtra("SECRET", groupHint);
         startService(intentSessionSubscribeService);
@@ -162,10 +179,65 @@ public class JoinGroupActivity extends AppCompatActivity {
         }
     }
 
+    private void showJoinDialog(final SimpleGroup group){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose Name");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(group.groupName);
+        builder.setView(input);
+
+
+        // Set up the buttons
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultJoinDialog(group, input.getText().toString());
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                resultJoinDialog(group, null);
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // show keyboard
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
+    }
+
+    private void resultJoinDialog(final SimpleGroup group, String name){
+        if (name == null || name.isEmpty()){
+            // no name given
+            return;
+        }
+
+        SimpleGroup newGroup = new SimpleGroup(group.groupID, name, group.sessionID);
+        join(newGroup);
+    }
+
+    private void tryJoin(SimpleGroup group){
+
+        List<SimpleGroup> groups = loadGroups();
+        for (SimpleGroup sp : groups){
+            if (sp.groupID.equals(group.groupID)){
+                // group already in the list
+                Toast.makeText(this, "Group already on the device: " + sp.groupName, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        showJoinDialog(group);
+    }
 
     private void join(SimpleGroup group) {
-
-        // TODO: check uniqueness of session and group ID !!
 
         String simpleGroupString;
         try {
@@ -182,12 +254,12 @@ public class JoinGroupActivity extends AppCompatActivity {
             Toast.makeText(this, "Session already in the list", Toast.LENGTH_SHORT).show();
         }
 
-
         // create joined Group
         Group newGroup = new Group(group.sessionID);
-        FileHelper fileHelper = new FileHelper(this);
 
-        //store newly created group in file
+
+        FileHelper fileHelper = new FileHelper(this);
+        // create new group file
         fileHelper.writeToFile(getString(R.string.path_groups), group.groupID.toString(),
                 newGroup.toString());
 
@@ -196,5 +268,24 @@ public class JoinGroupActivity extends AppCompatActivity {
         intent.putExtra(KEY_SIMPLEGROUP, simpleGroupString);
         setResult(RESULT_OK, intent);
         finish();
+    }
+
+    /**
+     * loads group objects from the shared preferences with the key defined in key_groups
+     * @return List of all groups stored in shared preferences
+     */
+    private List<SimpleGroup> loadGroups(){
+        List<SimpleGroup> groups = new ArrayList<>();
+        Set<String> objects = sharedPref.getStringSet(getString(R.string.key_groups), null);
+        if (objects != null) {
+            for (String o : objects) {
+                try {
+                    groups.add(new SimpleGroup(new JSONObject(o)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return groups;
     }
 }
