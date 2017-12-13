@@ -12,20 +12,38 @@
 
         <TextView
             android:id="@+id/textView_name"
-            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            tools:text="Participant"
-            />
+            tools:text="Participant"/>
 
         <TextView
-            android:id="@+id/textView_toPay"
-            android:layout_width="wrap_content"
+            android:id="@+id/textView_spent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:layout_margin="8dp"
+            tools:text="+ 18.50"/>
+
+        <TextView
+            android:id="@+id/textView_totalInvolved"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:layout_margin="8dp"
+            tools:text="+ 2.00"/>
+
+        <TextView
+            android:id="@+id/textView_credit"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="end"
             android:layout_margin="8dp"
             tools:text="+ 16.50"/>
-
     </LinearLayout>
 
 

@@ -232,6 +232,8 @@ public class Group {
      * @param p a participant
      * @return
      */
+
+        /*
     public double toPay(String p){
         double result = 0;
         if (participants.contains(p)){
@@ -241,6 +243,37 @@ public class Group {
                 if (t.payer.equals(p)) result -= t.amount;
             }
         } //else (i.e. if p is not a participant of this group) returns 0
+        double result = -credit(p);
+        return result;
+    }
+        */
+
+    /**
+     * = -toPay(p)
+     * @param p
+     * @return
+     */
+    public double credit(String p){
+        return spent(p) - totalInvolved(p);
+    }
+
+    public double spent(String p) {
+        double result = 0;
+        if(participants.contains(p)){
+            for(Transaction t: transactions){
+                if(t.payer.equals(p)) result += t.amount;
+            }
+        }
+        return result;
+    }
+
+    public double totalInvolved(String p) {
+        double result = 0;
+        if(participants.contains(p)){
+            for(Transaction t: transactions){
+                if(t.involved.contains(p)) result += t.amount;
+            }
+        }
         return result;
     }
 

@@ -167,8 +167,10 @@ public class TransactionListActivity extends AppCompatActivity {
         groupID = mSimpleGroup.groupID;
         filterType = intent.getStringExtra(KEY_FILTER_TYPE);
         Log.d(TAG, "type = " + filterType);
+        /*
         Log.d(TAG, "groupName = " + groupName);
         Log.d(TAG, "groupID = " + groupID.toString());
+        */
 
         //set title
         setTitle("Transactions in " + groupName);
@@ -255,12 +257,15 @@ public class TransactionListActivity extends AppCompatActivity {
         else if (filterType.equals(getString(R.string.filter_no_filter))) btnAll.callOnClick();
         else if (filterType.equals(getString(R.string.filter_paid_by_name))) {
             btnInvolved.setChecked(false);
+            btnPaid.setChecked(true);
             btnPaid.callOnClick();
         } else if (filterType.equals(getString(R.string.filter_name_involved))) {
             btnPaid.setChecked(false);
+            btnInvolved.setChecked(true);
             btnInvolved.callOnClick();
         } else if (filterType.equals(getString(R.string.filter_involved_or_paid))){
             btnPaid.setChecked(true);
+            btnInvolved.setChecked(true);
             btnInvolved.callOnClick();
         } else {
             btnAll.callOnClick();
@@ -420,30 +425,35 @@ public class TransactionListActivity extends AppCompatActivity {
     }
 
     private void setFilteredList() {
-        if (!bound){
-            Log.d(TAG, "not possible to setFilteredList()");
-            Toast.makeText(this, "sorry, not bound to service", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         //empty transactionList
         transactionList.clear();
+        List<Transaction> tempTransactions;
 
-        List<String> stringsTransactions = sessionAccess.getContent();
-        if (stringsTransactions == null){
-            return;
-        }
-        List<Transaction> tempTransactions = new ArrayList<>(stringsTransactions.size());
-
-        for (String s : stringsTransactions){
-            try {
-                JSONObject object = new JSONObject(s);
-                tempTransactions.add(new Transaction(object));
-            } catch (JSONException e) {
-                tempTransactions.clear();
-                Log.e(TAG, "Failed to create Transactions from JSON.", e);
+        if (bound){
+            List<String> stringsTransactions = sessionAccess.getContent();
+            if (stringsTransactions == null){
                 return;
             }
+            tempTransactions = new ArrayList<>(stringsTransactions.size());
+
+            for (String s : stringsTransactions){
+                try {
+                    JSONObject object = new JSONObject(s);
+                    tempTransactions.add(new Transaction(object));
+                } catch (JSONException e) {
+                    tempTransactions.clear();
+                    Log.e(TAG, "Failed to create Transactions from JSON.", e);
+                    return;
+                }
+            }
+
+
+        }
+        else {
+            Log.d(TAG, "not possible to load data from session");
+
+            tempTransactions = group.getTransactions();
         }
 
         //-----------------------------------------------------------------
@@ -460,7 +470,6 @@ public class TransactionListActivity extends AppCompatActivity {
             for (Transaction t : tempTransactions){
 
                 if (participantName != null && participantName.equals(t.getPayer())){
-                    Log.d(TAG, "adding a transaction");
                     transactionList.add(t);
                 }
             }
@@ -470,7 +479,6 @@ public class TransactionListActivity extends AppCompatActivity {
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
                 if (t.getInvolved().contains(participantName)){
-                    Log.d(TAG, "adding a transaction");
                     transactionList.add(t);
                 }
             }
@@ -480,7 +488,6 @@ public class TransactionListActivity extends AppCompatActivity {
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
                 if (t.getInvolved().contains(participantName) || participantName.equals(t.getPayer())){
-                    Log.d(TAG, "adding a transaction");
                     transactionList.add(t);
                 }
             }

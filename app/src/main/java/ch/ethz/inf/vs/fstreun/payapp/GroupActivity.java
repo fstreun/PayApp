@@ -69,7 +69,7 @@ public class GroupActivity extends AppCompatActivity {
     // main participant views
     LinearLayout linLayOwn;
     TextView tvDeviceOwner;
-    TextView tvOwnToPay;
+    TextView tvOwnSpent, tvOwnTotalInvolved, tvOwnCredit;
 
     // list of all participants
     private ListParticipantsAdapter adapter;
@@ -146,9 +146,12 @@ public class GroupActivity extends AppCompatActivity {
         //set group name as title
         setTitle(mSimpleGroup.groupName);
 
+
         //textView device owner
         tvDeviceOwner = findViewById(R.id.textView_device_owner);
-        tvOwnToPay = findViewById(R.id.textView_ownToPay);
+        tvOwnSpent = findViewById(R.id.textView_ownSpent);
+        tvOwnTotalInvolved = findViewById(R.id.textView_ownTotalInvolved);
+        tvOwnCredit = findViewById(R.id.textView_ownCredit);
         linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
 
         linLayOwn.setOnClickListener(new View.OnClickListener() {
@@ -465,10 +468,10 @@ public class GroupActivity extends AppCompatActivity {
             linLayOwn.setVisibility(View.VISIBLE);
             tvDeviceOwner.setText(defPart);
 
-            //make values appear like 49.99 (2 digits after the dot)
-            double toPay = group.toPay(defPart);
-            String toPayString = Transaction.doubleToString(toPay);
-            tvOwnToPay.setText(toPayString);
+            // set values to default Participant
+            tvOwnSpent.setText(Transaction.doubleToString(group.spent(defPart)));
+            tvOwnTotalInvolved.setText(Transaction.doubleToString(group.totalInvolved(defPart)));
+            tvOwnCredit.setText(Transaction.doubleToString(group.credit(defPart)));
 
             // remove default participant from list
             for (int i = 0; i < participantList.size(); i++){
