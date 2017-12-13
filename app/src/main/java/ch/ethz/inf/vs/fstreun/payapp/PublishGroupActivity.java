@@ -48,31 +48,27 @@ public class PublishGroupActivity extends AppCompatActivity {
         textViewGroupID = findViewById(R.id.textView_groupID);
         textViewGroupID.setText(group.groupID.toString());
 
-        startPublish();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        stopPublish();
-    }
-
-    public final void startPublish(){
-        Log.i(TAG, "startPublish()");
+        // start publish service
+        Log.i(TAG, "start service");
 
         String secret = textViewGroupSecret.getText().toString();
-        String group = jsonString;
 
-        // TODO: publish secret with group
         intentSessionPublishService = new Intent(this, SessionPublishService.class);
         intentSessionPublishService.putExtra("SECRET", secret);
         intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
         startService(intentSessionPublishService);
     }
 
-    public final void stopPublish(){
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // stop service
+        Log.d(TAG, "stop service");
         stopService(intentSessionPublishService);
     }
+
+
 
     /**
      *
@@ -109,7 +105,19 @@ public class PublishGroupActivity extends AppCompatActivity {
                     textViewGroupID = findViewById(R.id.textView_groupID);
                     textViewGroupID.setText(group.groupID.toString());
 
-                    startPublish();
+                    // stop service
+                    Log.i(TAG, "stop publish");
+                    stopService(intentSessionPublishService);
+
+                    // start publish service
+                    Log.i(TAG, "start publish");
+
+                    String secret = textViewGroupSecret.getText().toString();
+
+                    intentSessionPublishService = new Intent(this, SessionPublishService.class);
+                    intentSessionPublishService.putExtra("SECRET", secret);
+                    intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
+                    startService(intentSessionPublishService);
                 }
                 return true;
             default:

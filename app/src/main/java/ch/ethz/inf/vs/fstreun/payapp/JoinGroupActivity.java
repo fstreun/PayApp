@@ -145,12 +145,18 @@ public class JoinGroupActivity extends AppCompatActivity {
 
 
     private void buttonJoinClicked(){
+        // end running
+        try {
+            stopService(intentSessionSubscribeService);
+        }catch (Exception e){
+
+        }
+
         groupList.clear();
         adapter.notifyDataSetChanged();
 
         String groupHint = editTextGroupSecret.getText().toString();
 
-        //TODO: search groups
         intentSessionSubscribeService = new Intent(this, SessionSubscribeService.class);
         intentSessionSubscribeService.putExtra("SECRET", groupHint);
         startService(intentSessionSubscribeService);
