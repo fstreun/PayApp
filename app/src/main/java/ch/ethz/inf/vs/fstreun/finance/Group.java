@@ -185,7 +185,7 @@ public class Group {
             for(String pOld : participants) {
                 int compare = String.CASE_INSENSITIVE_ORDER.compare(pOld, p);
                 if (compare == 0){
-                    if(pOld.compareTo(p) < 0){
+                    if(pOld.compareTo(p) >= 0){
                         participants.remove(pOld);
                         participants.add(p);
                     }
