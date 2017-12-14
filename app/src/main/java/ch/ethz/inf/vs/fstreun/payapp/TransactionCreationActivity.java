@@ -109,21 +109,21 @@ public class TransactionCreationActivity extends AppCompatActivity {
 
     private Double getAmount(){
         String amountString = String.valueOf(editTextAmount.getText());
-        if (amountString != null) {
+
+        // replace commas with points, s.t. double parser can handle it.
+        amountString = amountString.replace(',', '.');
+
             try {
-
                 //case: everything ok
-                return DecimalFormat.getInstance().parse(amountString).doubleValue();
+                return Double.parseDouble(amountString);
 
-            } catch (ParseException e) {
+            } catch (NumberFormatException e) {
                 Log.e(TAG, "wrong amount string format");
                 return null;
             }
-        }
 
-        // case: get amount did not work
-        return null;
     }
+
 
     private String getPayer(){
         return (String) spinnerPayer.getSelectedItem();
