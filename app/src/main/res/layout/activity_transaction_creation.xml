@@ -32,7 +32,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:inputType="textAutoComplete|numberSigned|numberDecimal" />
+        android:inputType="numberSigned|numberDecimal" />
 
     <TextView
         android:id="@+id/textView_payer"
