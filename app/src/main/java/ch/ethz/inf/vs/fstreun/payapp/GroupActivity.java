@@ -69,7 +69,7 @@ public class GroupActivity extends AppCompatActivity {
     // main participant views
     LinearLayout linLayOwn;
     TextView tvDeviceOwner;
-    TextView tvOwnSpent, tvOwnTotalInvolved, tvOwnCredit;
+    TextView tvOwnSpent, tvOwnOwes, tvOwnCredit;
 
     // list of all participants
     private ListParticipantsAdapter adapter;
@@ -150,7 +150,7 @@ public class GroupActivity extends AppCompatActivity {
         //textView device owner
         tvDeviceOwner = findViewById(R.id.textView_device_owner);
         tvOwnSpent = findViewById(R.id.textView_ownSpent);
-        tvOwnTotalInvolved = findViewById(R.id.textView_ownTotalInvolved);
+        tvOwnOwes = findViewById(R.id.textView_ownOwes);
         tvOwnCredit = findViewById(R.id.textView_ownCredit);
         linLayOwn = findViewById(R.id.lin_lay_deviceOwner);
 
@@ -471,8 +471,22 @@ public class GroupActivity extends AppCompatActivity {
 
             // set values to default Participant
             tvOwnSpent.setText(Transaction.doubleToString(group.spent(defPart)));
-            tvOwnTotalInvolved.setText(Transaction.doubleToString(group.totalInvolved(defPart)));
-            tvOwnCredit.setText(Transaction.doubleToString(group.credit(defPart)));
+            tvOwnOwes.setText(Transaction.doubleToString(group.owes(defPart)));
+            Double credit = group.credit(defPart);
+            tvOwnCredit.setText(Transaction.doubleToString(credit));
+
+            //color the credit value
+            int compare = credit.compareTo(0.0);
+            if (compare < 0){
+                // toPay is a negativ number
+                tvOwnCredit.setTextColor(getResources().getColor(R.color.colorAccent));
+            }else if (compare > 0){
+                // toPay is a positiv number
+                tvOwnCredit.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+            }else {
+                // toPay is equals to 0.0
+                tvOwnCredit.setTextColor(getResources().getColor(R.color.colorGrey));
+            }
 
             // remove default participant from list
             for (int i = 0; i < participantList.size(); i++){

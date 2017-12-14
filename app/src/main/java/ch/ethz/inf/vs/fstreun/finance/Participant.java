@@ -28,7 +28,7 @@ public class Participant {
     }
 
     public double getTotalInvolved(){
-        return group.totalInvolved(name);
+        return group.owes(name);
     }
 
 }

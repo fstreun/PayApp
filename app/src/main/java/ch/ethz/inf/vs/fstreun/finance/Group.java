@@ -268,7 +268,7 @@ public class Group {
      * @return
      */
     public double credit(String p){
-        return spent(p) - totalInvolved(p);
+        return spent(p) - owes(p);
     }
 
     public double spent(String p) {
@@ -281,7 +281,7 @@ public class Group {
         return result;
     }
 
-    public double totalInvolved(String p) {
+    public double owes(String p) {
         double result = 0;
         if(participants.contains(p)){
             for(Transaction t: transactions){

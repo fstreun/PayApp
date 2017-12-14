@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:textStyle="bold"
-            android:text="Total involved" />
+            android:text="Owes" />
 
         <TextView
             android:textColor="@color/colorWhite"
@@ -60,7 +60,7 @@
         android:id="@+id/lin_lay_deviceOwner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4mm"
+        android:paddingVertical="2mm"
         android:orientation="horizontal">
 
         <TextView
@@ -74,6 +74,7 @@
 
         <TextView
             android:gravity="end"
+            android:textColor="@color/colorPrimaryDark"
             android:layout_weight="1"
             android:id="@+id/textView_ownSpent"
             android:layout_width="0dp"
@@ -84,8 +85,9 @@
 
         <TextView
             android:gravity="end"
+            android:textColor="@color/colorAccent"
             android:layout_weight="1"
-            android:id="@+id/textView_ownTotalInvolved"
+            android:id="@+id/textView_ownOwes"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"

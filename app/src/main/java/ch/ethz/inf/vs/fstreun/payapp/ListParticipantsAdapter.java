@@ -58,7 +58,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
         // Lookup view for data population
         TextView tvName = convertView.findViewById(R.id.textView_name);
         TextView tvSpent = convertView.findViewById(R.id.textView_spent);
-        TextView tvTotalInvolved = convertView.findViewById(R.id.textView_totalInvolved);
+        TextView tvOwes = convertView.findViewById(R.id.textView_owes);
         TextView tvCredit = convertView.findViewById(R.id.textView_credit);
         // Populate the data into the template view using the data object
         tvName.setText(participant.name);
@@ -66,7 +66,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
 
         // put values into TextViews
         tvSpent.setText(Transaction.doubleToString(participant.getSpent()));
-        tvTotalInvolved.setText(Transaction.doubleToString(participant.getTotalInvolved()));
+        tvOwes.setText(Transaction.doubleToString(participant.getTotalInvolved()));
         Double credit = participant.getCredit();
         tvCredit.setText(Transaction.doubleToString(credit));
         int compare = credit.compareTo(0.0);
@@ -75,7 +75,7 @@ public class ListParticipantsAdapter extends BaseAdapter{
             tvCredit.setTextColor(context.getResources().getColor(R.color.colorAccent));
         }else if (compare > 0){
             // toPay is a positiv number
-            tvCredit.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+            tvCredit.setTextColor(context.getResources().getColor(R.color.colorPrimaryDark));
         }else {
             // toPay is equals to 0.0
             tvCredit.setTextColor(context.getResources().getColor(R.color.colorGrey));

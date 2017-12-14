@@ -20,6 +20,7 @@
 
         <TextView
             android:id="@+id/textView_spent"
+            android:textColor="@color/colorPrimaryDark"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -28,7 +29,8 @@
             tools:text="+ 18.50"/>
 
         <TextView
-            android:id="@+id/textView_totalInvolved"
+            android:id="@+id/textView_owes"
+            android:textColor="@color/colorAccent"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
