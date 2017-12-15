@@ -14,7 +14,21 @@ public class Participant {
         this.group = group;
     }
 
+    /*
     public double getToPay(){
         return group.toPay(name);
     }
+    */
+    public double getCredit(){
+        return group.credit(name);
+    }
+
+    public double getSpent(){
+        return group.spent(name);
+    }
+
+    public double getTotalInvolved(){
+        return group.owes(name);
+    }
+
 }

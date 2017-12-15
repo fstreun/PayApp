@@ -21,6 +21,7 @@
         </activity>
         <activity
             android:name=".PublishGroupActivity"
+            android:configChanges="orientation|screenSize"
             android:parentActivityName=".GroupActivity"
         />
 
