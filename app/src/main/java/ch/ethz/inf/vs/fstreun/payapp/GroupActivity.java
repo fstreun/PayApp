@@ -584,11 +584,8 @@ public class GroupActivity extends AppCompatActivity {
 
         Intent intent = new Intent();
         intent.putExtra(KEY_RESULT_CODE, CODE_DELETE);
-        try {
-            intent.putExtra(KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
-        } catch (JSONException e) {
-            //TODO: handle exception
-        }
+        intent.putExtra(KEY_SIMPLE_GROUP, mSimpleGroup.toString());
+
         setResult(RESULT_OK, intent);
         finish();
         return success;

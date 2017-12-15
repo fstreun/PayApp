@@ -3,11 +3,13 @@ package ch.ethz.inf.vs.fstreun.payapp;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
@@ -58,12 +61,19 @@ public class TransactionListActivity extends AppCompatActivity {
     // Filter Buttons
     ToggleButton btnAll, btnPaid, btnInvolved;
 
+    //shared prefs
+    SharedPreferences sharedPreferences;
+
     String TAG = "###TransactionListActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction_list);
+
+        //get shared prefs
+        String prefName = getString(R.string.pref_name);
+        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
 
         // initialize buttons
         btnAll = findViewById(R.id.btn_show_all_transaction);
@@ -353,6 +363,52 @@ public class TransactionListActivity extends AppCompatActivity {
             case android.R.id.home:
                 finish();
                 return true;
+            case R.id.menu_addTransaction:
+                Intent intent = new Intent(TransactionListActivity.this,
+                        TransactionCreationActivity.class);
+                //----------------------------------------------------------------------------
+                // GETTING INFORMATION
+                //----------------------------------------------------------------------------
+
+                //putting participants of group into String array
+                String[] participants = new String[0];
+                if (group != null){
+                    int n = group.numParticipants();
+                    participants = new String[n];
+                    List<String> participantsList = group.getParticipantNames();
+                    for (int i=0; i<n; i++){
+                        participants[i] = participantsList.get(i);
+                    }
+                }
+
+                //get shared prefs
+                String prefName = getString(R.string.pref_name);
+                SharedPreferences sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
+                String payerKey = getString(R.string.pref_payer_lru);
+
+                // get LRU payer from shared prefs
+                String payer = sharedPreferences.getString(payerKey, group.getDefaultParticipantName());
+
+                //get initially checked participants from shared prefs
+                Set<String> checkedPartiSet = sharedPreferences.getStringSet(
+                        getString(R.string.pref_involved_lru), null);
+                String[] checkedParticipants;
+                if(checkedPartiSet != null) {
+                    checkedParticipants = checkedPartiSet.toArray(new String[checkedPartiSet.size()]);
+                } else {
+                    checkedParticipants = new String[0];
+                }
+
+                //----------------------------------------------------------------------------
+                // PUTTING INFORMATION to intent
+                //----------------------------------------------------------------------------
+
+                //put intents
+                intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS, participants);
+                intent.putExtra(TransactionCreationActivity.KEY_PAYER, payer);
+                intent.putExtra(TransactionCreationActivity.KEY_PARTICIPANTS_CHECKED, checkedParticipants);
+                startActivityForResult(intent, GroupActivity.CREATE_TRANSACTION_REQUEST);
+                return true;
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -361,14 +417,21 @@ public class TransactionListActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_transaction_list, menu);
+        return true;
+    }
+
+    @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-            case R.id.menu_deleteTransaction:
+            case R.id.menu_createReverseTransaction:
                 int position = info.position;
                 Transaction transactionToDelete = adapter.getItem(position);
                 Transaction reverseTransaction = transactionToDelete.reverse(System.currentTimeMillis());
-                //todo: open transaction creation activity or dialog to set the comment for reverse transaction
+                //open transaction creation activity or dialog to set the comment for reverse transaction
                 Intent intent = new Intent(TransactionListActivity.this,
                         TransactionCreationActivity.class);
                 //----------------------------------------------------------------------------
@@ -420,6 +483,20 @@ public class TransactionListActivity extends AppCompatActivity {
                 // transaction can only be stored after service was bound.
                 // so store it for the service in global field
                 openTransaction = data.getExtras();
+
+                //todo maybe: store payer & involved in sharedPrefs
+                /*
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                String payerKey = getString(R.string.pref_payer_lru);
+                editor.putString(payerKey, openTransaction.getString(TransactionCreationActivity.KEY_PAYER));
+                String[] involvedArray = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
+                Set<String> involvedSet = new Set();
+                for(int i=0; i<involvedArray.length; i++){
+
+                }
+                editor.putStringSet()
+                */
+
                 storeOpenTransaction();
                 updateViews();
                 return;
