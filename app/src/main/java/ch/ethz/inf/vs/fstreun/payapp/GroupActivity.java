@@ -46,8 +46,10 @@ public class GroupActivity extends AppCompatActivity {
 
     // different results
     public static final String KEY_RESULT_CODE = "key_result_type";
+    public static final String KEY_START_CODE = "start_code";
     public static final int CODE_DEFAULT = 0;
     public static final int CODE_DELETE = 1;
+    private boolean groupForDeletion = false;
 
     // simple group expected to be in the intent
     public static final String KEY_SIMPLE_GROUP = "simple_group";
@@ -101,6 +103,8 @@ public class GroupActivity extends AppCompatActivity {
 
         //getting intent
         Intent intent = getIntent();
+        String startCode = intent.getStringExtra(KEY_START_CODE);
+        if(startCode != null && startCode.equals("delete")) groupForDeletion = true;
         String stringSimpleGroup = intent.getStringExtra(KEY_SIMPLE_GROUP);
         if(stringSimpleGroup != null && !stringSimpleGroup.isEmpty()) {
             try {
@@ -255,6 +259,9 @@ public class GroupActivity extends AppCompatActivity {
                 boundDataService = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
 
+                if (groupForDeletion){
+                    deleteGroup();
+                }
                 // load transactions to the group
                 loadTransactions();
                 // if a open transaction exists, try to store it!
@@ -564,14 +571,14 @@ public class GroupActivity extends AppCompatActivity {
     /**
      * deletes the current group and al its dependence
      */
-    private void deleteGroup(){
+    private boolean deleteGroup(){
         boolean success = false;
         if (sessionAccess != null) {
-            success |= sessionAccess.removeSession();
+            success = sessionAccess.removeSession();
         }
 
         // remove group file
-        success |= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
+        success &= fileHelper.removeFile(getString(R.string.path_groups), mSimpleGroup.groupID.toString());
 
         Log.d(TAG, "delete group. success: " + success);
 
@@ -584,6 +591,7 @@ public class GroupActivity extends AppCompatActivity {
         }
         setResult(RESULT_OK, intent);
         finish();
+        return success;
 
     }
 

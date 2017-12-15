@@ -216,11 +216,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        int position = info.position;
+        SimpleGroup simpleGroup = adapter.getItem(position);
         switch (item.getItemId()){
             case R.id.contextMenu_changeName:
-                int position = info.position;
-                SimpleGroup simpleGroup = adapter.getItem(position);
                 showChangeNameDialog(simpleGroup);
+                break;
+            case R.id.menu_deleteGroup:
+                showDeleteGroupDialog(simpleGroup);
+                break;
         }
         return super.onContextItemSelected(item);
     }
@@ -264,6 +268,28 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void showDeleteGroupDialog(final SimpleGroup simpleGroup){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete group: " + simpleGroup.groupName + " ?");
+        builder.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(MainActivity.this, GroupActivity.class);
+                intent.putExtra(GroupActivity.KEY_SIMPLE_GROUP, simpleGroup.toString());
+                intent.putExtra(GroupActivity.KEY_START_CODE, "delete");
+                startActivityForResult(intent, RESULT_GROUP);
+            }
+        });
+        builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        });
+        builder.create().show();
+
+        Log.d(TAG, "delete group dialog shown");
+    }
     /**
      *
      * @param simpleGroup reference to SimpleGroup object in the groups list

@@ -39,6 +39,15 @@ public final class SimpleGroup {
     }
 
     @Override
+    public String toString() {
+        try {
+            return toJSON().toString();
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof SimpleGroup)){
             return false;

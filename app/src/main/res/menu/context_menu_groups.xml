@@ -3,4 +3,7 @@
     <item
         android:title="Change Name"
         android:id="@+id/contextMenu_changeName" />
+    <item
+        android:id="@+id/menu_deleteGroup"
+        android:title="@string/delete_group"/>
 </menu>
