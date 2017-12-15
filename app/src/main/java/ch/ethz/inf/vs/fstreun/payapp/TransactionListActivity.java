@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -70,10 +71,6 @@ public class TransactionListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction_list);
-
-        //get shared prefs
-        String prefName = getString(R.string.pref_name);
-        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
 
         // initialize buttons
         btnAll = findViewById(R.id.btn_show_all_transaction);
@@ -181,6 +178,10 @@ public class TransactionListActivity extends AppCompatActivity {
         Log.d(TAG, "groupName = " + groupName);
         Log.d(TAG, "groupID = " + groupID.toString());
         */
+
+        //get shared prefs
+        String prefName = getString(R.string.pref_name) + groupID;
+        sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
 
         //set title
         setTitle("Transactions in " + groupName);
@@ -381,12 +382,9 @@ public class TransactionListActivity extends AppCompatActivity {
                     }
                 }
 
-                //get shared prefs
-                String prefName = getString(R.string.pref_name);
-                SharedPreferences sharedPreferences = getSharedPreferences(prefName, MODE_PRIVATE);
-                String payerKey = getString(R.string.pref_payer_lru);
 
                 // get LRU payer from shared prefs
+                String payerKey = getString(R.string.pref_payer_lru);
                 String payer = sharedPreferences.getString(payerKey, group.getDefaultParticipantName());
 
                 //get initially checked participants from shared prefs
@@ -485,17 +483,19 @@ public class TransactionListActivity extends AppCompatActivity {
                 openTransaction = data.getExtras();
 
                 //todo maybe: store payer & involved in sharedPrefs
-                /*
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 String payerKey = getString(R.string.pref_payer_lru);
-                editor.putString(payerKey, openTransaction.getString(TransactionCreationActivity.KEY_PAYER));
                 String[] involvedArray = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
-                Set<String> involvedSet = new Set();
+                Set<String> involvedSet = new HashSet();
                 for(int i=0; i<involvedArray.length; i++){
+                    involvedSet.add(involvedArray[i]);
 
                 }
-                editor.putStringSet()
-                */
+                String involvedKey = getString(R.string.pref_involved_lru);
+
+                editor.putString(payerKey, openTransaction.getString(TransactionCreationActivity.KEY_PAYER));
+                editor.putStringSet(involvedKey, involvedSet);
+                editor.apply();
 
                 storeOpenTransaction();
                 updateViews();
