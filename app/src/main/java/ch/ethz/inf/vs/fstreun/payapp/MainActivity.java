@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<SimpleGroup> adapter;
     List<SimpleGroup> groups;
 
+
     SharedPreferences sharedPref;
 
     @Override
