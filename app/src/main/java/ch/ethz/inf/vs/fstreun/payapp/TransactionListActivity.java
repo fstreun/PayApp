@@ -482,17 +482,13 @@ public class TransactionListActivity extends AppCompatActivity {
                 // so store it for the service in global field
                 openTransaction = data.getExtras();
 
-                //todo maybe: store payer & involved in sharedPrefs
+                //store payer & involved in sharedPrefs
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 String payerKey = getString(R.string.pref_payer_lru);
                 String[] involvedArray = openTransaction.getStringArray(TransactionCreationActivity.KEY_PARTICIPANTS_INVOLVED);
                 Set<String> involvedSet = new HashSet();
-                for(int i=0; i<involvedArray.length; i++){
-                    involvedSet.add(involvedArray[i]);
-
-                }
+                for(int i=0; i<involvedArray.length; i++) involvedSet.add(involvedArray[i]);
                 String involvedKey = getString(R.string.pref_involved_lru);
-
                 editor.putString(payerKey, openTransaction.getString(TransactionCreationActivity.KEY_PAYER));
                 editor.putStringSet(involvedKey, involvedSet);
                 editor.apply();
