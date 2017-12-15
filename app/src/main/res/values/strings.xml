@@ -30,5 +30,6 @@
     <string name="filter_involved_or_paid">filter_involved_or_paid</string>
     <string name="sessions_directory">sessions</string>
     <string name="sessionIDs_file">sessionIDs</string>
+    <string name="delete_group">Delete Group</string>
 
 </resources>

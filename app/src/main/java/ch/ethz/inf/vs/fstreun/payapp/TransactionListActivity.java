@@ -235,7 +235,6 @@ public class TransactionListActivity extends AppCompatActivity {
                 inflater.inflate(R.menu.context_menu_transaction, menu);
             }
         });
-        setButtonsAccordingToFilterType();
         setButtonColor();
         updateListView();
 
@@ -326,7 +325,12 @@ public class TransactionListActivity extends AppCompatActivity {
                 if(sessionAccess != null) {
                     bound = true;
                 } else Log.d(TAG, "sessionAccess is null");
+
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
+
+                Log.d(TAG, "setButtonsAccordingToFilterType in onServiceConnected");
+                setButtonsAccordingToFilterType();
+                setButtonColor();
 
                 // if a open transaction exists, try to store it!
                 storeOpenTransaction();
