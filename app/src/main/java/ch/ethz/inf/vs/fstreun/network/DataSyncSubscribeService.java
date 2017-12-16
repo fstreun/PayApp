@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -242,9 +243,8 @@ public class DataSyncSubscribeService extends Service {
 
         public void run() {
             Log.i(TAG, "run()");
-            for (NsdServiceInfo serviceInfo : mServiceInfos){
-                // iterate through all the discovered services
-
+            for (Iterator<NsdServiceInfo> iterator = mServiceInfos.iterator(); iterator.hasNext();){
+                NsdServiceInfo serviceInfo = iterator.next();
                 InetAddress address = serviceInfo.getHost();
                 int port = serviceInfo.getPort();
                 Socket socket = null;
@@ -254,9 +254,10 @@ public class DataSyncSubscribeService extends Service {
                     handleSocket(socket);
                 } catch (IOException e) {
                     Log.e(TAG, "new Socket Creation exception.", e);
-                    // TODO: remove serviceInfo from mServiceInfos if not successful
+                    iterator.remove();
                 }
             }
+
             Log.i(TAG, "run finished");
         }
 
