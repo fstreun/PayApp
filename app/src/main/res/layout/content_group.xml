@@ -9,25 +9,96 @@
     tools:context="ch.ethz.inf.vs.fstreun.payapp.GroupActivity"
     tools:showIn="@layout/activity_group">
 
+    <LinearLayout
+        android:id="@+id/lin_lay_participant_item_titles"
+        android:background="@color/colorGrey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:textColor="@color/colorWhite"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            android:text="Name" />
+
+        <TextView
+            android:textColor="@color/colorWhite"
+            android:gravity="end"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            android:text="Spent" />
+
+        <TextView
+            android:textColor="@color/colorWhite"
+            android:gravity="end"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            android:text="Owes" />
+
+        <TextView
+            android:textColor="@color/colorWhite"
+            android:gravity="end"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            android:text="Credit" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/lin_lay_deviceOwner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4mm"
+        android:paddingVertical="2mm"
         android:orientation="horizontal">
 
         <TextView
+            android:layout_weight="1"
             android:id="@+id/textView_device_owner"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:textStyle="bold"
             tools:text="Name" />
 
         <TextView
-            android:id="@+id/textView_ownToPay"
-            android:layout_width="wrap_content"
+            android:gravity="end"
+            android:textColor="@color/colorPrimaryDark"
+            android:layout_weight="1"
+            android:id="@+id/textView_ownSpent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            tools:text="75.75" />
+
+        <TextView
+            android:gravity="end"
+            android:textColor="@color/colorAccent"
+            android:layout_weight="1"
+            android:id="@+id/textView_ownOwes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textStyle="bold"
+            tools:text="20.00" />
+
+        <TextView
+            android:gravity="end"
+            android:layout_weight="1"
+            android:id="@+id/textView_ownCredit"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:textStyle="bold"

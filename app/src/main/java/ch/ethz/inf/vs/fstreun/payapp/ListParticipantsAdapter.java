@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Participant;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
 
@@ -58,24 +57,28 @@ public class ListParticipantsAdapter extends BaseAdapter{
         }
         // Lookup view for data population
         TextView tvName = convertView.findViewById(R.id.textView_name);
-        TextView tvToPay = convertView.findViewById(R.id.textView_toPay);
+        TextView tvSpent = convertView.findViewById(R.id.textView_spent);
+        TextView tvOwes = convertView.findViewById(R.id.textView_owes);
+        TextView tvCredit = convertView.findViewById(R.id.textView_credit);
         // Populate the data into the template view using the data object
         tvName.setText(participant.name);
 
 
-        // TODO: choose the correct colors
-        tvToPay.setText(Transaction.doubleToString(participant.getToPay()));
-        Double toPay = participant.getToPay();
-        int compare = toPay.compareTo(0.0);
+        // put values into TextViews
+        tvSpent.setText(Transaction.doubleToString(participant.getSpent()));
+        tvOwes.setText(Transaction.doubleToString(participant.getTotalInvolved()));
+        Double credit = participant.getCredit();
+        tvCredit.setText(Transaction.doubleToString(credit));
+        int compare = credit.compareTo(0.0);
         if (compare < 0){
             // toPay is a negativ number
-            tvToPay.setTextColor(context.getResources().getColor(R.color.colorAccent));
+            tvCredit.setTextColor(context.getResources().getColor(R.color.colorAccent));
         }else if (compare > 0){
             // toPay is a positiv number
-            tvToPay.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+            tvCredit.setTextColor(context.getResources().getColor(R.color.colorPrimaryDark));
         }else {
             // toPay is equals to 0.0
-            tvToPay.setTextColor(context.getResources().getColor(R.color.colorGrey));
+            tvCredit.setTextColor(context.getResources().getColor(R.color.colorGrey));
         }
 
         // Return the completed view to render on screen

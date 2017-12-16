@@ -179,7 +179,21 @@ public class Group {
      */
     public void addParticipant(String p){
         // if p not already in participants add him to participants
-        if (!participants.contains(p)) participants.add(p);
+        if (!participants.contains(p)) {
+
+            // handle the case where the name already exists with different capitalization
+            for(String pOld : participants) {
+                int compare = String.CASE_INSENSITIVE_ORDER.compare(pOld, p);
+                if (compare == 0){
+                    if(pOld.compareTo(p) >= 0){
+                        participants.remove(pOld);
+                        participants.add(p);
+                    }
+                    return;
+                }
+            }
+            participants.add(p);
+        }
     }
 
 
@@ -232,6 +246,8 @@ public class Group {
      * @param p a participant
      * @return
      */
+
+        /*
     public double toPay(String p){
         double result = 0;
         if (participants.contains(p)){
@@ -241,6 +257,37 @@ public class Group {
                 if (t.payer.equals(p)) result -= t.amount;
             }
         } //else (i.e. if p is not a participant of this group) returns 0
+        double result = -credit(p);
+        return result;
+    }
+        */
+
+    /**
+     * = -toPay(p)
+     * @param p
+     * @return
+     */
+    public double credit(String p){
+        return spent(p) - owes(p);
+    }
+
+    public double spent(String p) {
+        double result = 0;
+        if(participants.contains(p)){
+            for(Transaction t: transactions){
+                if(t.payer.equals(p)) result += t.amount;
+            }
+        }
+        return result;
+    }
+
+    public double owes(String p) {
+        double result = 0;
+        if(participants.contains(p)){
+            for(Transaction t: transactions){
+                if(t.involved.contains(p)) result += t.amount / t.getNumInvolved();
+            }
+        }
         return result;
     }
 

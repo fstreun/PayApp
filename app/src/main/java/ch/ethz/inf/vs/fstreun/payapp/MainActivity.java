@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.network.DataSyncPublishService;
 import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
@@ -90,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate number of groups = " + groups.size());
 
 
-        // start services which run always
+        // start services which always run
 
         // Bind DataService
         Intent intentDataService = new Intent(this, DataService.class);
