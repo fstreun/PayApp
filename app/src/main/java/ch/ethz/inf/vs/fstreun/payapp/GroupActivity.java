@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -672,7 +673,19 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
 
     @Override
     public void dataUpdated() {
-        loadTransactions();
-        updateViews();
+        Log.d(TAG, "DataUpdated callback");
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(this.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+                loadTransactions();
+                updateViews();
+            } // This is your code
+        };
+        mainHandler.post(myRunnable);
     }
+
 }
