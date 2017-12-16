@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -40,7 +41,7 @@ import ch.ethz.inf.vs.fstreun.finance.Transaction;
 import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
-public class GroupActivity extends AppCompatActivity {
+public class GroupActivity extends AppCompatActivity implements DataSyncSubscribeService.DataSyncCallback{
 
     String TAG = "###GroupActivity###";
 
@@ -351,7 +352,7 @@ public class GroupActivity extends AppCompatActivity {
 
             case R.id.menu_syncData:
                 if (boundDataSync){
-                    dataSync.synchronizeSession(mSimpleGroup.sessionID);
+                    dataSync.synchronizeSession(mSimpleGroup.sessionID, this);
                 }
 
                 // TODO: update data with dataAccess after some time
@@ -669,4 +670,22 @@ public class GroupActivity extends AppCompatActivity {
         openTransaction = null;
         return true;
     }
+
+    @Override
+    public void dataUpdated() {
+        Log.d(TAG, "DataUpdated callback");
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(this.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+                loadTransactions();
+                updateViews();
+            } // This is your code
+        };
+        mainHandler.post(myRunnable);
+    }
+
 }
