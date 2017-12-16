@@ -7,29 +7,22 @@ import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
-import ch.ethz.inf.vs.fstreun.datasharing.Block;
-import ch.ethz.inf.vs.fstreun.datasharing.Chain;
-import ch.ethz.inf.vs.fstreun.datasharing.Session;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
-import static android.content.Context.BIND_AUTO_CREATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

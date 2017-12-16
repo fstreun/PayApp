@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.payapp;
+package ch.ethz.inf.vs.fstreun.payapp.ListAdapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -13,6 +13,7 @@ import java.util.List;
 
 import ch.ethz.inf.vs.fstreun.finance.Participant;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.payapp.R;
 
 /**
  * Created by fabio on 11/24/17.

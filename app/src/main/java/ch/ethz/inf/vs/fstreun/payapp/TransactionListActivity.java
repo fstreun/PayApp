@@ -31,7 +31,10 @@ import java.util.Set;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListTransactionAdapter;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class TransactionListActivity extends AppCompatActivity {

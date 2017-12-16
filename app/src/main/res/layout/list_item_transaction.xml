@@ -8,16 +8,17 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="8dp">
 
         <TextView
             android:id="@+id/textView_payer_name"
-            android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            tools:text="Payer"
-            />
+            android:layout_weight="1"
+            android:textSize="18sp"
+            tools:text="Payer" />
 
         <TextView
             android:id="@+id/textView_amount"
@@ -25,6 +26,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:layout_margin="8dp"
+            android:textSize="18sp"
             tools:text="+ 39.50"
             android:layout_width="0dp" />
 
@@ -33,8 +35,9 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="right"
+            android:gravity="end"
             android:layout_margin="8dp"
+            android:textSize="18sp"
             tools:text="Beer"/>
 
     </LinearLayout>

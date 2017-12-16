@@ -9,9 +9,9 @@
         android:id="@+id/textView_groupName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        tools:text="Group Name"
-        />
+        android:layout_margin="16dp"
+        android:textSize="18sp"
+        tools:text="Group Name" />
 
     <View
         android:layout_width="match_parent"

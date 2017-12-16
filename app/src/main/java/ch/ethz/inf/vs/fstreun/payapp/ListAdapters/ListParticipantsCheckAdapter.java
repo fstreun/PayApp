@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.payapp;
+package ch.ethz.inf.vs.fstreun.payapp.ListAdapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -12,6 +12,8 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
+import ch.ethz.inf.vs.fstreun.payapp.R;
 
 /**
  * Created by fabio on 11/26/17.

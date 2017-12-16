@@ -10,12 +10,15 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/group_name"/>
+        android:padding="8dp"
+        android:text="@string/group_name" />
 
     <EditText
         android:id="@+id/editText_groupName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:singleLine="true"
         tools:text="Name" />
 

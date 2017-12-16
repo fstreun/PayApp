@@ -31,8 +31,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.network.DataSyncPublishService;
 import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
+import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListGroupAdapter;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "###MainActivity";

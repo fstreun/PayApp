@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import ch.ethz.inf.vs.fstreun.payapp.DataService;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
  * Created by Kaan on 30.11.17.

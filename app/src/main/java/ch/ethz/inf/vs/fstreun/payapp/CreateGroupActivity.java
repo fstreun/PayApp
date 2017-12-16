@@ -6,7 +6,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -17,6 +16,8 @@ import org.json.JSONException;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class CreateGroupActivity extends AppCompatActivity {

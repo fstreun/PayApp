@@ -29,7 +29,10 @@ import java.util.List;
 import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
+import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
+import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListSimpleGroupAdapter;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
 public class JoinGroupActivity extends AppCompatActivity {

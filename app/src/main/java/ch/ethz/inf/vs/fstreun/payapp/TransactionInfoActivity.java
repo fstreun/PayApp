@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListSimpleNameAdapter;
 
 public class TransactionInfoActivity extends AppCompatActivity {
 

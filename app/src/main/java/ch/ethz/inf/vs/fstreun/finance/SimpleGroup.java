@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.payapp;
+package ch.ethz.inf.vs.fstreun.finance;
 
 import org.json.JSONException;
 import org.json.JSONObject;
