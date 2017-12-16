@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -21,17 +22,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
+
 public class SessionPublishService extends Service {
 
-    String TAG = "SessionPublishService";
+    String TAG = "## SessionPublishService";
     String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "SessionPublisher";
+
+    private boolean registered;
     private NsdManager mNsdManager;
     private NsdServiceInfo mServiceInfo;
-    private String mServiceName;
+    private NsdManager.RegistrationListener mRegistrationListener;
+
     private ServerSocket mServerSocket;
     private int mLocalPort;
-    private NsdManager.RegistrationListener mRegistrationListener;
+    private boolean initialized;
+    Thread mMainServerThread = null;
+
     private String secret;
     private String groupJsonString;
 
@@ -39,54 +46,80 @@ public class SessionPublishService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        // Return the communication channel to the service.
+        return mBinder;
+    }
+
+    // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+
+    public class LocalBinder extends Binder {
+        public void setSecretGroup(String secret, String groupJSON){
+            SessionPublishService.this.secret = secret;
+            SessionPublishService.this.groupJsonString = groupJSON;
+            Log.d(TAG, "setSecretGroup: " + secret + "\n" + groupJSON);
+        }
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        SessionPublishService.this.secret = "";
+        SessionPublishService.this.groupJsonString = "";
+        return super.onUnbind(intent);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        secret = intent.getStringExtra("SECRET");
-        groupJsonString = intent.getStringExtra("SIMPLEGROUP");
+        // start service
+        Log.d(TAG, "StartCommand");
 
-        initializeServerSocket();
-        initializeRegistrationListener();
-        registerService(mLocalPort);
+        if (!initialized){
+            Log.e(TAG, "FATAL ERROR: Socket has not been properly initialized");
+            stopSelf();
+            return START_STICKY;
+        }
+
+
+        // start server
+        if (mMainServerThread == null) {
+            mMainServerThread = new Thread(new ServerMainThread());
+            mMainServerThread.start();
+        }
+
+        // register service
+        try {
+            if (!registered) {
+                registerService();
+                registered = true;
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "FATAL ERROR: Service has not been properly initialized");
+            stopSelf();
+            return START_STICKY;
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mNsdManager.unregisterService(mRegistrationListener);
-    }
-
-    public void registerService(int port) {
-        // Create the NsdServiceInfo object, and populate it.
-        mServiceInfo  = new NsdServiceInfo();
-
-        // The name is subject to change based on conflicts
-        // with other services advertised on the same network.
-        mServiceInfo.setServiceName(SERVICE_NAME);
-        mServiceInfo.setServiceType(SERVICE_TYPE);
-        mServiceInfo.setPort(port);
-
-        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-
-        mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
-    }
-
-    public void initializeServerSocket() {
-        // Initialize a server socket on the next available port.
+    public void onCreate() {
+        super.onCreate();
         try {
-            mServerSocket = new ServerSocket(0);
-            new Thread(new ServerMainThread()).start();
+            initializeServerSocket();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        // Store the chosen port.
+    public void initializeServerSocket() throws IOException {
+        // Initialize a server socket on the next available port.
+        mServerSocket = new ServerSocket(0);
         mLocalPort =  mServerSocket.getLocalPort();
+        initialized = true;
+    }
+
+    public void registerService() throws IOException {
+        initializeRegistrationListener();
+        registerService(mLocalPort);
     }
 
     public void initializeRegistrationListener() {
@@ -104,32 +137,77 @@ public class SessionPublishService extends Service {
 
             @Override
             public void onServiceRegistered(NsdServiceInfo nsdServiceInfo) {
-                mServiceName = mServiceInfo.getServiceName();
-                Log.d(TAG, "onServiceRegistered: " + nsdServiceInfo);
+                Log.d(TAG, "onServiceRegistered: " + nsdServiceInfo.getServiceName());
             }
 
             @Override
             public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
-                Log.d(TAG, "onServiceUnregistered");
+                Log.d(TAG, "onServiceUnregistered: " + nsdServiceInfo.getServiceName());
             }
         };
     }
+
+    public void registerService(int port) {
+        // Create the NsdServiceInfo object, and populate it.
+        mServiceInfo  = new NsdServiceInfo();
+
+        // The name is subject to change based on conflicts
+        // with other services advertised on the same network.
+        mServiceInfo.setServiceName(SERVICE_NAME);
+        mServiceInfo.setServiceType(SERVICE_TYPE);
+        mServiceInfo.setPort(port);
+
+        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
+        if (mNsdManager != null) {
+            mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+            Log.d(TAG, "NSD Manager registerService() called");
+        }else {
+            Log.e(TAG, "Failed to instantiate NSDManager");
+        }
+    }
+
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        if (mNsdManager != null && registered) {
+            Log.d(TAG, "Unregister NSD");
+            mNsdManager.unregisterService(mRegistrationListener);
+            registered = false;
+        }
+
+        try {
+            closeServerSocket();
+            Log.d(TAG, "Server Socket closed");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        super.onDestroy();
+    }
+
+
+    public void closeServerSocket() throws IOException {
+        if (mServerSocket != null && !mServerSocket.isClosed()){
+            mServerSocket.close();
+        }
+    }
+
 
     class ServerMainThread implements Runnable {
 
         @Override
         public void run() {
-            Log.i("ServerMasterThread", "run()");
+            Log.i(TAG, "ServerMainThread run()");
             while (mServerSocket != null && !mServerSocket.isClosed()) {
                 try {
                     Socket socket = mServerSocket.accept();
-                    Log.i("ServerMasterThread", "accepted socket");
+                    Log.i(TAG, "ServerMainThread accepted socket");
                     socket.setSoTimeout(1000);
 
                     ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
                     new Thread(slaveThread).start();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.d(TAG, "ServerMainThread exception occured", e);
                 }
             }
         }

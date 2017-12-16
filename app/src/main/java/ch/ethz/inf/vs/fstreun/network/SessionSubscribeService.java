@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -29,20 +30,20 @@ import ch.ethz.inf.vs.fstreun.payapp.SimpleGroup;
 
 public class SessionSubscribeService extends Service {
 
-    String TAG = "SessionSubscribeService";
+    String TAG = "## SessionSubscribeService";
     String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "SessionSubscriber";
-    private Context mContext;
+
     private NsdManager mNsdManager;
     private NsdServiceInfo mService;
     private NsdManager.DiscoveryListener mDiscoveryListener;
 
-    private InetAddress mHost;
-    private int mPort;
     private String secret;
+
     private JoinGroupActivity activity;
 
     public SessionSubscribeService(){}
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -50,14 +51,13 @@ public class SessionSubscribeService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+
     @Override
     public void onCreate() {
         super.onCreate();
-        // start listener
+        // initialize listener
         initializeDiscoveryListener();
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-        mNsdManager.discoverServices(
-                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
     }
 
     @Override
@@ -70,10 +70,20 @@ public class SessionSubscribeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mContext = this;
-        secret = intent.getStringExtra("SECRET");
 
+        if (mNsdManager == null){
+            Log.e(TAG, "FATAL ERRO: NSD Manager has not been properly initialized.");
+            stopSelf();
+            return START_STICKY;
+        }
+
+        secret = intent.getStringExtra("SECRET");
         activity = JoinGroupActivity.instance;
+
+
+        mNsdManager.discoverServices(
+                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -96,12 +106,19 @@ public class SessionSubscribeService extends Service {
 
             @Override
             public void onDiscoveryStarted(String s) {
-                Log.d(TAG, "Service discovery started");
+                Log.d(TAG, "Service discovery started: " + s);
             }
 
             @Override
             public void onDiscoveryStopped(String serviceType) {
                 Log.i(TAG, "Discovery stopped: " + serviceType);
+            }
+
+            @Override
+            public void onServiceLost(NsdServiceInfo service) {
+                // When the network service is no longer available.
+                // Internal bookkeeping code goes here.
+                Log.e(TAG, "service lost" + service);
             }
 
             @Override
@@ -122,13 +139,6 @@ public class SessionSubscribeService extends Service {
                     Log.d(TAG, "Resolve service: ");
                     mNsdManager.resolveService(service, new MyResolveListener());
                 }
-            }
-
-            @Override
-            public void onServiceLost(NsdServiceInfo service) {
-                // When the network service is no longer available.
-                // Internal bookkeeping code goes here.
-                Log.e(TAG, "service lost" + service);
             }
         };
     }
@@ -155,7 +165,7 @@ public class SessionSubscribeService extends Service {
             try {
                 socket = new Socket(mService.getHost(), mService.getPort());
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "onServiceResolved failed due to socket creation failure.", e);
                 return;
             }
 
@@ -199,15 +209,13 @@ public class SessionSubscribeService extends Service {
                     Log.w(TAG, "Success response: " + result);
                     if (activity != null) {
                         // we are calling here activity's method
-                        JSONObject group = new JSONObject(response.getString("group"));
-                        return group;
+                        return new JSONObject(response.getString("group"));
                     }
                 } else {
                     // do nothing
                     Log.w(TAG, "Failure response: " + result);
                     return null;
                 }
-                mSocket.close();
                 return null;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -219,6 +227,14 @@ public class SessionSubscribeService extends Service {
 
         @Override
         protected void onPostExecute(JSONObject simpleGroup) {
+            if (mSocket != null && !mSocket.isClosed()){
+                try {
+                    mSocket.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to close socket");
+                }
+            }
+
             if (simpleGroup != null) {
                 activity.addGroupToList(simpleGroup);
             }
