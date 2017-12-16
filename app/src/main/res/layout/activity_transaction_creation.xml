@@ -11,12 +11,15 @@
         android:id="@+id/textView_comment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
         android:text="Title" />
 
     <EditText
         android:id="@+id/editText_comment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:ems="10"
         android:inputType="text"
         android:singleLine="true" />
@@ -25,12 +28,15 @@
         android:id="@+id/textView_amount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
         android:text="Amount" />
 
     <EditText
         android:id="@+id/editText_amount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:ems="10"
         android:inputType="numberSigned|numberDecimal" />
 
@@ -38,18 +44,22 @@
         android:id="@+id/textView_payer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
         android:text="Payer:" />
 
     <Spinner
         android:id="@+id/spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:listitem="@android:layout/simple_spinner_dropdown_item"/>
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        tools:listitem="@android:layout/simple_spinner_dropdown_item" />
 
     <TextView
         android:id="@+id/textView_part"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
         android:text="Participants" />
 
     <View

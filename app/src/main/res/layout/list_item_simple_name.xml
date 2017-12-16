@@ -7,11 +7,11 @@
 
     <TextView
         android:id="@+id/textView_main"
-        android:textSize="9pt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        tools:text="Name"/>
+        android:textSize="18sp"
+        tools:text="Name" />
 
 
     <View

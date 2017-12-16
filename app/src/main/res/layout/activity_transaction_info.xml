@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:paddingVertical="5sp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="8dp"
+    android:paddingVertical="5sp"
     tools:context="ch.ethz.inf.vs.fstreun.payapp.TransactionCreationActivity">
 
 
@@ -15,12 +16,12 @@
         android:paddingVertical="5sp">
 
         <TextView
-            android:textStyle="bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Title:"
-            android:textSize="9pt" />
+            android:textSize="9pt"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textView_info_comment"
@@ -32,108 +33,108 @@
     </LinearLayout>
 
     <LinearLayout
-        android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingVertical="5sp">
 
         <TextView
-            android:textStyle="bold"
-            android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Amount:" />
+            android:text="Amount:"
+            android:textSize="9pt"
+            android:textStyle="bold" />
 
         <TextView
-            android:textSize="9pt"
             android:id="@+id/textView_info_amount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ems="10" />
+            android:ems="10"
+            android:textSize="9pt" />
     </LinearLayout>
 
     <LinearLayout
-        android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingVertical="5sp">
 
         <TextView
-            android:textStyle="bold"
-            android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Payer:" />
+            android:text="Payer:"
+            android:textSize="9pt"
+            android:textStyle="bold" />
 
         <TextView
-            android:textSize="9pt"
             android:id="@+id/textView_info_payer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:textSize="9pt" />
     </LinearLayout>
 
     <LinearLayout
-        android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingVertical="5sp">
 
         <TextView
-            android:textStyle="bold"
-            android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Creation date:" />
+            android:text="Creation date:"
+            android:textSize="9pt"
+            android:textStyle="bold" />
 
         <TextView
-            android:textSize="9pt"
             android:id="@+id/textView_info_datestamp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:textSize="9pt" />
     </LinearLayout>
 
     <LinearLayout
-        android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingVertical="5sp">
 
         <TextView
-            android:textStyle="bold"
-            android:textSize="9pt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Creation time:" />
+            android:text="Creation time:"
+            android:textSize="9pt"
+            android:textStyle="bold" />
 
         <TextView
-            android:textSize="9pt"
             android:id="@+id/textView_info_timestamp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:textSize="9pt" />
     </LinearLayout>
 
     <TextView
-        android:textStyle="bold"
-        android:textSize="9pt"
-        android:paddingVertical="5sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Involved:" />
+        android:paddingVertical="5sp"
+        android:text="Involved:"
+        android:textSize="9pt"
+        android:textStyle="bold" />
 
     <ListView
         android:id="@+id/listView_info_involved"
-        android:textSize="9pt"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:listSelector="@android:color/transparent"
+        android:textSize="9pt"
         tools:listitem="@layout/list_item_simple_name">
 
     </ListView>

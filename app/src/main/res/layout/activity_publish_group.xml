@@ -3,13 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ch.ethz.inf.vs.fstreun.payapp.PublishGroupActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:context="ch.ethz.inf.vs.fstreun.payapp.PublishGroupActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/temp_group_secret"/>
+        android:text="@string/temp_group_secret" />
 
     <TextView
         android:id="@+id/textView_groupSecret"
@@ -21,14 +22,13 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Group ID"/>
+        android:text="Group ID" />
 
     <TextView
         android:id="@+id/textView_groupID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="bdku3k4u-0f3j-dke9-4dfb-b028-57ef5504d2a"/>
-
+        tools:text="bdku3k4u-0f3j-dke9-4dfb-b028-57ef5504d2a" />
 
 
 </LinearLayout>

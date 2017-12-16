@@ -48,32 +48,34 @@
         android:layout_height="wrap_content"
         android:background="@color/colorGrey"
         android:orientation="horizontal"
-        android:padding="5dp">
+        android:padding="4dp">
 
         <TextView
             android:layout_width="0dp"
-            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:paddingLeft="4dp"
             android:text="Paid by"
+            android:textColor="@color/colorWhite"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="0dp"
-            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="amount by"
+            android:textColor="@color/colorWhite"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="0dp"
-            android:textColor="@color/colorWhite"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="right"
+            android:paddingRight="4dp"
             android:text="comment"
+            android:textColor="@color/colorWhite"
             android:textStyle="bold" />
 
     </LinearLayout>
