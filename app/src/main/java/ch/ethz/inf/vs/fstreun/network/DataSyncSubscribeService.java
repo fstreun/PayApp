@@ -125,10 +125,8 @@ public class DataSyncSubscribeService extends Service {
     DataSync mDataSync = new DataSync();
 
     public class DataSync{
-        private DataSync(){
-        };
 
-        public synchronized void synchronizeSession(UUID sessionID){
+        public synchronized void synchronizeSession(UUID sessionID, DataSyncCallback callback){
             Log.d(TAG, "DataSync synchronizeSession called");
             // check if data service is already bounded
             if (!bound){
@@ -141,10 +139,13 @@ public class DataSyncSubscribeService extends Service {
                 return;
             }
 
-            ClientThread clientThread = new ClientThread(sessionNetworkAccess);
+            ClientThread clientThread = new ClientThread(sessionNetworkAccess, callback);
             new Thread(clientThread).start();
-
         }
+    }
+
+    public interface DataSyncCallback{
+        public void dataUpdated();
     }
 
     private void initializeDiscoveryListener() {
@@ -231,9 +232,11 @@ public class DataSyncSubscribeService extends Service {
         final static String TAG = "ClientThread";
 
         private final  DataService.SessionNetworkAccess mSessionAccess;
+        private final DataSyncCallback mCallback;
 
-        ClientThread(DataService.SessionNetworkAccess sessionAccess) {
+        ClientThread(DataService.SessionNetworkAccess sessionAccess, DataSyncCallback callback) {
             this.mSessionAccess = sessionAccess;
+            this.mCallback = callback;
         }
 
 
@@ -313,6 +316,8 @@ public class DataSyncSubscribeService extends Service {
 
                 // save data
                 mSessionAccess.putData(data, expected);
+                // call that data is updated
+                mCallback.dataUpdated();
             }catch (JSONException e){
                 Log.e(TAG, "JSONException in handleResponse.", e);
             }

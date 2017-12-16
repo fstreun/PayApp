@@ -40,7 +40,7 @@ import ch.ethz.inf.vs.fstreun.finance.Transaction;
 import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
-public class GroupActivity extends AppCompatActivity {
+public class GroupActivity extends AppCompatActivity implements DataSyncSubscribeService.DataSyncCallback{
 
     String TAG = "###GroupActivity###";
 
@@ -351,7 +351,7 @@ public class GroupActivity extends AppCompatActivity {
 
             case R.id.menu_syncData:
                 if (boundDataSync){
-                    dataSync.synchronizeSession(mSimpleGroup.sessionID);
+                    dataSync.synchronizeSession(mSimpleGroup.sessionID, this);
                 }
 
                 // TODO: update data with dataAccess after some time
@@ -668,5 +668,11 @@ public class GroupActivity extends AppCompatActivity {
         Toast.makeText(this, "Saved Transaction", Toast.LENGTH_SHORT).show();
         openTransaction = null;
         return true;
+    }
+
+    @Override
+    public void dataUpdated() {
+        loadTransactions();
+        updateViews();
     }
 }
