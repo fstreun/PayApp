@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.AsyncTask;
-import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -14,19 +13,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 
 import ch.ethz.inf.vs.fstreun.payapp.JoinGroupActivity;
-import ch.ethz.inf.vs.fstreun.payapp.SimpleGroup;
 
 public class SessionSubscribeService extends Service {
 

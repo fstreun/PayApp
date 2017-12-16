@@ -1,11 +1,9 @@
-package ch.ethz.inf.vs.fstreun.payapp;
+package ch.ethz.inf.vs.fstreun.payapp.filemanager;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -22,7 +20,7 @@ import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClientInterface;
 import ch.ethz.inf.vs.fstreun.datasharing.SessionClient;
-import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
+import ch.ethz.inf.vs.fstreun.payapp.R;
 
 /**
  * Created by fabio on 11/26/17.

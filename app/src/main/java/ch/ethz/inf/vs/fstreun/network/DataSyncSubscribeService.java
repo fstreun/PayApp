@@ -9,7 +9,6 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Binder;
 import android.os.IBinder;
-import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -29,9 +28,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 
-import ch.ethz.inf.vs.fstreun.payapp.DataService;
+import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
  * Created by Kaan on 30.11.17.

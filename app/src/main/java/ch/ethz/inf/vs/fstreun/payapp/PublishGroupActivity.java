@@ -16,7 +16,7 @@ import org.json.JSONObject;
 
 import java.util.Random;
 
-import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
+import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
 
 public class PublishGroupActivity extends AppCompatActivity {

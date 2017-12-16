@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.payapp;
+package ch.ethz.inf.vs.fstreun.payapp.ListAdapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import ch.ethz.inf.vs.fstreun.payapp.R;
 
 import java.util.List;
 

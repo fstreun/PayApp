@@ -18,12 +18,10 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListParticipantsCheckAdapter;
 
 public class TransactionCreationActivity extends AppCompatActivity {
 
