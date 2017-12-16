@@ -1,7 +1,10 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -13,9 +16,13 @@ import org.json.JSONObject;
 
 import java.util.Random;
 
+import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
 
 public class PublishGroupActivity extends AppCompatActivity {
+
+    boolean bound;
+    SessionPublishService.LocalBinder serviceBind;
 
     private String TAG = "PublishGroupActivity";
     public final static String KEY_SIMPLEGROUP = "key_group";
@@ -42,8 +49,6 @@ public class PublishGroupActivity extends AppCompatActivity {
         }
 
         textViewGroupSecret = findViewById(R.id.textView_groupSecret);
-        // create random 4 digit number
-        setSecret(Integer.toString(getRandom()));
 
         textViewGroupID = findViewById(R.id.textView_groupID);
         textViewGroupID.setText(group.groupID.toString());
@@ -51,20 +56,43 @@ public class PublishGroupActivity extends AppCompatActivity {
         // start publish service
         Log.i(TAG, "start service");
 
-        String secret = textViewGroupSecret.getText().toString();
-
+        // bind service with simplegroup (secret is set with bound service)
         intentSessionPublishService = new Intent(this, SessionPublishService.class);
-        intentSessionPublishService.putExtra("SECRET", secret);
-        intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
         startService(intentSessionPublishService);
+        bindService(intentSessionPublishService, connection, BIND_AUTO_CREATE);
     }
+
+
+
+    // service binding handler
+    ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "Service bound: " + name.getClassName());
+            if (name.getClassName().equals(SessionPublishService.class.getName())){
+                serviceBind = (SessionPublishService.LocalBinder) service;
+                bound = true;
+
+                // create random 4 digit number
+                setSecret(Integer.toString(getRandom()));
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceDisconnected");
+            bound = false;
+        }
+    };
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        // unbind service
+        Log.d(TAG, "unbind service");
+        unbindService(connection);
         // stop service
-        Log.d(TAG, "stop service");
         stopService(intentSessionPublishService);
     }
 
@@ -80,6 +108,12 @@ public class PublishGroupActivity extends AppCompatActivity {
     }
 
     public void setSecret(String secret){
+        if (!bound){
+            Log.e(TAG, "Service not yet bound. Cannot set secret");
+            return;
+        }
+
+        serviceBind.setSecretGroup(secret, jsonString);
         textViewGroupSecret.setText(secret);
     }
 
@@ -101,23 +135,6 @@ public class PublishGroupActivity extends AppCompatActivity {
                 if (group != null) {
                     // create random 4 digit number
                     setSecret(Integer.toString(getRandom()));
-
-                    textViewGroupID = findViewById(R.id.textView_groupID);
-                    textViewGroupID.setText(group.groupID.toString());
-
-                    // stop service
-                    Log.i(TAG, "stop publish");
-                    stopService(intentSessionPublishService);
-
-                    // start publish service
-                    Log.i(TAG, "start publish");
-
-                    String secret = textViewGroupSecret.getText().toString();
-
-                    intentSessionPublishService = new Intent(this, SessionPublishService.class);
-                    intentSessionPublishService.putExtra("SECRET", secret);
-                    intentSessionPublishService.putExtra("SIMPLEGROUP", jsonString);
-                    startService(intentSessionPublishService);
                 }
                 return true;
             default:
