@@ -52,7 +52,9 @@
             android:name="ch.ethz.inf.vs.fstreun.network.SessionSubscribeService"
             android:enabled="true"
             android:exported="true" />
+
         <service android:name=".filemanager.DataService" />
+
         <service android:name="ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService" android:stopWithTask="true"/>
         <service android:name="ch.ethz.inf.vs.fstreun.network.DataSyncPublishService" />
 

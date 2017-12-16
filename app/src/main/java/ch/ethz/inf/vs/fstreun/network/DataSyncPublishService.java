@@ -51,6 +51,8 @@ public class DataSyncPublishService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        // start server Socket
+        initializeServerSocket();
         // Bind DataService
         Intent intent = new Intent(this, DataService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
@@ -59,6 +61,18 @@ public class DataSyncPublishService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // unregister service
+        mNsdManager.unregisterService(mRegistrationListener);
+        mNsdManager = null;
+
+        // stop ServerSocket
+        if (mServerSocket != null){
+            try {
+                mServerSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "failed to close ServerSocket");
+            }
+        }
 
         // Unbind from service
         if (bound){
@@ -95,7 +109,6 @@ public class DataSyncPublishService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        initializeServerSocket();
         initializeRegistrationListener();
         registerService(mLocalPort);
         return super.onStartCommand(intent, flags, startId);
@@ -155,7 +168,7 @@ public class DataSyncPublishService extends Service {
 
             @Override
             public void onServiceUnregistered(NsdServiceInfo nsdServiceInfo) {
-                mNsdManager.unregisterService(mRegistrationListener);
+                Log.d(TAG, "onServiceUnregistered: " + nsdServiceInfo.getServiceName());
             }
         };
     }
