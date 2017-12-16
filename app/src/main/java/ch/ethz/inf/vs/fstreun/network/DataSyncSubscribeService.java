@@ -67,14 +67,18 @@ public class DataSyncSubscribeService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        //TODO: tear down listener
+        //tear down listener
+        if (mNsdManager != null) {
+            mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+        }
+        mNsdManager = null;
 
         // Unbind from service
         if (bound){
             unbindService(connection);
             bound = false;
         }
+        super.onDestroy();
     }
 
     ServiceConnection connection = new ServiceConnection() {
@@ -144,7 +148,7 @@ public class DataSyncSubscribeService extends Service {
     }
 
     public interface DataSyncCallback{
-        public void dataUpdated();
+        void dataUpdated();
     }
 
     private void initializeDiscoveryListener() {
@@ -219,10 +223,24 @@ public class DataSyncSubscribeService extends Service {
                 }
 
                 // TODO: only add once
-                boolean success = mServiceInfos.add(serviceInfo);
+                boolean success = addOnce(serviceInfo);
                 Log.d(TAG, "onServiceResolved added new service info: " + success);
 
             }
+
+
+    }
+
+    private synchronized boolean addOnce (NsdServiceInfo serviceInfo){
+        for (NsdServiceInfo info : mServiceInfos) {
+            if (equal(info, serviceInfo)) {
+                return false;
+            }
+        }
+        return mServiceInfos.add(serviceInfo);
+    }
+    private boolean equal (NsdServiceInfo x, NsdServiceInfo y){
+        return x.getServiceName().equals(y.getServiceName()) && x.getHost().equals(y.getHost()) && x.getPort() == y.getPort();
     }
 
 
@@ -255,6 +273,9 @@ public class DataSyncSubscribeService extends Service {
                     iterator.remove();
                 }
             }
+
+            // call that data is updated
+            mCallback.dataUpdated();
 
             Log.i(TAG, "run finished");
         }
@@ -315,8 +336,6 @@ public class DataSyncSubscribeService extends Service {
 
                 // save data
                 mSessionAccess.putData(data, expected);
-                // call that data is updated
-                mCallback.dataUpdated();
             }catch (JSONException e){
                 Log.e(TAG, "JSONException in handleResponse.", e);
             }
