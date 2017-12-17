@@ -94,7 +94,7 @@ public class DataSyncPublishService extends Service {
         if (mNsdManager != null) {
             mNsdManager.unregisterService(mRegistrationListener);
         }
-        registered = false;
+        //registered = false;
         mNsdManager = null;
 
         // stop ServerSocket
@@ -138,10 +138,10 @@ public class DataSyncPublishService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand. registered: " + registered);
-        if (!registered) {
+        //if (!registered) {
             initializeRegistrationListener();
             registerService(mLocalPort);
-        }
+        //}
         return super.onStartCommand(intent, flags, startId);
     }
 
