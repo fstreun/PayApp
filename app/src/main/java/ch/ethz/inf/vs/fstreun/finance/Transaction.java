@@ -187,6 +187,23 @@ public class Transaction implements Comparable<Transaction>{
      */
     @Override
     public int compareTo(@NonNull Transaction o) {
-        return Long.compare(timestamp, o.timestamp);
+        return Long.valueOf(timestamp).compareTo(Long.valueOf(o.timestamp));
+    }
+
+    /**
+     * case insensitive
+     * @param p
+     * @return whether a string is contained in this involved list
+     */
+    public boolean involvedContains(String p) {
+        for(String i : involved){
+            if(caseInsensitiveEquals(i, p)) return true;
+        }
+        return false;
+    }
+
+    public static boolean caseInsensitiveEquals(String p1, String p2) {
+        if(String.CASE_INSENSITIVE_ORDER.compare(p1, p2) == 0) return true;
+        else return false;
     }
 }

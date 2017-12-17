@@ -549,7 +549,8 @@ public class TransactionListActivity extends AppCompatActivity {
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
 
-                if (participantName != null && participantName.equals(t.getPayer())){
+                if (participantName != null && Transaction.caseInsensitiveEquals(participantName,
+                        t.getPayer())){
                     transactionList.add(t);
                 }
             }
@@ -558,7 +559,7 @@ public class TransactionListActivity extends AppCompatActivity {
         } else if (filterType.equals(getString(R.string.filter_name_involved))){
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
-                if (t.getInvolved().contains(participantName)){
+                if (t.involvedContains(participantName)){
                     transactionList.add(t);
                 }
             }
@@ -567,7 +568,8 @@ public class TransactionListActivity extends AppCompatActivity {
         } else if (filterType.equals(getString(R.string.filter_involved_or_paid))){
             //iterate over all transactions of this group
             for (Transaction t : tempTransactions){
-                if (t.getInvolved().contains(participantName) || participantName.equals(t.getPayer())){
+                if (t.involvedContains(participantName) || Transaction.caseInsensitiveEquals(
+                        participantName, t.getPayer())){
                     transactionList.add(t);
                 }
             }
