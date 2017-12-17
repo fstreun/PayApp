@@ -714,6 +714,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
             @Override
             public void run() {
                 loadTransactions();
+                writeGroup();
                 updateViews();
                 swipeRefreshLayout.setRefreshing(false);
             } // This is your code
