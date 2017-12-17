@@ -259,6 +259,11 @@ public class SessionSubscribeService extends Service {
                     return "";
                 }
 
+                String emptyLine = input.readLine();
+                if (emptyLine == null || !emptyLine.isEmpty()){
+                    return "";
+                }
+
                 String result = "";
                 String line;
 
@@ -292,7 +297,7 @@ public class SessionSubscribeService extends Service {
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
-                    + "Connection: " + connect + "\r\n"
+                    + "Connection: " + connect + "\r\n\r\n"
                     + requestBody.toString() + "\r\n"
                     + "\r\n";
 

@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import ch.ethz.inf.vs.fstreun.payapp.R;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
@@ -57,6 +59,33 @@ public class DataSyncPublishService extends Service {
         Intent intent = new Intent(this, DataService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
+
+    public void initializeServerSocket() {
+        // get last used port
+        SharedPreferences preferences = getSharedPreferences(getString(R.string.network_pref), MODE_PRIVATE);
+        int oldPort = preferences.getInt(getString(R.string.datasync_serverport), 0);
+
+        // Initialize a server socket on last used port.
+        if (mServerSocket == null) {
+            try {
+                mServerSocket = new ServerSocket(oldPort);
+                // start master network thread
+                new Thread(new ServerMasterThread()).start();
+            } catch (IOException e) {
+                Log.e(TAG, "FATAL ERROR: failed to initialized server socket.", e);
+                preferences.edit().putInt(getString(R.string.sessionpublish_serverport), 0).apply();
+                return;
+            }
+        }
+
+        // Store the chosen port.
+        mLocalPort = mServerSocket.getLocalPort();
+
+        if (mLocalPort != oldPort){
+            preferences.edit().putInt(getString(R.string.datasync_serverport), mLocalPort).apply();
+        }
+    }
+
 
     @Override
     public void onDestroy() {
@@ -131,21 +160,6 @@ public class DataSyncPublishService extends Service {
         mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
 
-    public void initializeServerSocket() {
-        // Initialize a server socket on the next available port.
-        if (mServerSocket == null) {
-            try {
-                mServerSocket = new ServerSocket(0);
-                // start master network thread
-                new Thread(new ServerMasterThread()).start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Store the chosen port.
-            mLocalPort = mServerSocket.getLocalPort();
-        }
-    }
 
     public void initializeRegistrationListener() {
         mRegistrationListener = new NsdManager.RegistrationListener() {
@@ -235,10 +249,14 @@ public class DataSyncPublishService extends Service {
                 PrintWriter wtr = new PrintWriter(output);
 
                 // Create Here Response String (favourably JSON)
-                String responseBody = generateResponseBody(jsonBody).toString();
-                Log.d(TAG, "response: " + responseBody);
+                JSONObject responseBody = generateResponseBody(jsonBody);
+                String stringBody = "";
+                if (jsonBody != null){
+                    stringBody = jsonBody.toString();
+                }
+                Log.d(TAG, "response: " + stringBody);
 
-                wtr.print(generateResponse(responseBody));
+                wtr.print(generateResponse(stringBody));
                 wtr.flush();
                 wtr.close();
 
@@ -254,7 +272,7 @@ public class DataSyncPublishService extends Service {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
                     "Content-Type: application/json\r\n" +
-                    "Connection: Closed\r\n" + body+ "\r\n\r\n";
+                    "Connection: Closed\r\n\r\n" + body+ "\r\n\r\n";
             return response;
         }
 
@@ -266,6 +284,7 @@ public class DataSyncPublishService extends Service {
                 DataService.SessionNetworkAccess sessionAccess = dataServiceBinder.getSessionNetworkAccess(sessionID);
                 if (sessionAccess == null){
                     // no such session available
+                    Log.d(TAG, "Session not available on this device.");
                     return null;
                 }
 
@@ -292,6 +311,7 @@ public class DataSyncPublishService extends Service {
 
             }catch (JSONException e){
                 Log.e(TAG, "JSONException in generateResponseBody.", e);
+                return null;
             }
             return jsonResponse;
         }
@@ -318,6 +338,11 @@ public class DataSyncPublishService extends Service {
 
                 String connectionLine = input.readLine();
                 if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String emptyLine = input.readLine();
+                if (emptyLine == null || !emptyLine.isEmpty()){
                     return "";
                 }
 
