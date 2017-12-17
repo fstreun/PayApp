@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -66,6 +67,9 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
     // also referred to by the adapter
     List<Transaction> transactionList = new ArrayList<>();
     ListTransactionAdapter adapter;
+
+    //Swipe data sync
+    SwipeRefreshLayout swipeRefreshLayout;
 
     // Filter Buttons
     ToggleButton btnAll, btnPaid, btnInvolved;
@@ -152,6 +156,15 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
                 // update list according to filterType
                 setFilteredList();
                 updateListView();
+            }
+        });
+
+        // swipe refresh
+        swipeRefreshLayout = findViewById(R.id.swipeSyncDataTransactionList);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                dataSync.synchronizeSession(mSimpleGroup.sessionID, TransactionListActivity.this);
             }
         });
 
@@ -673,7 +686,7 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
             @Override
             public void run() {
                 updateViews();
-                //swipeRefreshLayout.setRefreshing(false);
+                swipeRefreshLayout.setRefreshing(false);
             } // This is your code
         };
         mainHandler.post(myRunnable);
