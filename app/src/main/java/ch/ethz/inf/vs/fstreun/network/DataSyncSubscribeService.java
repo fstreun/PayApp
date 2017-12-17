@@ -33,6 +33,7 @@ import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
  * Created by Kaan on 30.11.17.
+ *
  */
 
 public class DataSyncSubscribeService extends Service {
@@ -222,7 +223,7 @@ public class DataSyncSubscribeService extends Service {
                     return;
                 }
 
-                // TODO: only add once
+                // only add once
                 boolean success = addOnce(serviceInfo);
                 Log.d(TAG, "onServiceResolved added new service info: " + success);
 
@@ -324,12 +325,12 @@ public class DataSyncSubscribeService extends Service {
                 }
                 JSONObject data = body.getJSONObject(NetworkKeys.DATA);
 
-                Map<UUID, Integer> expected = new HashMap<UUID, Integer>();
+                Map<UUID, Integer> expected = new HashMap<>();
                 JSONArray jsonMap = body.getJSONArray(NetworkKeys.LENGTHMAP);
 
                 for (int i = 0; i < jsonMap.length(); i++) {
                     JSONObject item = (JSONObject) jsonMap.get(i);
-                    UUID mUUid = UUID.fromString((String) item.getString(NetworkKeys.DEVICEID));
+                    UUID mUUid = UUID.fromString( item.getString(NetworkKeys.DEVICEID));
                     Integer mLength = Integer.valueOf(item.getString(NetworkKeys.LENGHT));
                     expected.put(mUUid, mLength);
                 }
@@ -388,11 +389,11 @@ public class DataSyncSubscribeService extends Service {
             return request;
         }
 
-        public String parseResponseForBody(BufferedReader input) {
+        private String parseResponseForBody(BufferedReader input) {
             // parse all header fields
 
             try {
-                String statusLine = input.readLine();;
+                String statusLine = input.readLine();
 
                 if (statusLine == null || statusLine.isEmpty()) {
                     return "";
@@ -418,17 +419,17 @@ public class DataSyncSubscribeService extends Service {
                     return "";
                 }
 
-                String result = "";
+                StringBuilder result = new StringBuilder();
                 String line;
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
                         break;
                     }else {
-                        result = result + line + "\r\n";
+                        result.append(line).append("\r\n");
                     }
                 }
-                return result;
+                return result.toString();
             } catch (IOException e) {
                 e.printStackTrace();
             }

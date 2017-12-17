@@ -33,6 +33,7 @@ import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
  * Created by Kaan on 30.11.17.
+ *
  */
 
 public class DataSyncPublishService extends Service {
@@ -258,7 +259,7 @@ public class DataSyncPublishService extends Service {
             }
         }
 
-        public String generateResponse(String body) {
+        private String generateResponse(String body) {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
                     "Content-Type: application/json\r\n" +
@@ -266,7 +267,7 @@ public class DataSyncPublishService extends Service {
             return response;
         }
 
-        public JSONObject generateResponseBody(JSONObject requestBody){
+        private JSONObject generateResponseBody(JSONObject requestBody){
             JSONObject jsonResponse = null;
             try {
                 UUID sessionID = UUID.fromString(requestBody.getString(NetworkKeys.SESSIONID));
@@ -306,11 +307,11 @@ public class DataSyncPublishService extends Service {
             return jsonResponse;
         }
 
-        public String parseRequestForBody(BufferedReader input) {
+        private String parseRequestForBody(BufferedReader input) {
             // parse all header fields
 
             try {
-                String requestLine = input.readLine();;
+                String requestLine = input.readLine();
 
                 if (requestLine == null || requestLine.isEmpty()) {
                     return "";
@@ -336,18 +337,18 @@ public class DataSyncPublishService extends Service {
                     return "";
                 }
 
-                String result = "";
+                StringBuilder result = new StringBuilder();
                 String line;
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.d(TAG, result);
+                        Log.d(TAG, result.toString());
                         break;
                     }else {
-                        result = result + line + "\r\n";
+                        result.append(line).append("\r\n");
                     }
                 }
-                return result;
+                return result.toString();
             } catch (IOException e) {
                 Log.e(TAG, "IOException in parseRequestForBody");
             }

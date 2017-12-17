@@ -234,11 +234,11 @@ public class SessionSubscribeService extends Service {
             super.onPostExecute(simpleGroup);
         }
 
-        public String parseResponseForBody(BufferedReader input) {
+        private String parseResponseForBody(BufferedReader input) {
             // parse all header fields
 
             try {
-                String statusLine = input.readLine();;
+                String statusLine = input.readLine();
 
                 if (statusLine == null || statusLine.isEmpty()) {
                     return "";
@@ -264,25 +264,25 @@ public class SessionSubscribeService extends Service {
                     return "";
                 }
 
-                String result = "";
+                StringBuilder result = new StringBuilder();
                 String line;
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.w(TAG, result);
+                        Log.w(TAG, result.toString());
                         break;
                     }else {
-                        result = result + line + "\r\n";
+                        result.append(line).append("\r\n");
                     }
                 }
-                return result;
+                return result.toString();
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return "";
         }
 
-        public String generateRequest(String host, int port, String path, String secret) {
+        private String generateRequest(String host, int port, String path, String secret) {
             String accept = "application/json";
             String connect = "Closed";
 

@@ -263,7 +263,7 @@ public class SessionPublishService extends Service {
                 }
         }
 
-        public String generateResponse(String body) {
+        private String generateResponse(String body) {
             String response =   "HTTP/1.1 200 OK\r\n" +
                                 "Content-Length: " + body.length() + "\r\n" +
                                 "Content-Type: application/json\r\n" +
@@ -271,11 +271,11 @@ public class SessionPublishService extends Service {
             return response;
         }
 
-        public String parseRequestForBody(BufferedReader input) {
+        private String parseRequestForBody(BufferedReader input) {
             // parse all header fields
 
             try {
-                String requestLine = input.readLine();;
+                String requestLine = input.readLine();
 
                 if (requestLine == null || requestLine.isEmpty()) {
                     return "";
@@ -301,18 +301,18 @@ public class SessionPublishService extends Service {
                     return "";
                 }
 
-                String result = "";
+                StringBuilder result = new StringBuilder();
                 String line;
 
                 while ((line = input.readLine()) != null){
                     if (line.isEmpty()){
-                        Log.w(TAG, result);
+                        Log.w(TAG, result.toString());
                         break;
                     }else {
-                        result = result + line + "\r\n";
+                        result.append(line).append("\r\n");
                     }
                 }
-                return result;
+                return result.toString();
             } catch (IOException e) {
                 e.printStackTrace();
             }
