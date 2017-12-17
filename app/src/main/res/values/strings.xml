@@ -31,5 +31,8 @@
     <string name="sessions_directory">sessions</string>
     <string name="sessionIDs_file">sessionIDs</string>
     <string name="delete_group">Delete Group</string>
+    <string name="network_pref">network</string>
+    <string name="datasync_serverport">datasync_serverport</string>
+    <string name="sessionpublish_serverport">sessionpublish_serverport</string>
 
 </resources>
