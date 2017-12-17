@@ -195,15 +195,15 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
         });
 
         // swipe to sync data
-        /*
         swipeRefreshLayout = findViewById(R.id.swipeSyncData);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 Log.d(TAG, "swipeRefreshLayout with refreshing = " + swipeRefreshLayout.isRefreshing());
-                dataSync.synchronizeSession(mSimpleGroup.sessionID);
+                dataSync.synchronizeSession(mSimpleGroup.sessionID, GroupActivity.this);
             }
         });
+        /*
         swipeRefreshLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -386,6 +386,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
             case R.id.menu_syncData:
                 if (boundDataSync){
                     dataSync.synchronizeSession(mSimpleGroup.sessionID, this);
+                    swipeRefreshLayout.setRefreshing(true);
                 }
 
                 // TODO: update data with dataAccess after some time
@@ -714,6 +715,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
             public void run() {
                 loadTransactions();
                 updateViews();
+                swipeRefreshLayout.setRefreshing(false);
             } // This is your code
         };
         mainHandler.post(myRunnable);
