@@ -51,6 +51,8 @@ public class DataSyncPublishService extends Service {
     DataService.LocalBinder dataServiceBinder;
     boolean bound = false;
 
+    private boolean registered;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -81,8 +83,18 @@ public class DataSyncPublishService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // Unbind from service
+        if (bound){
+            unbindService(connection);
+            bound = false;
+        }
+
         // unregister service
-        mNsdManager.unregisterService(mRegistrationListener);
+        if (mNsdManager != null) {
+            mNsdManager.unregisterService(mRegistrationListener);
+        }
+        //registered = false;
         mNsdManager = null;
 
         // stop ServerSocket
@@ -94,11 +106,7 @@ public class DataSyncPublishService extends Service {
             }
         }
 
-        // Unbind from service
-        if (bound){
-            unbindService(connection);
-            bound = false;
-        }
+
     }
 
     ServiceConnection connection = new ServiceConnection() {
@@ -129,8 +137,11 @@ public class DataSyncPublishService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        initializeRegistrationListener();
-        registerService(mLocalPort);
+        Log.d(TAG, "onStartCommand. registered: " + registered);
+        //if (!registered) {
+            initializeRegistrationListener();
+            registerService(mLocalPort);
+        //}
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -149,6 +160,8 @@ public class DataSyncPublishService extends Service {
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
 
         mNsdManager.registerService(mServiceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+
+        registered = true;
     }
 
 
@@ -184,7 +197,7 @@ public class DataSyncPublishService extends Service {
 
         public void run() {
             Log.i("ServerMasterThread", "run()");
-            while (mServerSocket != null) {
+            while (mServerSocket != null && !mServerSocket.isClosed()) {
 
                 try {
                     Log.i(TAG, "run() - open RequestThread");

@@ -395,7 +395,7 @@ public class DataService extends Service {
             JSONObject res = null;
             try {
                 res = getSession().getJSON(after);
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 return null;
             }
             return res;
