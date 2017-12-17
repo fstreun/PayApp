@@ -272,7 +272,7 @@ public class DataSyncPublishService extends Service {
             String response =    "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
                     "Content-Type: application/json\r\n" +
-                    "Connection: Closed\r\n" + body+ "\r\n\r\n";
+                    "Connection: Closed\r\n\r\n" + body+ "\r\n\r\n";
             return response;
         }
 
@@ -338,6 +338,11 @@ public class DataSyncPublishService extends Service {
 
                 String connectionLine = input.readLine();
                 if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String emptyLine = input.readLine();
+                if (emptyLine == null || !emptyLine.isEmpty()){
                     return "";
                 }
 

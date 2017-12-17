@@ -381,7 +381,7 @@ public class DataSyncSubscribeService extends Service {
             String request = "GET " + path + " HTTP/1.1\r\n"
                     + "Host: " + host + ":" + port + "\r\n"
                     + "Accept: " + accept + "\r\n"
-                    + "Connection: " + connect + "\r\n"
+                    + "Connection: " + connect + "\r\n\r\n"
                     + body + "\r\n"
                     + "\r\n";
 
@@ -410,6 +410,11 @@ public class DataSyncSubscribeService extends Service {
 
                 String connectionLine = input.readLine();
                 if (connectionLine == null || connectionLine.isEmpty()) {
+                    return "";
+                }
+
+                String emptyLine = input.readLine();
+                if (emptyLine == null || !emptyLine.isEmpty()){
                     return "";
                 }
 
