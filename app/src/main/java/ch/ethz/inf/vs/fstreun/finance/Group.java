@@ -185,6 +185,7 @@ public class Group {
             for(String pOld : participants) {
                 int compare = String.CASE_INSENSITIVE_ORDER.compare(pOld, p);
                 if (compare == 0){
+                    // keep the String with capital letters in participants list
                     if(pOld.compareTo(p) >= 0){
                         participants.remove(pOld);
                         participants.add(p);
@@ -275,7 +276,7 @@ public class Group {
         double result = 0;
         if(participants.contains(p)){
             for(Transaction t: transactions){
-                if(t.payer.equals(p)) result += t.amount;
+                if(Transaction.caseInsensitiveEquals(t.payer, p)) result += t.amount;
             }
         }
         return result;
@@ -285,7 +286,7 @@ public class Group {
         double result = 0;
         if(participants.contains(p)){
             for(Transaction t: transactions){
-                if(t.involved.contains(p)) result += t.amount / t.getNumInvolved();
+                if(t.involvedContains(p)) result += t.amount / t.getNumInvolved();
             }
         }
         return result;

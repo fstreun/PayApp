@@ -31,4 +31,10 @@ public class Participant {
         return group.owes(name);
     }
 
+    /*
+    @Override
+    public boolean equals(Participant obj) {
+        return Transaction.caseInsensitiveEquals(name, obj.name);
+    }
+    */
 }

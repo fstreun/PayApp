@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -76,6 +77,9 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
     LinearLayout linLayOwn;
     TextView tvDeviceOwner;
     TextView tvOwnSpent, tvOwnOwes, tvOwnCredit;
+
+    // swipe to sync
+    SwipeRefreshLayout swipeRefreshLayout;
 
     // list of all participants
     private ListParticipantsAdapter adapter;
@@ -189,6 +193,25 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
                 createTransaction();
             }
         });
+
+        // swipe to sync data
+        swipeRefreshLayout = findViewById(R.id.swipeSyncData);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.d(TAG, "swipeRefreshLayout with refreshing = " + swipeRefreshLayout.isRefreshing());
+                dataSync.synchronizeSession(mSimpleGroup.sessionID, GroupActivity.this);
+            }
+        });
+        /*
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "post refresh");
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        });
+        */
 
         // participant view
         adapter = new ListParticipantsAdapter(this, participantList);
@@ -363,6 +386,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
             case R.id.menu_syncData:
                 if (boundDataSync){
                     dataSync.synchronizeSession(mSimpleGroup.sessionID, this);
+                    swipeRefreshLayout.setRefreshing(true);
                 }
 
                 // TODO: update data with dataAccess after some time
@@ -690,7 +714,9 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
             @Override
             public void run() {
                 loadTransactions();
+                writeGroup();
                 updateViews();
+                swipeRefreshLayout.setRefreshing(false);
             } // This is your code
         };
         mainHandler.post(myRunnable);
