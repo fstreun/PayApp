@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -33,11 +34,12 @@ import java.util.UUID;
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
+import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListTransactionAdapter;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
-public class TransactionListActivity extends AppCompatActivity {
+public class TransactionListActivity extends AppCompatActivity implements DataSyncSubscribeService.DataSyncCallback {
 
     public final static String KEY_PARTICIPANT = "participant"; // String
     public final static String KEY_FILTER_TYPE = "filter_type"; // String
@@ -52,6 +54,9 @@ public class TransactionListActivity extends AppCompatActivity {
     // Session Service communication
     private boolean bound;
     private DataService.SessionClientAccess sessionAccess;
+
+    private boolean boundDataSync;
+    private DataSyncSubscribeService.DataSync dataSync;
 
     private String participantName;
     private String groupName;
@@ -256,6 +261,10 @@ public class TransactionListActivity extends AppCompatActivity {
         Intent intentService = new Intent(this, DataService.class);
         bindService(intentService, connection, BIND_AUTO_CREATE);
         Log.d(TAG, "called bindService");
+
+        // Bind DataSync
+        Intent intentDataSync = new Intent(this, DataSyncSubscribeService.class);
+        bindService(intentDataSync, connection, BIND_AUTO_CREATE);
     }
 
     /**
@@ -350,13 +359,25 @@ public class TransactionListActivity extends AppCompatActivity {
                 storeOpenTransaction();
                 // update all views
                 updateViews();
+            }else if (name.getClassName().equalsIgnoreCase(DataSyncSubscribeService.class.getName())) {
+                DataSyncSubscribeService.LocalBinder binder = (DataSyncSubscribeService.LocalBinder) service;
+                dataSync = binder.getDataSync();
+                if (dataSync == null) {
+                    Log.e(TAG, "Failed to get DataSync Service access");
+                    return;
+                }
+                boundDataSync = true;
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.e(TAG, "onServiceDisconnected");
-            bound = false;
+                Log.e(TAG, "onServiceDisconnected: " + name.getClassName());
+                if (name.getClassName().equals(DataService.class.getName())){
+                    bound = false;
+                }else if (name.getClassName().equals(DataSyncSubscribeService.class.getName())){
+                    boundDataSync = false;
+                }
         }
     };
 
@@ -641,4 +662,20 @@ public class TransactionListActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public void dataUpdated() {
+        Log.d(TAG, "DataUpdated callback");
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(this.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateViews();
+                //swipeRefreshLayout.setRefreshing(false);
+            } // This is your code
+        };
+        mainHandler.post(myRunnable);
+    }
 }
