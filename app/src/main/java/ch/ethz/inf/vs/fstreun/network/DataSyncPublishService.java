@@ -241,7 +241,7 @@ public class DataSyncPublishService extends Service {
                 // Create Here Response String (favourably JSON)
                 JSONObject responseBody = generateResponseBody(jsonBody);
                 String stringBody = "";
-                if (jsonBody != null){
+                if (jsonBodyString != null){
                     stringBody = jsonBody.toString();
                 }
                 Log.d(TAG, "response: " + stringBody);
