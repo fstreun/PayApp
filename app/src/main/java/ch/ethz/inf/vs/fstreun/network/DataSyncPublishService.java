@@ -61,28 +61,18 @@ public class DataSyncPublishService extends Service {
     }
 
     public void initializeServerSocket() {
-        // get last used port
-        SharedPreferences preferences = getSharedPreferences(getString(R.string.network_pref), MODE_PRIVATE);
-        int oldPort = preferences.getInt(getString(R.string.datasync_serverport), 0);
-
-        // Initialize a server socket on last used port.
+        // Initialize a server socket on the next available port.
         if (mServerSocket == null) {
             try {
-                mServerSocket = new ServerSocket(oldPort);
+                mServerSocket = new ServerSocket(0);
                 // start master network thread
                 new Thread(new ServerMasterThread()).start();
             } catch (IOException e) {
-                Log.e(TAG, "FATAL ERROR: failed to initialized server socket.", e);
-                preferences.edit().putInt(getString(R.string.sessionpublish_serverport), 0).apply();
-                return;
+                e.printStackTrace();
             }
-        }
 
-        // Store the chosen port.
-        mLocalPort = mServerSocket.getLocalPort();
-
-        if (mLocalPort != oldPort){
-            preferences.edit().putInt(getString(R.string.datasync_serverport), mLocalPort).apply();
+            // Store the chosen port.
+            mLocalPort = mServerSocket.getLocalPort();
         }
     }
 
