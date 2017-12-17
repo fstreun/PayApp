@@ -383,6 +383,7 @@ public class DataService extends Service {
         public JSONObject getData() {
             JSONObject res;
             try {
+                if(getSession() == null) return null;
                 res = getSession().getJSON();
             } catch (JSONException e) {
                 return null;
@@ -394,6 +395,7 @@ public class DataService extends Service {
         public JSONObject getData(Map<UUID, Integer> after) {
             JSONObject res = null;
             try {
+                if(getSession() == null) return null;
                 res = getSession().getJSON(after);
             } catch (Exception e) {
                 return null;
@@ -402,6 +404,10 @@ public class DataService extends Service {
         }
 
         public Map<UUID, Integer> getLength(){
+            if(getSession() == null) {
+                Log.d("##", "this really is null");
+                return null;
+            }
             return getSession().getLength();
         }
 

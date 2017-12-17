@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="amount by"
+            android:text="amount"
             android:textColor="@color/colorWhite"
             android:textStyle="bold" />
 
@@ -90,6 +90,7 @@
         android:id="@+id/swipeSyncDataTransactionList"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
     <ListView
         android:id="@+id/listView_transaction"
         android:layout_width="match_parent"

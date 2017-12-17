@@ -308,12 +308,8 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.e(TAG, "onServiceDisconnected: " + name.getClassName());
-            if (name.getClassName().equals(DataService.class.getName())){
-                boundDataService = false;
-            }else if (name.getClassName().equals(DataSyncSubscribeService.class.getName())){
-                boundDataService = false;
-            }
+            Log.e(TAG, "onServiceDisconnected");
+            boundDataService = false;
         }
     };
 
