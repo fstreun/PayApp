@@ -7,6 +7,9 @@ package ch.ethz.inf.vs.fstreun.network;
 public final class NetworkKeys {
     public static final String SUCCESS = "success";
 
+    public static final String SECRET = "secret";
+    public static final String GROUP = "group";
+
     public static final String SESSIONID = "sessionID";
 
     public static final String LENGTHMAP = "lengthmap";

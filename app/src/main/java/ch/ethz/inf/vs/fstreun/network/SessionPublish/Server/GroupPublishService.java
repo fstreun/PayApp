@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.network.SessionPublish;
+package ch.ethz.inf.vs.fstreun.network.SessionPublish.Server;
 
 import android.app.Service;
 import android.content.Context;
@@ -9,23 +9,16 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
+import java.util.HashMap;
+import java.util.Map;
 
 
-public class SessionPublishService extends Service {
+public class GroupPublishService extends Service {
 
-    String TAG = "## SessionPublishService";
+    String TAG = "## GroupPublishService";
     String SERVICE_TYPE = "_http._tcp.";
     String SERVICE_NAME = "SessionPublisher";
 
@@ -42,7 +35,7 @@ public class SessionPublishService extends Service {
     private String secret;
     private String groupJsonString;
 
-    public SessionPublishService() {}
+    public GroupPublishService() {}
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -55,16 +48,16 @@ public class SessionPublishService extends Service {
 
     public class LocalBinder extends Binder {
         public void setSecretGroup(String secret, String groupJSON){
-            SessionPublishService.this.secret = secret;
-            SessionPublishService.this.groupJsonString = groupJSON;
+            GroupPublishService.this.secret = secret;
+            GroupPublishService.this.groupJsonString = groupJSON;
             Log.d(TAG, "setSecretGroup: " + secret + "\n" + groupJSON);
         }
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        SessionPublishService.this.secret = "";
-        SessionPublishService.this.groupJsonString = "";
+        GroupPublishService.this.secret = "";
+        GroupPublishService.this.groupJsonString = "";
         return super.onUnbind(intent);
     }
 
@@ -205,8 +198,11 @@ public class SessionPublishService extends Service {
                     Log.i(TAG, "ServerMainThread accepted socket");
                     socket.setSoTimeout(1000);
 
-                    ServerSlaveThread slaveThread = new ServerSlaveThread(socket);
+                    Map<String, String> groups = new HashMap<>(1);
+                    groups.put(secret, groupJsonString);
+                    GroupPublish slaveThread = new GroupPublish(groups, socket);
                     new Thread(slaveThread).start();
+
                 } catch (IOException e) {
                     Log.d(TAG, "ServerMainThread exception occured", e);
                 }
@@ -214,106 +210,4 @@ public class SessionPublishService extends Service {
         }
     }
 
-    class ServerSlaveThread implements Runnable {
-
-        private final Socket socket;
-
-        ServerSlaveThread(Socket socket){
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-
-                try {
-
-                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                    String jsonBodyString = parseRequestForBody(input);
-
-                    JSONObject mJson = null;
-                    String key = "";
-                    mJson = new JSONObject(jsonBodyString);
-                    key = mJson.getString("secret");
-
-                    JSONObject response = new JSONObject();
-                    if (key.equals(secret)) {
-                        response.put("result", true);
-                        response.put("group", groupJsonString);
-                    } else {
-                        response.put("result", false);
-                    }
-
-                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-                    PrintWriter wtr = new PrintWriter(output);
-                    wtr.print(generateResponse(response.toString()));
-                    wtr.flush();
-                    wtr.close();
-
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-        }
-
-        private String generateResponse(String body) {
-            String response =   "HTTP/1.1 200 OK\r\n" +
-                                "Content-Length: " + body.length() + "\r\n" +
-                                "Content-Type: application/json\r\n" +
-                                "Connection: Closed\r\n\r\n" + body + "\r\n\r\n";
-            return response;
-        }
-
-        private String parseRequestForBody(BufferedReader input) {
-            // parse all header fields
-
-            try {
-                String requestLine = input.readLine();
-
-                if (requestLine == null || requestLine.isEmpty()) {
-                    return "";
-                }
-
-                String hostLine = input.readLine();
-                if (hostLine == null || hostLine.isEmpty()) {
-                    return "";
-                }
-
-                String acceptLine = input.readLine();
-                if (acceptLine == null || acceptLine.isEmpty()) {
-                    return "";
-                }
-
-                String connectionLine = input.readLine();
-                if (connectionLine == null || connectionLine.isEmpty()) {
-                    return "";
-                }
-
-                String emptyLine = input.readLine();
-                if (emptyLine == null || !emptyLine.isEmpty()){
-                    return "";
-                }
-
-                StringBuilder result = new StringBuilder();
-                String line;
-
-                while ((line = input.readLine()) != null){
-                    if (line.isEmpty()){
-                        Log.w(TAG, result.toString());
-                        break;
-                    }else {
-                        result.append(line).append("\r\n");
-                    }
-                }
-                return result.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return "";
-        }
-    }
 }

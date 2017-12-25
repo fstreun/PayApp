@@ -17,12 +17,12 @@ import org.json.JSONObject;
 import java.util.Random;
 
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
-import ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionPublishService;
+import ch.ethz.inf.vs.fstreun.network.SessionPublish.Server.GroupPublishService;
 
 public class PublishGroupActivity extends AppCompatActivity {
 
     boolean bound;
-    SessionPublishService.LocalBinder serviceBind;
+    GroupPublishService.LocalBinder serviceBind;
 
     private String TAG = "PublishGroupActivity";
     public final static String KEY_SIMPLEGROUP = "key_group";
@@ -57,7 +57,7 @@ public class PublishGroupActivity extends AppCompatActivity {
         Log.i(TAG, "start service");
 
         // bind service with simplegroup (secret is set with bound service)
-        intentSessionPublishService = new Intent(this, SessionPublishService.class);
+        intentSessionPublishService = new Intent(this, GroupPublishService.class);
         startService(intentSessionPublishService);
         bindService(intentSessionPublishService, connection, BIND_AUTO_CREATE);
     }
@@ -69,8 +69,8 @@ public class PublishGroupActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "Service bound: " + name.getClassName());
-            if (name.getClassName().equals(SessionPublishService.class.getName())){
-                serviceBind = (SessionPublishService.LocalBinder) service;
+            if (name.getClassName().equals(GroupPublishService.class.getName())){
+                serviceBind = (GroupPublishService.LocalBinder) service;
                 bound = true;
 
                 // create random 4 digit number
