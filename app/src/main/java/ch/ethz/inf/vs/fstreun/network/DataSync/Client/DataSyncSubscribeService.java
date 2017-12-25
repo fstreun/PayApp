@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.network;
+package ch.ethz.inf.vs.fstreun.network.DataSync.Client;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -11,28 +11,18 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
- * Created by Kaan on 30.11.17.
+ * Created by fstreun on 25.12.17.
  *
  */
 
@@ -48,7 +38,7 @@ public class DataSyncSubscribeService extends Service {
     private Set<NsdServiceInfo> mServiceInfos = new HashSet<>();
 
 
-    DataService.LocalBinder dataServiceBinder;
+    DataService.DataServiceBinder dataServiceBinder;
     boolean bound = false;
 
     @Override
@@ -87,7 +77,7 @@ public class DataSyncSubscribeService extends Service {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (name.getClassName().equals(DataService.class.getName())){
-                dataServiceBinder = (DataService.LocalBinder) service;
+                dataServiceBinder = (DataService.DataServiceBinder) service;
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());
             }
@@ -259,16 +249,20 @@ public class DataSyncSubscribeService extends Service {
 
 
         public void run() {
-            Log.i(TAG, "run()");
+            Log.d(TAG, "run()");
+
             for (Iterator<NsdServiceInfo> iterator = mServiceInfos.iterator(); iterator.hasNext();){
                 NsdServiceInfo serviceInfo = iterator.next();
                 InetAddress address = serviceInfo.getHost();
                 int port = serviceInfo.getPort();
-                Socket socket = null;
                 try {
-                    socket = new Socket(address, port);
+                    Socket socket = new Socket(address, port);
                     socket.setSoTimeout(1000);
-                    handleSocket(socket);
+
+                    DataSyncSubscribe dataSyncSubscribe = new DataSyncSubscribe(mSessionAccess, socket);
+                    // execute not concurrent
+                    dataSyncSubscribe.run();
+
                 } catch (IOException e) {
                     Log.e(TAG, "new Socket Creation exception.", e);
                     iterator.remove();
@@ -278,162 +272,9 @@ public class DataSyncSubscribeService extends Service {
             // call that data is updated
             mCallback.dataUpdated();
 
-            Log.i(TAG, "run finished");
+            Log.d(TAG, "run finished");
         }
 
-        private void handleSocket(Socket socket){
-            try {
 
-                JSONObject requestBody = generateRequestBody();
-
-                String get_message = generateRequest(socket.getInetAddress().toString(), socket.getPort(), "/dataSync", requestBody.toString());
-
-                Log.d(TAG, "request: " + get_message);
-
-                OutputStream mOutputStream = socket.getOutputStream();
-
-                PrintWriter wtr = new PrintWriter(mOutputStream);
-                wtr.print(get_message);
-                //mOutputStream.write(get_message.getBytes());
-                wtr.flush();
-
-                BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                String result = parseResponseForBody(input);
-
-                Log.d(TAG, "response: " + result);
-
-                JSONObject responseBody = new JSONObject(result);
-
-                handleResponse(responseBody);
-
-                socket.close();
-                return;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private void handleResponse(JSONObject body){
-            try {
-                UUID sessionId = UUID.fromString(body.getString(NetworkKeys.SESSIONID));
-                if (!sessionId.equals(mSessionAccess.getSessionID())){
-                    // data not supposed to be for this session
-                    return;
-                }
-                JSONObject data = body.getJSONObject(NetworkKeys.DATA);
-
-                Map<UUID, Integer> expected = new HashMap<>();
-                JSONArray jsonMap = body.getJSONArray(NetworkKeys.LENGTHMAP);
-
-                for (int i = 0; i < jsonMap.length(); i++) {
-                    JSONObject item = (JSONObject) jsonMap.get(i);
-                    UUID mUUid = UUID.fromString( item.getString(NetworkKeys.DEVICEID));
-                    Integer mLength = Integer.valueOf(item.getString(NetworkKeys.LENGHT));
-                    expected.put(mUUid, mLength);
-                }
-
-                // save data
-                mSessionAccess.putData(data, expected);
-            }catch (JSONException e){
-                Log.e(TAG, "JSONException in handleResponse.", e);
-            }
-        }
-
-        private JSONObject generateRequestBody() {
-
-            JSONObject mJsonRequest = null;
-
-            try {
-                // get data for request (sessionId, Map<UUID, Int) -> start
-                UUID sessionId = mSessionAccess.getSessionID();
-                Map<UUID, Integer> mData = mSessionAccess.getLength();
-
-                // create json request
-                mJsonRequest = new JSONObject();
-                mJsonRequest.put(NetworkKeys.SESSIONID, sessionId.toString());
-                mJsonRequest.put(NetworkKeys.COMMAND, "start");
-                JSONArray mJsonMap = new JSONArray();
-
-                for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
-                    UUID deviceId = item.getKey();
-                    Integer length = item.getValue();
-
-                    JSONObject mJsonItem = new JSONObject();
-                    mJsonItem.put(NetworkKeys.DEVICEID, deviceId.toString());
-                    mJsonItem.put(NetworkKeys.LENGHT, length.toString());
-                    mJsonMap.put(mJsonItem);
-                }
-                mJsonRequest.put(NetworkKeys.LENGTHMAP, mJsonMap);
-            } catch (JSONException e) {
-                Log.e(TAG, "JSONException in generateRequestBody.", e);
-            }
-
-            return mJsonRequest;
-        }
-
-        public String generateRequest(String host, int port, String path, String body) {
-            String accept = "text/plain";
-            String connect = "Closed";
-
-
-            String request = "GET " + path + " HTTP/1.1\r\n"
-                    + "Host: " + host + ":" + port + "\r\n"
-                    + "Accept: " + accept + "\r\n"
-                    + "Connection: " + connect + "\r\n\r\n"
-                    + body + "\r\n"
-                    + "\r\n";
-
-            return request;
-        }
-
-        private String parseResponseForBody(BufferedReader input) {
-            // parse all header fields
-
-            try {
-                String statusLine = input.readLine();
-
-                if (statusLine == null || statusLine.isEmpty()) {
-                    return "";
-                }
-
-                String lengthLine = input.readLine();
-                if (lengthLine == null || lengthLine.isEmpty()) {
-                    return "";
-                }
-
-                String typeLine = input.readLine();
-                if (typeLine == null || typeLine.isEmpty()) {
-                    return "";
-                }
-
-                String connectionLine = input.readLine();
-                if (connectionLine == null || connectionLine.isEmpty()) {
-                    return "";
-                }
-
-                String emptyLine = input.readLine();
-                if (emptyLine == null || !emptyLine.isEmpty()){
-                    return "";
-                }
-
-                StringBuilder result = new StringBuilder();
-                String line;
-
-                while ((line = input.readLine()) != null){
-                    if (line.isEmpty()){
-                        break;
-                    }else {
-                        result.append(line).append("\r\n");
-                    }
-                }
-                return result.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return "";
-        }
     }
 }

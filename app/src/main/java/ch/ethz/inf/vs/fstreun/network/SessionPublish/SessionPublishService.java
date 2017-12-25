@@ -1,9 +1,8 @@
-package ch.ethz.inf.vs.fstreun.network;
+package ch.ethz.inf.vs.fstreun.network.SessionPublish;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Binder;
@@ -22,8 +21,6 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-
-import ch.ethz.inf.vs.fstreun.payapp.R;
 
 
 public class SessionPublishService extends Service {

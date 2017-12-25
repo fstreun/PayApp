@@ -17,7 +17,7 @@ import org.json.JSONObject;
 import java.util.Random;
 
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
-import ch.ethz.inf.vs.fstreun.network.SessionPublishService;
+import ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionPublishService;
 
 public class PublishGroupActivity extends AppCompatActivity {
 

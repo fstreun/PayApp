@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.fstreun.network;
+package ch.ethz.inf.vs.fstreun.network.SessionPublish;
 
 import android.app.Service;
 import android.content.Context;

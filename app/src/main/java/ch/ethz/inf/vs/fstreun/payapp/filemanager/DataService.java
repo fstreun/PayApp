@@ -107,13 +107,13 @@ public class DataService extends Service {
      */
 
     // Binder given to clients
-    private final IBinder mBinder = new LocalBinder();
+    private final IBinder mBinder = new DataServiceBinder();
 
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
-    public class LocalBinder extends Binder {
+    public class DataServiceBinder extends Binder {
 
         /**
          * Return this instance of LocalService so clients can call public methods

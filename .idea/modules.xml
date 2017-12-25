@@ -3,10 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/PayApp.iml" filepath="$PROJECT_DIR$/PayApp.iml" />
-      <module fileurl="file://E:\Users\zeno\Documents\ETH\infk y3\distr sys\PayApp\PayApp.iml" filepath="E:\Users\zeno\Documents\ETH\infk y3\distr sys\PayApp\PayApp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/PayApp.iml" filepath="$PROJECT_DIR$/.idea/PayApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://E:\Users\zeno\Documents\ETH\infk y3\distr sys\PayApp\app\app.iml" filepath="E:\Users\zeno\Documents\ETH\infk y3\distr sys\PayApp\app\app.iml" />
     </modules>
   </component>
 </project>
