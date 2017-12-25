@@ -74,7 +74,7 @@ public class CreateGroupActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            DataService.LocalBinder binder = (DataService.LocalBinder) service;
+            DataService.DataServiceBinder binder = (DataService.DataServiceBinder) service;
             mService = binder.getService();
             mBound = true;
         }

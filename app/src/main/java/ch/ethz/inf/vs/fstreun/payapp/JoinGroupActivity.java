@@ -30,7 +30,7 @@ import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
-import ch.ethz.inf.vs.fstreun.network.SessionSubscribeService;
+import ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListSimpleGroupAdapter;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
@@ -133,7 +133,7 @@ public class JoinGroupActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            DataService.LocalBinder binder = (DataService.LocalBinder) service;
+            DataService.DataServiceBinder binder = (DataService.DataServiceBinder) service;
             mService = binder.getService();
             mBound = true;
         }

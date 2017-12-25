@@ -40,7 +40,7 @@ import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.Participant;
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.finance.Transaction;
-import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
+import ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListParticipantsAdapter;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
@@ -276,7 +276,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (name.getClassName().equals(DataService.class.getName())){
-                DataService.LocalBinder binder = (DataService.LocalBinder) service;
+                DataService.DataServiceBinder binder = (DataService.DataServiceBinder) service;
 
                 sessionAccess = binder.getSessionClientAccess(mSimpleGroup.sessionID);
                 if (sessionAccess == null){

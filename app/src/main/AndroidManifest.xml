@@ -45,18 +45,18 @@
             android:parentActivityName=".MainActivity" />
 
         <service
-            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublishService"
+            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionPublishService"
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name="ch.ethz.inf.vs.fstreun.network.SessionSubscribeService"
+            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionSubscribeService"
             android:enabled="true"
             android:exported="true" />
 
         <service android:name=".filemanager.DataService" />
 
-        <service android:name="ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService" android:stopWithTask="true"/>
-        <service android:name="ch.ethz.inf.vs.fstreun.network.DataSyncPublishService" />
+        <service android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService" android:stopWithTask="true"/>
+        <service android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Server.DataSyncPublishService" />
 
         <activity android:name=".TransactionListActivity"
             android:parentActivityName=".GroupActivity"

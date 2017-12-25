@@ -40,7 +40,7 @@ public class DataServiceTest {
     @ClassRule
     public static final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-    private static DataService.LocalBinder binder;
+    private static DataService.DataServiceBinder binder;
     private static UUID userID;
 
 
@@ -61,7 +61,7 @@ public class DataServiceTest {
                         DataService.class);
 
         // Bind the service and grab a reference to the binder.
-        binder = (DataService.LocalBinder) mServiceRule.bindService(serviceIntent);
+        binder = (DataService.DataServiceBinder) mServiceRule.bindService(serviceIntent);
     }
 
 
