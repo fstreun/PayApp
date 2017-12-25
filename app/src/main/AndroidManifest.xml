@@ -45,11 +45,11 @@
             android:parentActivityName=".MainActivity" />
 
         <service
-            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionPublishService"
+            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.Server.GroupPublishService"
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionSubscribeService"
+            android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.Client.GroupSubscribeService"
             android:enabled="true"
             android:exported="true" />
 

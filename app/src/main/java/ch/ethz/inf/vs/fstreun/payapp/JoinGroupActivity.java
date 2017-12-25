@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -30,17 +31,19 @@ import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.Group;
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
-import ch.ethz.inf.vs.fstreun.network.SessionPublish.SessionSubscribeService;
+import ch.ethz.inf.vs.fstreun.network.SessionPublish.Client.GroupSubscribe;
+import ch.ethz.inf.vs.fstreun.network.SessionPublish.Client.GroupSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListSimpleGroupAdapter;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.FileHelper;
 
-public class JoinGroupActivity extends AppCompatActivity {
+public class JoinGroupActivity extends AppCompatActivity implements GroupSubscribe.Callback{
+
+    private String TAG = "JoinGroupActivity";
 
     public static JoinGroupActivity instance;
 
     DataService mService;
-    private String TAG = "JoinGroupActivity";
     boolean mBound;
     private Intent intentSessionSubscribeService;
     public static final String KEY_SIMPLEGROUP = "simple_group";
@@ -83,7 +86,6 @@ public class JoinGroupActivity extends AppCompatActivity {
 
         // for reference in service
         instance = this;
-
 
         // Bind to LocalService
         Intent intent = new Intent(this, DataService.class);
@@ -145,8 +147,6 @@ public class JoinGroupActivity extends AppCompatActivity {
     };
 
 
-
-
     private void buttonJoinClicked(){
         // end running
         try {
@@ -158,27 +158,30 @@ public class JoinGroupActivity extends AppCompatActivity {
         groupList.clear();
         adapter.notifyDataSetChanged();
 
-        String groupHint = editTextGroupSecret.getText().toString();
-
-        intentSessionSubscribeService = new Intent(this, SessionSubscribeService.class);
-        intentSessionSubscribeService.putExtra("SECRET", groupHint);
+        intentSessionSubscribeService = new Intent(this, GroupSubscribeService.class);
         startService(intentSessionSubscribeService);
     }
 
 
-    public void addGroupToList(JSONObject groupJSON){
-        Log.d(TAG, "SimpleGroup addGroupToList: " + groupJSON);
-        SimpleGroup group = null;
-        try {
-            group = new SimpleGroup(groupJSON);
-            Log.d(TAG, "SimpleGroup added: " + group.toJSON().toString());
-        } catch (JSONException e) {
-            Log.e(TAG, "Failed to create SimpleGroup from JSON.", e);
-            return;
-        }
-        if (group != null) {
-            groupList.add(group);
-            adapter.notifyDataSetChanged();
+    public void addGroupToList(String secret, String groupString){
+        if (secret.equals(getSecret())){
+            // still same secret
+
+            Log.d(TAG, "SimpleGroup addGroupToList: " + groupString);
+            SimpleGroup group = null;
+            try {
+                JSONObject groupJSON = new JSONObject(groupString);
+                group = new SimpleGroup(groupJSON);
+                Log.d(TAG, "SimpleGroup added: " + group.toJSON().toString());
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to create SimpleGroup from JSON.", e);
+                return;
+            }
+            if (group != null) {
+                groupList.add(group);
+                adapter.notifyDataSetChanged();
+            }
+
         }
     }
 
@@ -290,5 +293,28 @@ public class JoinGroupActivity extends AppCompatActivity {
             }
         }
         return groups;
+    }
+
+
+
+    @Override
+    public String getSecret() {
+        return editTextGroupSecret.getText().toString();
+    }
+
+    @Override
+    public void groupFound(final String simpleGroup, final String secret) {
+        Log.d(TAG, "groupFound callback");
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(this.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+                addGroupToList(secret, simpleGroup);
+            } // This is your code
+        };
+        mainHandler.post(myRunnable);
     }
 }

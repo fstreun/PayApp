@@ -1,8 +1,7 @@
-package ch.ethz.inf.vs.fstreun.network.DataSync.Client;
+package ch.ethz.inf.vs.fstreun.network.SessionPublish.Client;
 
 import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,39 +11,35 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 import ch.ethz.inf.vs.fstreun.network.HttpParser;
 import ch.ethz.inf.vs.fstreun.network.NetworkKeys;
-import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 /**
  * Created by fabio on 12/25/17.
  *
  */
 
-public class DataSyncSubscribe implements Runnable{
+public class GroupSubscribe implements Runnable{
 
-    private final String TAG = "DataSyncSubscribe";
+    private final String TAG = "GroupSubscribe";
 
-    private final DataService.SessionNetworkAccess mSessionAccess;
+    private final Callback mCallback;
     private final Socket mSocket;
 
-    DataSyncSubscribe(DataService.SessionNetworkAccess sessionAccess, Socket socket){
-        mSessionAccess = sessionAccess;
+    GroupSubscribe(Callback callback, Socket socket){
+        mCallback = callback;
         mSocket = socket;
     }
 
     @Override
     public void run() {
         try {
-            if (mSessionAccess != null) {
+            if (mCallback != null) {
                 handleCommunication();
             }
         } catch (IOException e) {
-            Log.e(TAG, "handleSocket throws IOException", e);
+            Log.e(TAG, "handleCommunication throws IOException", e);
         }
 
         if (mSocket != null){
@@ -116,38 +111,19 @@ public class DataSyncSubscribe implements Runnable{
                 return;
             }
 
-            UUID sessionId = UUID.fromString(object.getString(NetworkKeys.SESSIONID));
-            if (!sessionId.equals(mSessionAccess.getSessionID())){
-                // data not supposed to be for this session
-                return;
-            }
+            String secret = object.getString(NetworkKeys.SECRET);
+            String group = object.getString(NetworkKeys.GROUP);
 
-            JSONObject data = object.getJSONObject(NetworkKeys.DATA);
-
-            Map<UUID, Integer> expected = new HashMap<>();
-            JSONArray jsonMap = object.getJSONArray(NetworkKeys.LENGTHMAP);
-
-            for (int i = 0; i < jsonMap.length(); i++) {
-                JSONObject item = (JSONObject) jsonMap.get(i);
-                UUID mUUid = UUID.fromString( item.getString(NetworkKeys.DEVICEID));
-                Integer mLength = Integer.valueOf(item.getString(NetworkKeys.LENGHT));
-                expected.put(mUUid, mLength);
-            }
-
-            // save data
-            mSessionAccess.putData(data, expected);
+            mCallback.groupFound(group, secret);
 
         } catch (JSONException e) {
             // response body is not json
             Log.e(TAG, "Response body handling failed, due to JSONException", e);
         }
-
-
     }
 
-
     private String generateRequest(String host, int port, String body) {
-        String path = "/dataSync";
+        String path = "/joinGroup";
         String accept = "text/plain";
         String connect = "Closed";
 
@@ -163,28 +139,14 @@ public class DataSyncSubscribe implements Runnable{
 
     private String generateRequestBody() throws JSONException {
 
-            // get data for request (UUID sessionId, Map<UUID, Int> start)
-            UUID sessionId = mSessionAccess.getSessionID();
-            Map<UUID, Integer> mData = mSessionAccess.getLength();
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put(NetworkKeys.SECRET, mCallback.getSecret());
 
-            // create json request
-            JSONObject jsonRequest = new JSONObject();
-            jsonRequest.put(NetworkKeys.SESSIONID, sessionId.toString());
-            jsonRequest.put(NetworkKeys.COMMAND, "start");
-            JSONArray mJsonMap = new JSONArray();
+        return jsonRequest.toString();
+    }
 
-            for (Map.Entry<UUID, Integer> item : mData.entrySet()) {
-                UUID deviceId = item.getKey();
-                Integer length = item.getValue();
-
-                JSONObject mJsonItem = new JSONObject();
-                mJsonItem.put(NetworkKeys.DEVICEID, deviceId.toString());
-                mJsonItem.put(NetworkKeys.LENGHT, length.toString());
-                mJsonMap.put(mJsonItem);
-            }
-
-            jsonRequest.put(NetworkKeys.LENGTHMAP, mJsonMap);
-
-            return jsonRequest.toString();
+    public interface Callback{
+        String getSecret();
+        void groupFound(String simpleGroup, String secret);
     }
 }
