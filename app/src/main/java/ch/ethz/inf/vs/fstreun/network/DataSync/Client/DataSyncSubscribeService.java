@@ -190,7 +190,7 @@ public class DataSyncSubscribeService extends Service {
             public void onServiceLost(NsdServiceInfo service) {
                 // When the network service is no longer available.
                 // Internal bookkeeping code goes here.
-                Log.e(TAG, "service lost" + service);
+                Log.d(TAG, "service lost: " + service);
             }
         };
     }
