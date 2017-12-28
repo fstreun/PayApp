@@ -48,10 +48,11 @@ public class JoinGroupActivity extends AppCompatActivity implements GroupSubscri
     private Intent intentSessionSubscribeService;
     public static final String KEY_SIMPLEGROUP = "simple_group";
 
-    EditText editTextGroupSecret;
+    private EditText editTextGroupSecret;
+    private String currentSecret;
 
-    List<SimpleGroup> groupList = new ArrayList<SimpleGroup>();
-    ListSimpleGroupAdapter adapter;
+    private List<SimpleGroup> groupList = new ArrayList<SimpleGroup>();
+    private ListSimpleGroupAdapter adapter;
     private SharedPreferences sharedPref;
 
     @Override
@@ -64,6 +65,7 @@ public class JoinGroupActivity extends AppCompatActivity implements GroupSubscri
         sharedPref = getSharedPreferences(prefName, Context.MODE_PRIVATE);
 
         editTextGroupSecret = findViewById(R.id.edittext_group_secret);
+        currentSecret = null;
 
         adapter = new ListSimpleGroupAdapter(this, groupList);
         ListView listViewFoundGroup = findViewById(R.id.listView_foundGroups);
@@ -76,11 +78,11 @@ public class JoinGroupActivity extends AppCompatActivity implements GroupSubscri
             }
         });
 
-        final Button buttonJoin = findViewById(R.id.button_search);
-        buttonJoin.setOnClickListener(new View.OnClickListener() {
+        final Button buttonSearch = findViewById(R.id.button_search);
+        buttonSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buttonJoinClicked();
+                buttonSearchClicked();
             }
         });
 
@@ -147,13 +149,15 @@ public class JoinGroupActivity extends AppCompatActivity implements GroupSubscri
     };
 
 
-    private void buttonJoinClicked(){
+    private void buttonSearchClicked(){
         // end running
         try {
             stopService(intentSessionSubscribeService);
         }catch (Exception e){
 
         }
+
+        currentSecret = editTextGroupSecret.getText().toString();
 
         groupList.clear();
         adapter.notifyDataSetChanged();
@@ -299,7 +303,7 @@ public class JoinGroupActivity extends AppCompatActivity implements GroupSubscri
 
     @Override
     public String getSecret() {
-        return editTextGroupSecret.getText().toString();
+        return currentSecret;
     }
 
     @Override
