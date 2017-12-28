@@ -22,9 +22,7 @@
         <activity
             android:name=".PublishGroupActivity"
             android:configChanges="orientation|screenSize"
-            android:parentActivityName=".GroupActivity"
-        />
-
+            android:parentActivityName=".GroupActivity" />
         <activity
             android:name=".JoinGroupActivity"
             android:configChanges="orientation|screenSize"
@@ -52,19 +50,20 @@
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.Client.GroupSubscribeService"
             android:enabled="true"
             android:exported="true" />
-
         <service android:name=".filemanager.DataService" />
-
-        <service android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService" android:stopWithTask="true"/>
+        <service
+            android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService"
+            android:stopWithTask="true" />
         <service android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Server.DataSyncPublishService" />
 
-        <activity android:name=".TransactionListActivity"
-            android:parentActivityName=".GroupActivity"
-            android:configChanges="orientation|screenSize">
-        </activity>
+        <activity
+            android:name=".TransactionListActivity"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName=".GroupActivity"></activity>
         <activity
             android:name=".TransactionInfoActivity"
             android:parentActivityName=".TransactionListActivity" />
+        <activity android:name=".SettleActivity"></activity>
     </application>
 
 </manifest>

@@ -4,4 +4,6 @@
     <item
         android:id="@+id/menu_addTransaction"
         android:title="Add Transaction" />
+
+
 </menu>

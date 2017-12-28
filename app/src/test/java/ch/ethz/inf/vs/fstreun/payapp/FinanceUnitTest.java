@@ -111,8 +111,8 @@ public class FinanceUnitTest {
         Group awesomeWG = new Group(groupJson);
 
         /* works :)
-        //output the amount of the transactions
-        System.out.println("the amount of the transactions of the group" +
+        //output the amount of the transactionList
+        System.out.println("the amount of the transactionList of the group" +
                 awesomeWG.getTransactions().get(0).getAmount() +
                 " and " + awesomeWG.getTransactions().get(1).getAmount());
         */

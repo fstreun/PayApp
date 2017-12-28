@@ -17,13 +17,13 @@
     <string name="pref_involved_lru">pref_involved_from_last_trans_crea</string>
     <string name="search">Search</string>
     <string name="group_name">Group Name</string>
-  
+
     <string name="filter_paid_by_name">PAID_BY_NAME</string>
     <string name="filter_no_filter">NO_FILTER</string>
     <string name="filter_name_involved">name_involved</string>
-  
+
     <string name="key_list_sessionID">key_list_sessionID</string>
-    <string name="show_all_transactions">Show all Transactions</string>
+    <string name="history">History</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="delete_transaction">Create reverse Transaction</string>
@@ -34,5 +34,6 @@
     <string name="network_pref">network</string>
     <string name="datasync_serverport">datasync_serverport</string>
     <string name="sessionpublish_serverport">sessionpublish_serverport</string>
+    <string name="sync">Sync</string>
 
 </resources>

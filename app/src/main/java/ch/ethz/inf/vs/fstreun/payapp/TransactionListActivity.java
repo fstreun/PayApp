@@ -45,7 +45,7 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
     public final static String KEY_PARTICIPANT = "participant"; // String
     public final static String KEY_FILTER_TYPE = "filter_type"; // String
     private String filterType;
-        // NO_FILTER (all transactions); PAID_BY_NAME; NAME_INVOLVED
+        // NO_FILTER (all transactionList); PAID_BY_NAME; NAME_INVOLVED
         // see R.string.filter_* for definitions
 
     // simple group expected to be in the intent
@@ -224,7 +224,7 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
             btnInvolved.setTextOff("" + participantName + " involved");
         }
 
-        // if no type defined, show all transactions
+        // if no type defined, show all transactionList
         if (filterType == null)
             filterType = getString(R.string.filter_no_filter);
 
@@ -575,12 +575,12 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
         //-----------------------------------------------------------------
 
         Log.d(TAG, "entering type case distinction with type " + filterType);
-        //type: all transactions
+        //type: all transactionList
         if (filterType.equals(getString(R.string.filter_no_filter))){
             transactionList.addAll(tempTransactions);
             //type: filter paid by
         } else if (filterType.equals(getString(R.string.filter_paid_by_name))) {
-            //iterate over all transactions of this group
+            //iterate over all transactionList of this group
             for (Transaction t : tempTransactions){
 
                 if (participantName != null && Transaction.caseInsensitiveEquals(participantName,
@@ -591,7 +591,7 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
 
             //type: all involved
         } else if (filterType.equals(getString(R.string.filter_name_involved))){
-            //iterate over all transactions of this group
+            //iterate over all transactionList of this group
             for (Transaction t : tempTransactions){
                 if (t.involvedContains(participantName)){
                     transactionList.add(t);
@@ -600,7 +600,7 @@ public class TransactionListActivity extends AppCompatActivity implements DataSy
 
             //type: both involved and paid are selected
         } else if (filterType.equals(getString(R.string.filter_involved_or_paid))){
-            //iterate over all transactions of this group
+            //iterate over all transactionList of this group
             for (Transaction t : tempTransactions){
                 if (t.involvedContains(participantName) || Transaction.caseInsensitiveEquals(
                         participantName, t.getPayer())){

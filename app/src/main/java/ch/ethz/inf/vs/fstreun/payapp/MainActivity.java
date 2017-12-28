@@ -1,13 +1,10 @@
 package ch.ethz.inf.vs.fstreun.payapp;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -35,13 +32,9 @@ import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
 import ch.ethz.inf.vs.fstreun.network.DataSync.Server.DataSyncPublishService;
 import ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListGroupAdapter;
-import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "###MainActivity";
-
-    DataService dataService;
-    boolean bound = false;
 
     ArrayAdapter<SimpleGroup> adapter;
     List<SimpleGroup> groups;
@@ -95,49 +88,13 @@ public class MainActivity extends AppCompatActivity {
 
         // start services which always run
 
-        // Bind DataService
-        Intent intentDataService = new Intent(this, DataService.class);
-        startService(intentDataService);
-        bindService(intentDataService, connection, BIND_AUTO_CREATE);
-
+        // Bind Services
         Intent intentSyncPubService = new Intent(this, DataSyncPublishService.class);
         startService(intentSyncPubService);
 
         Intent intentSyncSubService = new Intent(this, DataSyncSubscribeService.class);
         startService(intentSyncSubService);
-
     }
-
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Unbind from service
-        if (bound){
-            unbindService(connection);
-            bound = false;
-        }
-    }
-
-    ServiceConnection connection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            if (name.getClassName().equals(DataService.class.getName())){
-                DataService.DataServiceBinder binder = (DataService.DataServiceBinder) service;
-                dataService = binder.getService();
-                bound = true;
-                Log.d(TAG, "onServiceConnected: " + name.getClassName());
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.e(TAG, "onServiceDisconnected");
-            bound = false;
-        }
-    };
-
 
     private final static int RESULT_CREATE = 1;
     public void buttonCreateClicked(View view){

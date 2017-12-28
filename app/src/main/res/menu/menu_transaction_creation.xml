@@ -3,12 +3,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/menu_addName"
+        android:icon="@drawable/ic_person_add_white_24dp"
+        android:title="Add Name"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/menu_save"
         android:icon="@drawable/ic_save_white_24dp"
         android:title="Save"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/menu_addName"
-        android:title="Add Name"
-        app:showAsAction="never" />
+
 </menu>

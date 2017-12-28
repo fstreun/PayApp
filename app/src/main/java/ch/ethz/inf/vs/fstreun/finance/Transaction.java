@@ -58,7 +58,6 @@ public class Transaction implements Comparable<Transaction>{
         }
         this.amount = amount;
         this.comment = comment;
-
     }
 
     /**

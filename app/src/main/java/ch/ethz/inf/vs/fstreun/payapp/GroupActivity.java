@@ -289,7 +289,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
                 if (groupForDeletion){
                     deleteGroup();
                 }
-                // load transactions to the group
+                // load transactionList to the group
                 loadTransactions();
                 // if a open transaction exists, try to store it!
                 storeOpenTransaction();
@@ -371,20 +371,20 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-            case R.id.menu_showAllTransactions:
-                //case view all transactions
-                Intent intent1 = new Intent(GroupActivity.this,
+            case R.id.menu_transactionHistory:
+                //case view all transactionList
+                Intent intent = new Intent(GroupActivity.this,
                         TransactionListActivity.class);
-                intent1.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
+                intent.putExtra(TransactionListActivity.KEY_FILTER_TYPE,
                         getString(R.string.filter_no_filter));
                 try {
-                    intent1.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+                    intent.putExtra(TransactionListActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
                     Log.e(TAG, "Failed to create SimpleGroup JSON.", e);
                     return true;
                 }
 
-                GroupActivity.this.startActivity(intent1);
+                GroupActivity.this.startActivity(intent);
                 return true;
 
             case R.id.menu_syncData:
@@ -393,11 +393,17 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
                     swipeRefreshLayout.setRefreshing(true);
                 }
 
-                // TODO: update data with dataAccess after some time
-
                 return true;
+
+            case R.id.menu_settle:
+                // case show how to settle expenses
+                SettleActivity.sGroup = group;
+                intent = new Intent(this, SettleActivity.class);
+                startActivity(intent);
+                return true;
+
             case R.id.menu_publishGroup:
-                Intent intent = new Intent(this, PublishGroupActivity.class);
+                intent = new Intent(this, PublishGroupActivity.class);
                 try {
                     intent.putExtra(PublishGroupActivity.KEY_SIMPLEGROUP, mSimpleGroup.toJSON().toString());
                 } catch (JSONException e) {
@@ -626,7 +632,7 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
 
 
     /**
-     * loads all transactions from the Session Service into the group
+     * loads all transactionList from the Session Service into the group
      * @return success of accessing Session
      */
     private synchronized boolean loadTransactions() {
