@@ -45,7 +45,7 @@ public class SettleActivity extends AppCompatActivity {
 
 
     ListSettleTransactionAdapter adapter;
-    List<Transaction> transactionList = new ArrayList<>();
+    List<ListSettleTransactionAdapter.CheckTransaction> transactionList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +84,7 @@ public class SettleActivity extends AppCompatActivity {
                 // open transaction view
                 Intent intent = new Intent(SettleActivity.this,
                         TransactionInfoActivity.class);
-                intent.putExtra(TransactionInfoActivity.KEY_TRANSACTION, transactionList.get(position).toString());
+                intent.putExtra(TransactionInfoActivity.KEY_TRANSACTION, transactionList.get(position).transaction.toString());
                 startActivity(intent);
             }
         });
@@ -107,7 +107,10 @@ public class SettleActivity extends AppCompatActivity {
         if (mGroup != null){
             transactionList.clear();
             DebtSolver debtSolver = new DebtSolver(mGroup, sessionAccess.getUserID());
-            transactionList.addAll(debtSolver.solvePrimitive(System.currentTimeMillis()));
+            List<Transaction> transactions = debtSolver.solvePrimitive(System.currentTimeMillis());
+            for (Transaction t : transactions){
+                transactionList.add(new ListSettleTransactionAdapter.CheckTransaction(t, true));
+            }
             adapter.notifyDataSetChanged();
         }
     }
@@ -200,16 +203,23 @@ public class SettleActivity extends AppCompatActivity {
         }
 
         if (bound){
-            for (Transaction transaction : transactionList){
-                try {
-                    sessionAccess.add(transaction.toJson().toString());
-                } catch (JSONException e) {
-                    Log.e(TAG, "Failed to add all transaction to session.", e);
-                    return false;
+            int count = 0;
+            for (ListSettleTransactionAdapter.CheckTransaction checkTransaction : transactionList){
+                if (checkTransaction.checked) {
+                    Transaction transaction = checkTransaction.transaction;
+                    try {
+                        sessionAccess.add(transaction.toJson().toString());
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Failed to add all transaction to session.", e);
+                        return false;
+                    }
+                    count++;
                 }
             }
 
-            Toast.makeText(this, "Added new Transactions", Toast.LENGTH_SHORT).show();
+            if (count > 0) {
+                Toast.makeText(this, "Added new Transactions", Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
 
