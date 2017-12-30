@@ -42,6 +42,18 @@
             android:name=".CreateGroupActivity"
             android:parentActivityName=".MainActivity" />
 
+
+        <activity
+            android:name=".TransactionListActivity"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName=".GroupActivity"></activity>
+        <activity
+            android:name=".TransactionInfoActivity"
+            android:parentActivityName=".TransactionListActivity" />
+        <activity
+            android:name=".SettleActivity"
+            android:parentActivityName=".GroupActivity" />
+
         <service
             android:name="ch.ethz.inf.vs.fstreun.network.SessionPublish.Server.GroupPublishService"
             android:enabled="true"
@@ -56,14 +68,6 @@
             android:stopWithTask="true" />
         <service android:name="ch.ethz.inf.vs.fstreun.network.DataSync.Server.DataSyncPublishService" />
 
-        <activity
-            android:name=".TransactionListActivity"
-            android:configChanges="orientation|screenSize"
-            android:parentActivityName=".GroupActivity"></activity>
-        <activity
-            android:name=".TransactionInfoActivity"
-            android:parentActivityName=".TransactionListActivity" />
-        <activity android:name=".SettleActivity"></activity>
     </application>
 
 </manifest>

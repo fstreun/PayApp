@@ -396,9 +396,15 @@ public class GroupActivity extends AppCompatActivity implements DataSyncSubscrib
                 return true;
 
             case R.id.menu_settle:
+
                 // case show how to settle expenses
-                SettleActivity.sGroup = group;
                 intent = new Intent(this, SettleActivity.class);
+                try {
+                    intent.putExtra(SettleActivity.KEY_SIMPLE_GROUP, mSimpleGroup.toJSON().toString());
+                } catch (JSONException e) {
+                    // failed to create SimpleGroup JSON
+                    Log.e(TAG, "Failed to create JSON of SimpleGroup.", e);
+                }
                 startActivity(intent);
                 return true;
 
