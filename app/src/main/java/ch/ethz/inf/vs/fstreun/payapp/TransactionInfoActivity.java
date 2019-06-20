@@ -56,7 +56,7 @@ public class TransactionInfoActivity extends AppCompatActivity {
         tvComment.setText(transaction.comment);
         tvAmount.setText(Transaction.doubleToString(transaction.amount));
         tvPayer.setText(transaction.payer);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd. MMM. yyyy");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd. MMM yyyy");
         SimpleDateFormat simpleTimeFormat = new SimpleDateFormat("HH:mm");
         Date date = new Date(transaction.timestamp);
         String dateAsString = simpleDateFormat.format(date);
