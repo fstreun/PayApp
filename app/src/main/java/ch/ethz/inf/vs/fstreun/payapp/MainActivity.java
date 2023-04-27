@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Set;
 
 import ch.ethz.inf.vs.fstreun.finance.SimpleGroup;
-import ch.ethz.inf.vs.fstreun.network.DataSyncPublishService;
-import ch.ethz.inf.vs.fstreun.network.DataSyncSubscribeService;
+import ch.ethz.inf.vs.fstreun.network.DataSync.Server.DataSyncPublishService;
+import ch.ethz.inf.vs.fstreun.network.DataSync.Client.DataSyncSubscribeService;
 import ch.ethz.inf.vs.fstreun.payapp.ListAdapters.ListGroupAdapter;
 import ch.ethz.inf.vs.fstreun.payapp.filemanager.DataService;
 
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (name.getClassName().equals(DataService.class.getName())){
-                DataService.LocalBinder binder = (DataService.LocalBinder) service;
+                DataService.DataServiceBinder binder = (DataService.DataServiceBinder) service;
                 dataService = binder.getService();
                 bound = true;
                 Log.d(TAG, "onServiceConnected: " + name.getClassName());

@@ -4,15 +4,20 @@ package ch.ethz.inf.vs.fstreun.network;
  * Created by fabio on 12/12/17.
  */
 
-final class NetworkKeys {
-    static final String SESSIONID = "sessionID";
+public final class NetworkKeys {
+    public static final String SUCCESS = "success";
 
-    static final String LENGTHMAP = "lengthmap";
-    static final String DEVICEID = "deviceID";
-    static final String LENGHT = "length";
+    public static final String SECRET = "secret";
+    public static final String GROUP = "group";
 
-    static final String DATA = "data";
+    public static final String SESSIONID = "sessionID";
 
-    static final String COMMAND = "command";
+    public static final String LENGTHMAP = "lengthmap";
+    public static final String DEVICEID = "deviceID";
+    public static final String LENGHT = "length";
+
+    public static final String DATA = "data";
+
+    public static final String COMMAND = "command";
 
 }
